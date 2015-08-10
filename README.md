@@ -1,1 +1,1 @@
-# Teamwork-SoftUni-HQC-QUENCE
+# Teamwork-SoftUni-HQC-QUENCE.
