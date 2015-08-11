@@ -53,7 +53,18 @@ namespace Test.Logic.Dictionaries
         [TestMethod]
         public void NamesListNotInList()
         {
-            // TODO: Implement me            
+            // Arrange
+            var namesList = new NamesList(Directory.GetCurrentDirectory(), "en", false, null);
+
+            // Act
+            namesList.Add("Gosho");
+            namesList.Add("Pesho");
+            namesList.Add("Nashmat");
+
+            var exists = namesList.GetNames().Contains("Ivan");
+
+            // Assert
+            Assert.IsFalse(exists);    
         }
 
         public void NamesListAddWordReload()
@@ -86,8 +97,17 @@ namespace Test.Logic.Dictionaries
         [TestMethod]
         public void NamesListRemoveReload()
         {
-            // TODO: Implement me
-        }
+            // Arrange
+            var namesList = new NamesList(Directory.GetCurrentDirectory(), "en", false, null);
+            namesList.Add("Goshko");
+            namesList.Add("Ivan");
 
+            // Act
+            namesList.Remove("Goshko");
+            namesList = new NamesList(Directory.GetCurrentDirectory(), "en", false, null);
+
+            // Assert
+            Assert.IsFalse(namesList.GetNames().Contains("Goshko"));
+        }
     }
 }
