@@ -1,10 +1,4 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="HtmlUtil.cs" company="">
-//   
-// </copyright>
-// --------------------------------------------------------------------------------------------------------------------
-
-namespace Nikse.SubtitleEdit.Core
+﻿namespace Nikse.SubtitleEdit.Core
 {
     using System;
     using System.Linq;
