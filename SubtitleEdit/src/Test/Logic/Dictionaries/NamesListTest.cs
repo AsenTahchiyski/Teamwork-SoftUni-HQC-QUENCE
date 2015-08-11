@@ -30,7 +30,7 @@ namespace Test.Logic.Dictionaries
             // Act
             namesList.Add("Kremena you have dandruff on your shoes, think about that.");
 
-            var exists = namesList.GetNames().Contains("Kremena you have dandruff on your shoes, think about that.");
+            var exists = namesList.GetMultiNames().Contains("Kremena you have dandruff on your shoes, think about that.");
 
             // Assert
             Assert.IsTrue(exists);    
