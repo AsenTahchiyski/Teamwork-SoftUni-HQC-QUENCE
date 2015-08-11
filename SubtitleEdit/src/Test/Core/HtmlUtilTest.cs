@@ -1,7 +1,5 @@
 ﻿namespace Test.Core
 {
-    using System;
-
     using Microsoft.VisualStudio.TestTools.UnitTesting;
 
     using Nikse.SubtitleEdit.Core;
@@ -120,6 +118,182 @@
         {
             string expectedResult = "&#160;";
             string actualResult = HtmlUtil.EncodeNumeric(" ");
+            Assert.AreEqual(expectedResult, actualResult);
+        }
+
+        [TestMethod]
+        public void TestEncodeNumeric_WithSpecialSymbols()
+        {
+            string expectedResult = "&#60;&#38;&#62;";
+            string actualResult = HtmlUtil.EncodeNumeric("<&>");
+            Assert.AreEqual(expectedResult, actualResult);
+        }
+
+        [TestMethod]
+        public void TestEncodeNumeric_WithEnglishLetters()
+        {
+            string expectedResult = "abcDEf";
+            string actualResult = HtmlUtil.EncodeNumeric("abcDEf");
+            Assert.AreEqual(expectedResult, actualResult);
+        }
+
+        [TestMethod]
+        public void TestEncodeNumeric_WithDigits()
+        {
+            string expectedResult = "1235299";
+            string actualResult = HtmlUtil.EncodeNumeric("1235299");
+            Assert.AreEqual(expectedResult, actualResult);
+        }
+
+        [TestMethod]
+        public void TestRemoveHtmlTags_WithShortText()
+        {
+            string expectedResult = "<2";
+            string actualResult = HtmlUtil.RemoveHtmlTags("<2");
+            Assert.AreEqual(expectedResult, actualResult);
+        }
+
+        [TestMethod]
+        public void TestRemoveHtmlTags_WithNull()
+        {
+            string expectedResult = null;
+            string actualResult = HtmlUtil.RemoveHtmlTags(null);
+            Assert.AreEqual(expectedResult, actualResult);
+        }
+
+        [TestMethod]
+        public void TestRemoveHtmlTags_WithoutLessThanSymbol()
+        {
+            string expectedResult = "SubtitleEdit";
+            string actualResult = HtmlUtil.RemoveHtmlTags("SubtitleEdit");
+            Assert.AreEqual(expectedResult, actualResult);
+        }
+
+        [TestMethod]
+        public void TestRemoveHtmlTags_WithHtmlText()
+        {
+            string expectedResult = "Hello World";
+            string actualResult = HtmlUtil.RemoveHtmlTags("<p>Hello <i>World</i></p>");
+            Assert.AreEqual(expectedResult, actualResult);
+        }
+
+        [TestMethod]
+        public void TestIsUrl_WithTextThatContainsWhiteSpace()
+        {
+            string testInput = "Hello World.";
+            bool result = HtmlUtil.IsUrl(testInput);
+            Assert.IsFalse(result);
+        }
+
+        [TestMethod]
+        public void TestIsUrl_WithShortText()
+        {
+            string testInput = "he.";
+            bool result = HtmlUtil.IsUrl(testInput);
+            Assert.IsFalse(result);
+        }
+
+        [TestMethod]
+        public void TestIsUrl_WithTextThatDontContainDot()
+        {
+            string testInput = "SubtitleEdit";
+            bool result = HtmlUtil.IsUrl(testInput);
+            Assert.IsFalse(result);
+        }
+
+        [TestMethod]
+        public void TestIsUrl_WithEmptyString()
+        {
+            string testInput = string.Empty;
+            bool result = HtmlUtil.IsUrl(testInput);
+            Assert.IsFalse(result);
+        }
+
+        [TestMethod]
+        public void TestIsUrl_WithCorrect_httpsUrl()
+        {
+            string testInput = "https://softuni.bg";
+            bool result = HtmlUtil.IsUrl(testInput);
+            Assert.IsTrue(result);
+        }
+
+        [TestMethod]
+        public void TestIsUrl_WithCorrect_wwwUrl()
+        {
+            string testInput = "www.softuni.bg";
+            bool result = HtmlUtil.IsUrl(testInput);
+            Assert.IsTrue(result);
+        }
+
+        [TestMethod]
+        public void TestIsUrl_WithCorrect_comUrl()
+        {
+            string testInput = "softuni.com";
+            bool result = HtmlUtil.IsUrl(testInput);
+            Assert.IsTrue(result);
+        }
+
+        [TestMethod]
+        public void TestIsUrl_WithCorrect_comUrl2()
+        {
+            string testInput = "softuni.com/";
+            bool result = HtmlUtil.IsUrl(testInput);
+            Assert.IsTrue(result);
+        }
+
+        [TestMethod]
+        public void TestStartsWithUrl_WithEmptyString()
+        {
+            string testInput = string.Empty;
+            bool result = HtmlUtil.StartsWithUrl(testInput);
+            Assert.IsFalse(result);
+        }
+
+        [TestMethod]
+        public void TestStartsWithUrl_WithCorrectUrl()
+        {
+            string testInput = "www.test.com .";
+            bool result = HtmlUtil.StartsWithUrl(testInput);
+            Assert.IsTrue(result);
+        }
+
+        [TestMethod]
+        public void TestStartsWithUrl_WithCorrectUrl2()
+        {
+            string testInput = "www.test.com Test example .";
+            bool result = HtmlUtil.StartsWithUrl(testInput);
+            Assert.IsTrue(result);
+        }
+
+        [TestMethod]
+        public void TestFixUpperTags_WithNull()
+        {
+            string expectedResult = null;
+            string actualResult = HtmlUtil.FixUpperTags(null);
+            Assert.AreEqual(expectedResult, actualResult);
+        }
+
+        [TestMethod]
+        public void TestFixUpperTags_WithItalicTag()
+        {
+            string expectedResult = "<i>";
+            string actualResult = HtmlUtil.FixUpperTags("<I>");
+            Assert.AreEqual(expectedResult, actualResult);
+        }
+
+        [TestMethod]
+        public void TestFixUpperTags_WithParagraphTag()
+        {
+            string expectedResult = "</font>";
+            string actualResult = HtmlUtil.FixUpperTags("</FONT>");
+            Assert.AreEqual(expectedResult, actualResult);
+        }
+
+        [TestMethod]
+        public void TestFixUpperTags_WithManyTags()
+        {
+            string expectedResult = "<b> Test <u> Unit </u> Test </b>";
+            string actualResult = HtmlUtil.FixUpperTags("<B> Test <U> Unit </u> Test </B>");
             Assert.AreEqual(expectedResult, actualResult);
         }
     }
