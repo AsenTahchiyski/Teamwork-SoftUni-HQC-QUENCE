@@ -1,5 +1,7 @@
 ﻿namespace Test.Core
 {
+    using System;
+
     using Microsoft.VisualStudio.TestTools.UnitTesting;
 
     using Nikse.SubtitleEdit.Core;
@@ -47,6 +49,38 @@
         {
             const string Source = "<i>SubtitleEdit</i>";
             Assert.AreEqual("SubtitleEdit", HtmlUtil.RemoveOpenCloseTags(Source, HtmlUtil.TagItalic));
+        }
+
+        [TestMethod]
+        public void TestEncodeNamed_WithEmptyString_ShouldReturnEmpttyString()
+        {
+            string expectedResult = string.Empty;
+            string actualResult = HtmlUtil.EncodeNamed("");
+            Assert.AreEqual(expectedResult, actualResult);
+        }
+
+        [TestMethod]
+        public void TestEncodeNamed_WithLetterA_ShouldReturnLetterA()
+        {
+            string expectedResult = "A";
+            string actualResult = HtmlUtil.EncodeNamed("A");
+            Assert.AreEqual(expectedResult, actualResult);
+        }
+
+        [TestMethod]
+        public void TestEncodeNamed_WithSymbolAmpersand_ShouldReturnEncodedSymbolAmpersand()
+        {
+            string expectedResult = "&amp;";
+            string actualResult = HtmlUtil.EncodeNamed("&");
+            Assert.AreEqual(expectedResult, actualResult);
+        }
+
+        [TestMethod]
+        public void TestEncodeNamed_WithSymbolInExtendedASCIITable()
+        {
+            string expectedResult = string.Format("&#" + 178 + ";");
+            string actualResult = HtmlUtil.EncodeNamed(((char)178).ToString());
+            Assert.AreEqual(expectedResult, actualResult);
         }
     }
 }

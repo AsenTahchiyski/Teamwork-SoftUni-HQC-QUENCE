@@ -48,7 +48,9 @@ namespace Nikse.SubtitleEdit.Core
         public static string EncodeNamed(string source)
         {
             if (source == null)
+            {
                 return string.Empty;
+            }
 
             var encoded = new StringBuilder(source.Length);
             foreach (var ch in source)
