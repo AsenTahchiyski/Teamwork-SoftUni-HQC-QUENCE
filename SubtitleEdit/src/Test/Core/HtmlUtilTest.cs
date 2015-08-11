@@ -60,6 +60,14 @@
         }
 
         [TestMethod]
+        public void TestEncodeNamed_WithNull_ShouldReturnEmpttyString()
+        {
+            string expectedResult = string.Empty;
+            string actualResult = HtmlUtil.EncodeNamed(null);
+            Assert.AreEqual(expectedResult, actualResult);
+        }
+
+        [TestMethod]
         public void TestEncodeNamed_WithLetterA_ShouldReturnLetterA()
         {
             string expectedResult = "A";
@@ -80,6 +88,38 @@
         {
             string expectedResult = string.Format("&#" + 178 + ";");
             string actualResult = HtmlUtil.EncodeNamed(((char)178).ToString());
+            Assert.AreEqual(expectedResult, actualResult);
+        }
+
+        [TestMethod]
+        public void TestEncodeNamed_WithManySymbols()
+        {
+            string expectedResult = "&lt;Test$&gt;";
+            string actualResult = HtmlUtil.EncodeNamed("<Test$>");
+            Assert.AreEqual(expectedResult, actualResult);
+        }
+
+        [TestMethod]
+        public void TestEncodeNumeric_WithEmptyString_ShouldReturnEmpttyString()
+        {
+            string expectedResult = string.Empty;
+            string actualResult = HtmlUtil.EncodeNumeric(string.Empty);
+            Assert.AreEqual(expectedResult, actualResult);
+        }
+
+        [TestMethod]
+        public void TestEncodeNumeric_WithNull_ShouldReturnEmpttyString()
+        {
+            string expectedResult = string.Empty;
+            string actualResult = HtmlUtil.EncodeNumeric(null);
+            Assert.AreEqual(expectedResult, actualResult);
+        }
+
+        [TestMethod]
+        public void TestEncodeNumeric_WhiteSpace()
+        {
+            string expectedResult = "&#160;";
+            string actualResult = HtmlUtil.EncodeNumeric(" ");
             Assert.AreEqual(expectedResult, actualResult);
         }
     }
