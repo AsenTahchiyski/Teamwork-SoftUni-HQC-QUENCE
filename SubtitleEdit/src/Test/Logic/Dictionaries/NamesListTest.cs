@@ -24,7 +24,16 @@ namespace Test.Logic.Dictionaries
         [TestMethod]
         public void NamesListAddMultiWord()
         {
-            // TODO: Implement me            
+            // Arrange
+            var namesList = new NamesList(Directory.GetCurrentDirectory(), "en", false, null);
+
+            // Act
+            namesList.Add("Kremena you have dandruff on your shoes, think about that.");
+
+            var exists = namesList.GetNames().Contains("Kremena you have dandruff on your shoes, think about that.");
+
+            // Assert
+            Assert.IsTrue(exists);    
         }
 
         [TestMethod]

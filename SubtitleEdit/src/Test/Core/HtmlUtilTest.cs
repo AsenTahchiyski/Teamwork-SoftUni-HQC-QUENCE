@@ -52,7 +52,7 @@
         }
 
         [TestMethod]
-        public void TestEncodeNamed_WithEmptyString_ShouldReturnEmpttyString()
+        public void TestEncodeNamed_WithEmptyString_ShouldReturnEmptyString()
         {
             string expectedResult = string.Empty;
             string actualResult = HtmlUtil.EncodeNamed("");
@@ -60,7 +60,7 @@
         }
 
         [TestMethod]
-        public void TestEncodeNamed_WithNull_ShouldReturnEmpttyString()
+        public void TestEncodeNamed_WithNull_ShouldReturnEmptyString()
         {
             string expectedResult = string.Empty;
             string actualResult = HtmlUtil.EncodeNamed(null);
@@ -100,7 +100,7 @@
         }
 
         [TestMethod]
-        public void TestEncodeNumeric_WithEmptyString_ShouldReturnEmpttyString()
+        public void TestEncodeNumeric_WithEmptyString_ShouldReturnEmptyString()
         {
             string expectedResult = string.Empty;
             string actualResult = HtmlUtil.EncodeNumeric(string.Empty);
@@ -108,7 +108,7 @@
         }
 
         [TestMethod]
-        public void TestEncodeNumeric_WithNull_ShouldReturnEmpttyString()
+        public void TestEncodeNumeric_WithNull_ShouldReturnEmptyString()
         {
             string expectedResult = string.Empty;
             string actualResult = HtmlUtil.EncodeNumeric(null);
