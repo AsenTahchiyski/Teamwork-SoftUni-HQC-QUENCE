@@ -98,6 +98,46 @@
         }
 
         [TestMethod]
+        public void TestEncodeNamed_WithManySymbols2()
+        {
+            string expectedResult = "&lt;&gt;&quot;&amp;&nbsp;&ndash;&mdash;&iexcl;&iquest;&ldquo;&rdquo;&euml;&Euml;&iacute;";
+            string actualResult = HtmlUtil.EncodeNamed("<>\"& –—¡¿“”ëËí");
+            Assert.AreEqual(expectedResult, actualResult);
+        }
+
+        [TestMethod]
+        public void TestEncodeNamed_WithManySymbols3()
+        {
+            string expectedResult = "&lsquo;&rsquo;&laquo;&raquo;&cent;&copy;&divide;&micro;&middot;&para;&plusmn;&ecirc;&Ecirc;";
+            string actualResult = HtmlUtil.EncodeNamed("‘’«»¢©÷µ·¶±êÊ");
+            Assert.AreEqual(expectedResult, actualResult);
+        }
+
+        [TestMethod]
+        public void TestEncodeNamed_WithManySymbols4()
+        {
+            string expectedResult = "&euro;&pound;&reg;&sect;&trade;&yen;&aacute;&Aacute;&agrave;&Agrave;&acirc;&egrave;&Egrave;";
+            string actualResult = HtmlUtil.EncodeNamed("€£®§™¥áÁàÀâèÈ");
+            Assert.AreEqual(expectedResult, actualResult);
+        }
+
+        [TestMethod]
+        public void TestEncodeNamed_WithManySymbols5()
+        {
+            string expectedResult = "&Acirc;&aring;&Aring;&atilde;&Atilde;&auml;&Auml;&aelig;&AElig;&ccedil;&Ccedil;&eacute;&Eacute;";
+            string actualResult = HtmlUtil.EncodeNamed("ÂåÅãÃäÄæÆçÇéÉ");
+            Assert.AreEqual(expectedResult, actualResult);
+        }
+
+        [TestMethod]
+        public void TestEncodeNamed_WithManySymbols6()
+        {
+            string expectedResult = "&Iacute;&igrave;&Igrave;&icirc;&Icirc;&iuml;&Iuml;&ntilde;&Ntilde;&oacute;&Oacute;&ograve;&Ograve;";
+            string actualResult = HtmlUtil.EncodeNamed("ÍìÌîÎïÏñÑóÓòÒ");
+            Assert.AreEqual(expectedResult, actualResult);
+        }
+
+        [TestMethod]
         public void TestEncodeNumeric_WithEmptyString_ShouldReturnEmptyString()
         {
             string expectedResult = string.Empty;
