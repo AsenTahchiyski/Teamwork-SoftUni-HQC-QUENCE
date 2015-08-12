@@ -67,6 +67,7 @@ namespace Test.Logic.Dictionaries
             Assert.IsFalse(exists);    
         }
 
+        [TestMethod]
         public void NamesListAddWordReload()
         {
             // Arrange
@@ -81,6 +82,20 @@ namespace Test.Logic.Dictionaries
         }
 
         [TestMethod]
+        public void NamesListAddTextThatDontContainsLetter()
+        {
+            // Arrange
+            bool isItAdded;
+            var namesList = new NamesList(Directory.GetCurrentDirectory(), "en", false, null);
+
+            // Act
+            isItAdded = namesList.Add("~");
+
+            // Assert
+            Assert.IsFalse(isItAdded);
+        }
+
+        [TestMethod]
         public void NamesListRemove()
         {
             // Arrange
@@ -92,6 +107,20 @@ namespace Test.Logic.Dictionaries
 
             // Assert
             Assert.IsFalse(namesList.GetNames().Contains("Jones"));
+        }
+
+        [TestMethod]
+        public void NamesListRemove_WithLetter()
+        {
+            // Arrange
+            bool isItRemoved;
+            var namesList = new NamesList(Directory.GetCurrentDirectory(), "en", false, null);
+
+            // Act
+            isItRemoved = namesList.Remove("a");
+
+            // Assert
+            Assert.IsFalse(isItRemoved);
         }
 
         [TestMethod]
