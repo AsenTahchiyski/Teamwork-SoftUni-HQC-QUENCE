@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Net;
 
     using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -9,9 +10,36 @@
     using Nikse.SubtitleEdit.Logic;
     using Nikse.SubtitleEdit.Logic.Forms;
 
+
+
     [TestClass]
     public class UtilitiesTest
     {
+        [TestMethod]
+        public void TestSplitForChangedCalc()
+        {
+            string expectedResult = "test";
+            string input = Environment.NewLine + "test ?" + Environment.NewLine;
+            var actualResult = Utilities.SplitForChangedCalc(input, true, false);
+            Assert.AreEqual(expectedResult, actualResult[0]);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(WebException))]
+        public void TestDownloadString()
+        {
+            string actualResult = Utilities.DownloadString("test");
+        }
+
+        [TestMethod]
+        public void TestGetTotalAndChangedWords()
+        {
+            int total = 2;
+            int change = 1;
+            Utilities.GetTotalAndChangedWords("aa", "ba", ref total, ref change, false, true);
+            Assert.AreEqual(4, total);
+        }
+
         [TestMethod]
         public void TestRemoveSsaTags()
         {
