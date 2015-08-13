@@ -13,6 +13,124 @@
     public class UtilitiesTest
     {
         [TestMethod]
+        public void TestRemoveSsaTags()
+        {
+            string expectedResult = "12";
+            string testInput = "1{test}2";
+            string actualResult = Utilities.RemoveSsaTags(testInput);
+            Assert.AreEqual(expectedResult, actualResult);
+        }
+
+        [TestMethod]
+        public void TestGetMaxLineLength()
+        {
+            string testInput = "123" + Environment.NewLine + "0";
+            int maxLineLength = Utilities.GetMaxLineLength(testInput);
+            Assert.AreEqual(3, maxLineLength);
+        }
+
+        [TestMethod]
+        public void TestAssemblyVersion()
+        {
+            string expectedVersion = "3.4.7.9999";
+            string actualVesrion = Utilities.AssemblyVersion;
+            Assert.AreEqual(expectedVersion, actualVesrion);
+        }
+
+        [TestMethod]
+        public void TestAssemblyDescription()
+        {
+            Assert.AreEqual(string.Empty, Utilities.AssemblyDescription);
+        }
+
+        [TestMethod]
+        public void TestIsManagedDirectXInstalled()
+        {
+            bool isManagedDirectXInstalled = Utilities.IsManagedDirectXInstalled;
+            Assert.IsFalse(isManagedDirectXInstalled);
+        }
+
+        [TestMethod]
+        public void TestIsMPlayerAvailable()
+        {
+            bool isMPlayerAvailable = Utilities.IsMPlayerAvailable;
+            Assert.IsFalse(isMPlayerAvailable);
+        }
+
+        [TestMethod]
+        public void TestIsMpcHcInstalled()
+        {
+            bool isMpcHcInstalled = Utilities.IsMpcHcInstalled;
+            Assert.IsFalse(isMpcHcInstalled);
+        }
+
+        [TestMethod]
+        public void TestUrlEncode()
+        {
+            string expectedResult = "test%20";
+            string actualResult = Utilities.UrlEncode("test ");
+            Assert.AreEqual(expectedResult, actualResult);
+        }
+
+        [TestMethod]
+        public void TestUrlDecode()
+        {
+            string expectedResult = "test ";
+            string actualResult = Utilities.UrlDecode("test+");
+            Assert.AreEqual(expectedResult, actualResult);
+        }
+
+        [TestMethod]
+        public void TestFixEnglishTextInRightToLeftLanguage()
+        {
+            string expectedResult = "a)tets(f";
+            string actualResult = Utilities.FixEnglishTextInRightToLeftLanguage("a(test)f", "atads");
+            Assert.AreEqual(expectedResult, actualResult);
+        }
+
+        [TestMethod]
+        public void TestTaskDelay()
+        {
+            var task = Utilities.TaskDelay(1);
+            Assert.IsNull(task.Exception);
+            Assert.AreEqual(1, task.Id);
+        }
+
+        [TestMethod]
+        public void TestRemoveNonNumbers()
+        {
+            string expectedResult = "123";
+            string actualResult = Utilities.RemoveNonNumbers("a1e23");
+            Assert.AreEqual(expectedResult, actualResult);
+        }
+
+        [TestMethod]
+        public void TestRemoveNonNumbersWithEmptyString()
+        {
+            string expectedResult = string.Empty;
+            string actualResult = Utilities.RemoveNonNumbers(string.Empty);
+            Assert.AreEqual(expectedResult, actualResult);
+        }
+
+        [TestMethod]
+        public void TestToSubscript()
+        {
+            string expectedResult = "₁₂#b";
+            string testInput = "12#b";
+            string actualResult = Utilities.ToSubscript(testInput);
+            Assert.AreEqual(expectedResult, actualResult);
+        }
+
+        [TestMethod]
+        public void TestToSuperscript()
+        {
+            string expectedResult = "ᵗᵉˢᵗ#";
+            string testInput = "test#";
+            string actualResult = Utilities.ToSuperscript(testInput);
+            Assert.AreEqual(expectedResult, actualResult);
+        }
+
+        [TestMethod]
         public void TestGetRegExGroupCorrecktInput()
         {
             string expectedResult = "test";
