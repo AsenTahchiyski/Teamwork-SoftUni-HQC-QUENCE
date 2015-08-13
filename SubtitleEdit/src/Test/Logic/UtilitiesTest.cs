@@ -1,6 +1,7 @@
 ﻿namespace Test.Logic
 {
     using System;
+    using System.Collections.Generic;
 
     using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -11,6 +12,112 @@
     [TestClass]
     public class UtilitiesTest
     {
+        [TestMethod]
+        public void TestGetRegExGroupCorrecktInput()
+        {
+            string expectedResult = "test";
+            string correctInput = "[A-Za-z](?<test>)[a-z]";
+            string actualResult = Utilities.GetRegExGroup(correctInput);
+            Assert.AreEqual(expectedResult, actualResult);
+        }
+
+        [TestMethod]
+        public void TestGetRegExGroupIncorrecktInput()
+        {
+            string incorrectInput = "test";
+            string number = Utilities.GetRegExGroup(incorrectInput);
+            Assert.IsNull(number);
+        }
+
+        [TestMethod]
+        public void TestGetRegExGroupIncorrecktInput2()
+        {
+            string incorrectInput = "?<test";
+            string number = Utilities.GetRegExGroup(incorrectInput);
+            Assert.IsNull(number);
+        }
+
+        [TestMethod]
+        public void TestGetNumber0To7FromUserName()
+        {
+            int number = Utilities.GetNumber0To7FromUserName("abc");
+            Assert.AreEqual(6, number);
+        }
+
+        [TestMethod]
+        public void TestGetNumber0To7FromUserNameEmptyString()
+        {
+            int number = Utilities.GetNumber0To7FromUserName(string.Empty);
+            Assert.AreEqual(0, number);
+        }
+
+        [TestMethod]
+        public void TestGetColorFromUserName()
+        {
+            var color = Utilities.GetColorFromUserName("t");
+            var a = color.A;
+            var b = color.B;
+            Assert.AreEqual(255, a);
+            Assert.AreEqual(0, b);
+        }
+
+        [TestMethod]
+        public void TestGetColorFromUserNameEmptyString()
+        {
+            var color = Utilities.GetColorFromUserName(string.Empty);
+            var a = color.A;
+            var b = color.B;
+            Assert.AreEqual(255, a);
+            Assert.AreEqual(203, b);
+        }
+
+        [TestMethod]
+        public void TestLoadUserWordList()
+        {
+            string result = Utilities.LoadUserWordList(new List<string>(), "names_etc");
+            string[] resultArgs = result.Split('.');
+            Assert.AreEqual("xml", resultArgs[1]);
+        }
+
+        [TestMethod]
+        public void TestMakeWordSearchRegexWithNumbers()
+        {
+            string testInput = "?";
+            var regex = Utilities.MakeWordSearchRegexWithNumbers(testInput);
+            Assert.AreEqual(@"[\b ,\.\?\!]\?[\b !\.,\r\n\?]", regex.ToString());
+        }
+
+        [TestMethod]
+        public void TestMakeWordSearchRegex()
+        {
+            string testInput = "?";
+            var regex = Utilities.MakeWordSearchRegex(testInput);
+            Assert.AreEqual(@"\b\?\b", regex.ToString());
+        }
+
+        [TestMethod]
+        public void TestIsValidRegexWithIncorrectPattern()
+        {
+            string pattern = "\\";
+            bool isValidRegex = Utilities.IsValidRegex(pattern);
+            Assert.IsFalse(isValidRegex);
+        }
+
+        [TestMethod]
+        public void TestIsValidRegexWithCorrectPattern()
+        {
+            string pattern = "\\s+";
+            bool isValidRegex = Utilities.IsValidRegex(pattern);
+            Assert.IsTrue(isValidRegex);
+        }
+
+        [TestMethod]
+        public void TestIsValidRegexWithEmptyString()
+        {
+            bool isValidRegex = Utilities.IsValidRegex(string.Empty);
+            Assert.IsFalse(isValidRegex);
+        }
+
         [TestMethod]
         public void TestIsQuartsDllInstalled()
         {
