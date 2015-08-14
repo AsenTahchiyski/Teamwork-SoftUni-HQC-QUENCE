@@ -840,7 +840,7 @@
             return Encoding.UTF8;
         }
 
-        private void AudioWaveform_OnNonParagraphRightClicked(object sender, AudioVisualizer.ParagraphEventArgs e)
+        private void AudioWaveform_OnNonParagraphRightClicked(object sender, ParagraphEventArgs e)
         {
             this.addParagraphHereToolStripMenuItem.Visible = false;
             this.addParagraphAndPasteToolStripMenuItem.Visible = false;
@@ -855,7 +855,7 @@
             this.contextMenuStripWaveform.Show(MousePosition.X, MousePosition.Y);
         }
 
-        private void AudioWaveform_OnDoubleClickNonParagraph(object sender, AudioVisualizer.ParagraphEventArgs e)
+        private void AudioWaveform_OnDoubleClickNonParagraph(object sender, ParagraphEventArgs e)
         {
             if (this.mediaPlayer.VideoPlayer != null)
             {
@@ -879,7 +879,7 @@
             this.SelectZoomTextInComboBox();
         }
 
-        private void AudioWaveform_OnTimeChangedAndOffsetRest(object sender, AudioVisualizer.ParagraphEventArgs e)
+        private void AudioWaveform_OnTimeChangedAndOffsetRest(object sender, ParagraphEventArgs e)
         {
             if (this.mediaPlayer.VideoPlayer == null)
             {
@@ -926,7 +926,7 @@
             }
         }
 
-        private void AudioWaveform_OnSingleClick(object sender, AudioVisualizer.ParagraphEventArgs e)
+        private void AudioWaveform_OnSingleClick(object sender, ParagraphEventArgs e)
         {
             this.timerWaveform.Stop();
             this._endSeconds = -1;
@@ -947,7 +947,7 @@
             this.timerWaveform.Start();
         }
 
-        private void AudioWaveform_OnParagraphRightClicked(object sender, AudioVisualizer.ParagraphEventArgs e)
+        private void AudioWaveform_OnParagraphRightClicked(object sender, ParagraphEventArgs e)
         {
             this.SubtitleListview1.SelectIndexAndEnsureVisible(this._subtitle.GetIndex(e.Paragraph));
 
@@ -966,7 +966,7 @@
             this.contextMenuStripWaveform.Show(MousePosition.X, MousePosition.Y);
         }
 
-        private void AudioWaveform_OnNewSelectionRightClicked(object sender, AudioVisualizer.ParagraphEventArgs e)
+        private void AudioWaveform_OnNewSelectionRightClicked(object sender, ParagraphEventArgs e)
         {
             this.SubtitleListview1.SelectIndexAndEnsureVisible(this._subtitle.GetIndex(e.Paragraph));
 
@@ -982,7 +982,7 @@
             this.contextMenuStripWaveform.Show(MousePosition.X, MousePosition.Y);
         }
 
-        private void AudioWaveform_OnTimeChanged(object sender, AudioVisualizer.ParagraphEventArgs e)
+        private void AudioWaveform_OnTimeChanged(object sender, ParagraphEventArgs e)
         {
             var paragraph = e.Paragraph;
             var beforeParagraph = e.BeforeParagraph;
@@ -1132,11 +1132,11 @@
             this._makeHistoryPaused = false;
         }
 
-        private void MovePrevNext(AudioVisualizer.ParagraphEventArgs e, Paragraph beforeParagraph, int index)
+        private void MovePrevNext(ParagraphEventArgs e, Paragraph beforeParagraph, int index)
         {
             if (e.MovePreviousOrNext)
             {
-                if (e.MouseDownParagraphType == AudioVisualizer.MouseDownParagraphType.Start)
+                if (e.MouseDownParagraphType == MouseDownParagraphType.Start)
                 {
                     var prev = this._subtitle.GetParagraphOrDefault(index - 1);
                     if (prev != null)
@@ -1157,7 +1157,7 @@
                         }
                     }
                 }
-                else if (e.MouseDownParagraphType == AudioVisualizer.MouseDownParagraphType.End)
+                else if (e.MouseDownParagraphType == MouseDownParagraphType.End)
                 {
                     var next = this._subtitle.GetParagraphOrDefault(index + 1);
                     if (next != null)
@@ -1181,7 +1181,7 @@
             }
         }
 
-        private void AudioWaveform_OnPositionSelected(object sender, AudioVisualizer.ParagraphEventArgs e)
+        private void AudioWaveform_OnPositionSelected(object sender, ParagraphEventArgs e)
         {
             this.mediaPlayer.CurrentPosition = e.Seconds;
             if (e.Paragraph != null)
