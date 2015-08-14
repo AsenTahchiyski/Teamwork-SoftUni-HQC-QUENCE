@@ -70,15 +70,7 @@
         {
             Assert.AreEqual(string.Empty, Utilities.AssemblyDescription);
         }
-
-        [TestMethod]
-        [Ignore]
-        public void TestIsManagedDirectXInstalled()
-        {
-            bool isManagedDirectXInstalled = Utilities.IsManagedDirectXInstalled;
-            Assert.IsFalse(isManagedDirectXInstalled);
-        }
-
+        
         [TestMethod]
         public void TestIsMPlayerAvailable()
         {
