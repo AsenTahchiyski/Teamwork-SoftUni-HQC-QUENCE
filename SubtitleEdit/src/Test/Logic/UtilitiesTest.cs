@@ -72,6 +72,7 @@
         }
 
         [TestMethod]
+        [Ignore]
         public void TestIsManagedDirectXInstalled()
         {
             bool isManagedDirectXInstalled = Utilities.IsManagedDirectXInstalled;
@@ -436,7 +437,9 @@
         [DeploymentItem("SubtitleEdit.exe")]
         public void FixInvalidItalicTags3()
         {
-            // TODO: Implement me
+            string TestInput = "Gledaj prema kameri i rici <i>zdravo!" + Environment.NewLine + "<i> Sup Brah?";
+            string s2 = HtmlUtil.FixInvalidItalicTags(TestInput);
+            Assert.AreEqual(s2, "Gledaj prema kameri i rici <i>zdravo!" + Environment.NewLine + "</i> Sup Brah?");
         }
 
         [TestMethod]
@@ -491,6 +494,51 @@
             const string TestInput = "FALCONE:<i> I didn't think</i>\r\n<i>it was going to be you,</i>";
             string s2 = HtmlUtil.FixInvalidItalicTags(TestInput);
             Assert.AreEqual(s2, "FALCONE: <i>I didn't think\r\nit was going to be you,</i>");
+        }
+
+        [TestMethod]
+        [DeploymentItem("SubtitleEdit.exe")]
+        public void FixInvalidItalicTags10()
+        {
+            const string TestInput = "</i>-<i>- I didn't think\r\nit was going to be you,</i>";
+            string s2 = HtmlUtil.FixInvalidItalicTags(TestInput);
+            Assert.AreEqual(s2, "<i>- I didn't think\r\nit was going to be you,</i>");
+        }
+
+        [TestMethod]
+        [DeploymentItem("SubtitleEdit.exe")]
+        public void FixInvalidItalicTags11()
+        {
+            const string TestInput = "</i>- <i>- I didn't think\r\nit was going to be you,</i>";
+            string s2 = HtmlUtil.FixInvalidItalicTags(TestInput);
+            Assert.AreEqual(s2, " <i>- I didn't think\r\nit was going to be you,</i>");
+        }
+
+        [TestMethod]
+        [DeploymentItem("SubtitleEdit.exe")]
+        public void FixInvalidItalicTags12()
+        {
+            const string TestInput = "</i>- <i> - I didn't think\r\nit was going to be you,</i>";
+            string s2 = HtmlUtil.FixInvalidItalicTags(TestInput);
+            Assert.AreEqual(s2, " <i> - I didn't think\r\nit was going to be you,</i>");
+        }
+
+        [TestMethod]
+        [DeploymentItem("SubtitleEdit.exe")]
+        public void FixInvalidItalicTags13()
+        {
+            const string TestInput = "</i>-<i> - I didn't think\r\nit was going to be you,</i>";
+            string s2 = HtmlUtil.FixInvalidItalicTags(TestInput);
+            Assert.AreEqual(s2, "<i> - I didn't think\r\nit was going to be you,</i>");
+        }
+
+        [TestMethod]
+        [DeploymentItem("SubtitleEdit.exe")]
+        public void FixInvalidItalicTags14()
+        {
+            const string TestInput = "</i>- I didn't think\r\nit was going to be <i>you,</i>";
+            string s2 = HtmlUtil.FixInvalidItalicTags(TestInput);
+            Assert.AreEqual(s2, "- I didn't think\r\nit was going to be <i>you,</i>");
         }
 
         [TestMethod]
