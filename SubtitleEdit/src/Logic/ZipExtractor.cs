@@ -4,68 +4,26 @@
 
 // Simplified to extract-only by Nikse - August 18, 2010
 
-using System.Collections.Generic;
-using System.Text;
-
-namespace System.IO.Compression
+namespace Nikse.SubtitleEdit.Logic
 {
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.IO.Compression;
+    using System.Text;
+
+    using Nikse.SubtitleEdit.Logic.Enums;
+
     /// <summary>
     /// Zip archive decompression. Represents a Zip file.
     /// </summary>
     public class ZipExtractor : IDisposable
     {
-        /// <summary>
-        /// Compression method enumeration
-        /// </summary>
-        public enum Compression : ushort
-        {
-            /// <summary>Uncompressed storage</summary>
-            Store = 0,
-            /// <summary>Deflate compression method</summary>
-            Deflate = 8
-        }
-
-        /// <summary>
-        /// Represents an entry in Zip file directory
-        /// </summary>
-        public struct ZipFileEntry
-        {
-            /// <summary>Compression method</summary>
-            public Compression Method;
-            /// <summary>Full path and filename as stored in Zip</summary>
-            public string FilenameInZip;
-            /// <summary>Original file size</summary>
-            public uint FileSize;
-            /// <summary>Compressed file size</summary>
-            public uint CompressedSize;
-            /// <summary>Offset of header information inside Zip storage</summary>
-            public uint HeaderOffset;
-            /// <summary>Offset of file inside Zip storage</summary>
-            public uint FileOffset;
-            /// <summary>Size of header information</summary>
-            public uint HeaderSize;
-            /// <summary>32-bit checksum of entire file</summary>
-            public uint Crc32;
-            /// <summary>Last modification time of file</summary>
-            public DateTime ModifyTime;
-            /// <summary>User comment for file</summary>
-            public string Comment;
-            /// <summary>True if UTF8 encoding for filename and comments, false if default (CP 437)</summary>
-            public bool EncodeUTF8;
-
-            /// <summary>Overriden method</summary>
-            /// <returns>Filename in Zip</returns>
-            public override string ToString()
-            {
-                return this.FilenameInZip;
-            }
-        }
-
         #region Public fields
 
         /// <summary>True if UTF8 encoding for filename and comments, false if default (CP 437)</summary>
         public bool EncodeUTF8 = false;
-        /// <summary>Force deflate algotithm even if it inflates the stored file. Off by default.</summary>
+        /// <summary>Force deflate algorithm even if it inflates the stored file. Off by default.</summary>
         public bool ForceDeflating = false;
 
         #endregion Public fields
@@ -159,28 +117,28 @@ namespace System.IO.Compression
 
             for (int pointer = 0; pointer < this.CentralDirImage.Length; )
             {
-                uint signature = BitConverter.ToUInt32(CentralDirImage, pointer);
+                uint signature = BitConverter.ToUInt32(this.CentralDirImage, pointer);
                 if (signature != 0x02014b50)
                     break;
 
-                bool encodeUTF8 = (BitConverter.ToUInt16(CentralDirImage, pointer + 8) & 0x0800) != 0;
-                ushort method = BitConverter.ToUInt16(CentralDirImage, pointer + 10);
-                uint modifyTime = BitConverter.ToUInt32(CentralDirImage, pointer + 12);
-                uint crc32 = BitConverter.ToUInt32(CentralDirImage, pointer + 16);
-                uint comprSize = BitConverter.ToUInt32(CentralDirImage, pointer + 20);
-                uint fileSize = BitConverter.ToUInt32(CentralDirImage, pointer + 24);
-                ushort filenameSize = BitConverter.ToUInt16(CentralDirImage, pointer + 28);
-                ushort extraSize = BitConverter.ToUInt16(CentralDirImage, pointer + 30);
-                ushort commentSize = BitConverter.ToUInt16(CentralDirImage, pointer + 32);
-                uint headerOffset = BitConverter.ToUInt32(CentralDirImage, pointer + 42);
+                bool encodeUTF8 = (BitConverter.ToUInt16(this.CentralDirImage, pointer + 8) & 0x0800) != 0;
+                ushort method = BitConverter.ToUInt16(this.CentralDirImage, pointer + 10);
+                uint modifyTime = BitConverter.ToUInt32(this.CentralDirImage, pointer + 12);
+                uint crc32 = BitConverter.ToUInt32(this.CentralDirImage, pointer + 16);
+                uint comprSize = BitConverter.ToUInt32(this.CentralDirImage, pointer + 20);
+                uint fileSize = BitConverter.ToUInt32(this.CentralDirImage, pointer + 24);
+                ushort filenameSize = BitConverter.ToUInt16(this.CentralDirImage, pointer + 28);
+                ushort extraSize = BitConverter.ToUInt16(this.CentralDirImage, pointer + 30);
+                ushort commentSize = BitConverter.ToUInt16(this.CentralDirImage, pointer + 32);
+                uint headerOffset = BitConverter.ToUInt32(this.CentralDirImage, pointer + 42);
                 uint headerSize = (uint)(46 + filenameSize + extraSize + commentSize);
 
                 Encoding encoder = encodeUTF8 ? Encoding.UTF8 : DefaultEncoding;
 
                 ZipFileEntry zfe = new ZipFileEntry();
                 zfe.Method = (Compression)method;
-                zfe.FilenameInZip = encoder.GetString(CentralDirImage, pointer + 46, filenameSize);
-                zfe.FileOffset = GetFileOffset(headerOffset);
+                zfe.FilenameInZip = encoder.GetString(this.CentralDirImage, pointer + 46, filenameSize);
+                zfe.FileOffset = this.GetFileOffset(headerOffset);
                 zfe.FileSize = fileSize;
                 zfe.CompressedSize = comprSize;
                 zfe.HeaderOffset = headerOffset;
@@ -188,7 +146,7 @@ namespace System.IO.Compression
                 zfe.Crc32 = crc32;
                 zfe.ModifyTime = DosTimeToDateTime(modifyTime);
                 if (commentSize > 0)
-                    zfe.Comment = encoder.GetString(CentralDirImage, pointer + 46 + filenameSize + extraSize, commentSize);
+                    zfe.Comment = encoder.GetString(this.CentralDirImage, pointer + 46 + filenameSize + extraSize, commentSize);
 
                 result.Add(zfe);
                 pointer += (46 + filenameSize + extraSize + commentSize);
@@ -218,7 +176,7 @@ namespace System.IO.Compression
             bool result = false;
             using (Stream output = new FileStream(filename, FileMode.Create, FileAccess.Write))
             {
-                result = ExtractFile(zfe, output);
+                result = this.ExtractFile(zfe, output);
             }
             File.SetCreationTime(filename, zfe.ModifyTime);
             File.SetLastWriteTime(filename, zfe.ModifyTime);
@@ -420,7 +378,7 @@ namespace System.IO.Compression
 
         public void Dispose()
         {
-            Dispose(true);
+            this.Dispose(true);
             GC.SuppressFinalize(this);
         }
 

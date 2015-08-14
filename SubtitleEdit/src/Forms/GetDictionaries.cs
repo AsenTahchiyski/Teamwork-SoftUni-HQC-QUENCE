@@ -169,14 +169,14 @@ namespace Nikse.SubtitleEdit.Forms
             using (var ms = new MemoryStream(e.Result))
             using (ZipExtractor zip = ZipExtractor.Open(ms))
             {
-                List<ZipExtractor.ZipFileEntry> dir = zip.ReadCentralDir();
+                List<ZipFileEntry> dir = zip.ReadCentralDir();
                 // Extract dic/aff files in dictionary folder
                 bool found = false;
                 ExtractDic(dictionaryFolder, zip, dir, ref found);
 
                 if (!found) // check zip inside zip
                 {
-                    foreach (ZipExtractor.ZipFileEntry entry in dir)
+                    foreach (ZipFileEntry entry in dir)
                     {
                         if (entry.FilenameInZip.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
                         {
@@ -184,7 +184,7 @@ namespace Nikse.SubtitleEdit.Forms
                             {
                                 zip.ExtractFile(entry, innerMs);
                                 ZipExtractor innerZip = ZipExtractor.Open(innerMs);
-                                List<ZipExtractor.ZipFileEntry> innerDir = innerZip.ReadCentralDir();
+                                List<ZipFileEntry> innerDir = innerZip.ReadCentralDir();
                                 ExtractDic(dictionaryFolder, innerZip, innerDir, ref found);
                             }
                         }
@@ -200,9 +200,9 @@ namespace Nikse.SubtitleEdit.Forms
             MessageBox.Show(string.Format(Configuration.Settings.Language.GetDictionaries.XDownloaded, comboBoxDictionaries.Items[index]));
         }
 
-        private static void ExtractDic(string dictionaryFolder, ZipExtractor zip, List<ZipExtractor.ZipFileEntry> dir, ref bool found)
+        private static void ExtractDic(string dictionaryFolder, ZipExtractor zip, List<ZipFileEntry> dir, ref bool found)
         {
-            foreach (ZipExtractor.ZipFileEntry entry in dir)
+            foreach (ZipFileEntry entry in dir)
             {
                 if (entry.FilenameInZip.EndsWith(".dic", StringComparison.OrdinalIgnoreCase) || entry.FilenameInZip.EndsWith(".aff", StringComparison.OrdinalIgnoreCase))
                 {

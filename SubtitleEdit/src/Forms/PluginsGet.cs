@@ -243,10 +243,10 @@ namespace Nikse.SubtitleEdit.Forms
             var ms = new MemoryStream(e.Result);
             using (ZipExtractor zip = ZipExtractor.Open(ms))
             {
-                List<ZipExtractor.ZipFileEntry> dir = zip.ReadCentralDir();
+                List<ZipFileEntry> dir = zip.ReadCentralDir();
 
                 // Extract dic/aff files in dictionary folder
-                foreach (ZipExtractor.ZipFileEntry entry in dir)
+                foreach (ZipFileEntry entry in dir)
                 {
                     string fileName = Path.GetFileName(entry.FilenameInZip);
                     string fullPath = Path.Combine(pluginsFolder, fileName);
