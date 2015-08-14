@@ -1,8 +1,9 @@
-﻿using Microsoft.Win32;
-using System.Security;
-
-namespace Nikse.SubtitleEdit.Core
+﻿namespace Nikse.SubtitleEdit.Core
 {
+    using System.Security;
+
+    using Microsoft.Win32;
+
     internal static class RegistryUtil
     {
         /// <summary>
@@ -37,6 +38,7 @@ namespace Nikse.SubtitleEdit.Core
                     key.Dispose();
                 }
             }
+
             return null;
         }
     }

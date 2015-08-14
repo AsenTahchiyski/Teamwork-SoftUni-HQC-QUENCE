@@ -1,12 +1,13 @@
-﻿using System;
-using System.IO;
-using System.Text;
-using System.Windows.Forms;
-using Nikse.SubtitleEdit.Logic.TransportStream;
-using Nikse.SubtitleEdit.Logic.VobSub;
-
-namespace Nikse.SubtitleEdit.Core
+﻿namespace Nikse.SubtitleEdit.Core
 {
+    using System;
+    using System.IO;
+    using System.Text;
+    using System.Windows.Forms;
+
+    using Nikse.SubtitleEdit.Logic.TransportStream;
+    using Nikse.SubtitleEdit.Logic.VobSub;
+
     /// <summary>
     /// File related utilities.
     /// </summary>
@@ -24,18 +25,25 @@ namespace Nikse.SubtitleEdit.Core
             {
                 var index = 0;
                 var fileLength = fs.Length;
-                if (fileLength > Int32.MaxValue)
+                if (fileLength > int.MaxValue)
+                {
                     throw new IOException("File too long");
+                }
+
                 var count = (int)fileLength;
                 var bytes = new byte[count];
                 while (count > 0)
                 {
                     var n = fs.Read(bytes, index, count);
                     if (n == 0)
+                    {
                         throw new InvalidOperationException("End of file reached before expected");
+                    }
+
                     index += n;
                     count -= n;
                 }
+
                 return bytes;
             }
         }
@@ -63,6 +71,7 @@ namespace Nikse.SubtitleEdit.Core
                     }
                 }
             }
+
             return fs;
         }
 
@@ -73,9 +82,12 @@ namespace Nikse.SubtitleEdit.Core
                 var buffer = new byte[4];
                 var count = fs.Read(buffer, 0, buffer.Length);
                 if (count != buffer.Length)
+                {
                     return false;
-                return buffer[0] == 0x50  // P
-                    && buffer[1] == 0x4B  // K
+                }
+
+                return buffer[0] == 0x50 // P
+                       && buffer[1] == 0x4B  // K
                     && buffer[2] == 0x03  // (ETX)
                     && buffer[3] == 0x04; // (EOT)
             }
@@ -88,9 +100,12 @@ namespace Nikse.SubtitleEdit.Core
                 var buffer = new byte[4];
                 var count = fs.Read(buffer, 0, buffer.Length);
                 if (count != buffer.Length)
+                {
                     return false;
-                return buffer[0] == 0x52  // R
-                    && buffer[1] == 0x61  // a
+                }
+
+                return buffer[0] == 0x52 // R
+                       && buffer[1] == 0x61  // a
                     && buffer[2] == 0x72  // r
                     && buffer[3] == 0x21; // !
             }
@@ -103,9 +118,11 @@ namespace Nikse.SubtitleEdit.Core
                 var buffer = new byte[8];
                 var count = fs.Read(buffer, 0, buffer.Length);
                 if (count != buffer.Length)
+                {
                     return false;
-                return buffer[0] == 137
-                    && buffer[1] == 80
+                }
+
+                return buffer[0] == 137 && buffer[1] == 80
                     && buffer[2] == 78
                     && buffer[3] == 71
                     && buffer[4] == 13
@@ -122,9 +139,11 @@ namespace Nikse.SubtitleEdit.Core
                 var buffer = new byte[3];
                 var count = fs.Read(buffer, 0, buffer.Length);
                 if (count != buffer.Length)
+                {
                     return false;
-                return buffer[0] == 0x69
-                    && buffer[1] == 0x69
+                }
+
+                return buffer[0] == 0x69 && buffer[1] == 0x69
                     && buffer[2] == 0x69;
             }
         }
@@ -137,7 +156,9 @@ namespace Nikse.SubtitleEdit.Core
                 var buffer = new byte[3];
                 var count = fs.Read(buffer, 0, buffer.Length);
                 if (count != buffer.Length)
+                {
                     return false;
+                }
 
                 return buffer[0] == 0xFF
                     && buffer[1] == 0xD8
@@ -173,7 +194,9 @@ namespace Nikse.SubtitleEdit.Core
                 var buffer = new byte[3761];
                 var count = fs.Read(buffer, 0, buffer.Length);
                 if (count != buffer.Length)
+                {
                     return false;
+                }
 
                 return (buffer[0] == 0x47 && buffer[188] == 0x47) || // 47hex (71 dec or 'G') == TS sync byte
                        (buffer[0] == 0x54 && buffer[1] == 0x46 && buffer[2] == 0x72 && buffer[3760] == 0x47); // Topfield REC TS file
@@ -246,11 +269,13 @@ namespace Nikse.SubtitleEdit.Core
                 var buffer = new byte[65536];
                 var count = fs.Read(buffer, 0, buffer.Length);
                 if (count < 100)
+                {
                     return false;
+                }
 
                 for (int i = 0; i < count - 11; i++)
                 {
-                    //Header Partition PackId = 06 0E 2B 34 02 05 01 01 0D 01 02
+                    // Header Partition PackId = 06 0E 2B 34 02 05 01 01 0D 01 02
                     if (buffer[i + 00] == 0x06 &&
                         buffer[i + 01] == 0x0E &&
                         buffer[i + 02] == 0x2B &&
@@ -267,6 +292,7 @@ namespace Nikse.SubtitleEdit.Core
                     }
                 }
             }
+
             return false;
         }
 
@@ -285,7 +311,9 @@ namespace Nikse.SubtitleEdit.Core
             using (var fs = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
             {
                 if (fs.Length < 10)
+                {
                     return false; // too short to be a proper subtitle file
+                }
 
                 int numberOfBytes = 1;
                 var buffer = new byte[1024];
@@ -301,21 +329,28 @@ namespace Nikse.SubtitleEdit.Core
                     }
                 }
             }
+
             return true;
         }
 
         public static bool IsFile(string path)
         {
             if (!Path.IsPathRooted(path))
+            {
                 return false;
-            return ((File.GetAttributes(path) & FileAttributes.Directory) != FileAttributes.Directory);
+            }
+
+            return (File.GetAttributes(path) & FileAttributes.Directory) != FileAttributes.Directory;
         }
 
         public static bool IsDirectory(string path)
         {
             if (!Path.IsPathRooted(path))
+            {
                 return false;
-            return ((File.GetAttributes(path) & FileAttributes.Directory) == FileAttributes.Directory);
+            }
+
+            return (File.GetAttributes(path) & FileAttributes.Directory) == FileAttributes.Directory;
         }
     }
 }

@@ -1,14 +1,14 @@
-﻿using System.IO;
-
-namespace Nikse.SubtitleEdit.Core
+﻿namespace Nikse.SubtitleEdit.Core
 {
+    using System.IO;
+
     /// <summary>
     /// Exposes a <see cref="Stream"/> around a file, supporting synchronous read operations.
     /// </summary>
     internal class FastFileStream : FileStream
     {
-        private readonly long _length;
-        private long _position;
+        private readonly long length;
+        private long position;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FastFileStream"/> class with the specified path.
@@ -17,7 +17,7 @@ namespace Nikse.SubtitleEdit.Core
         public FastFileStream(string path)
             : base(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)
         {
-            _length = base.Length;
+            this.length = base.Length;
         }
 
         /// <summary>
@@ -27,7 +27,7 @@ namespace Nikse.SubtitleEdit.Core
         {
             get
             {
-                return _length;
+                return this.length;
             }
         }
 
@@ -38,11 +38,12 @@ namespace Nikse.SubtitleEdit.Core
         {
             get
             {
-                return _position;
+                return this.position;
             }
+
             set
             {
-                Seek(value, SeekOrigin.Begin);
+                this.Seek(value, SeekOrigin.Begin);
             }
         }
 
@@ -57,24 +58,27 @@ namespace Nikse.SubtitleEdit.Core
             switch (origin)
             {
                 case SeekOrigin.Begin:
-                    if (_position != offset)
+                    if (this.position != offset)
                     {
-                        _position = offset;
+                        this.position = offset;
                         base.Seek(offset, origin);
                     }
+
                     break;
                 case SeekOrigin.Current:
-                    if (_position != _position + offset)
+                    if (this.position != this.position + offset)
                     {
-                        _position += offset;
+                        this.position += offset;
                         base.Seek(offset, origin);
                     }
+
                     break;
                 default:
-                    _position = base.Seek(offset, origin);
+                    this.position = base.Seek(offset, origin);
                     break;
             }
-            return _position;
+
+            return this.position;
         }
 
         /// <summary>
@@ -87,7 +91,7 @@ namespace Nikse.SubtitleEdit.Core
         public override int Read(byte[] array, int offset, int count)
         {
             var bytesRead = base.Read(array, offset, count);
-            _position += bytesRead;
+            this.position += bytesRead;
             return bytesRead;
         }
 
@@ -97,7 +101,7 @@ namespace Nikse.SubtitleEdit.Core
         /// <returns>The byte, cast to an Int32, or -1 if the end of the stream has been reached.</returns>
         public override int ReadByte()
         {
-            _position++;
+            this.position++;
             return base.ReadByte();
         }
     }
