@@ -1,11 +1,10 @@
-﻿using System;
-using System.Text;
-
-namespace Nikse.SubtitleEdit.Logic.VobSub
+﻿namespace Nikse.SubtitleEdit.Logic.VobSub
 {
+    using System;
+    using System.Text;
+
     public static class Helper
     {
-
         #region Binary constants
 
         public const int B00000000 = 0;
@@ -267,7 +266,7 @@ namespace Nikse.SubtitleEdit.Logic.VobSub
 
         #endregion Binary constants
 
-        public static string IntToHex(UInt64 value, int digits)
+        public static string IntToHex(ulong value, int digits)
         {
             return value.ToString("X").PadLeft(digits, '0');
         }
@@ -282,11 +281,14 @@ namespace Nikse.SubtitleEdit.Logic.VobSub
             return Convert.ToString(value, 2).PadLeft(digits, '0');
         }
 
-        public static UInt32 GetEndian(byte[] buffer, int index, int count)
+        public static uint GetEndian(byte[] buffer, int index, int count)
         {
-            UInt32 result = 0;
+            uint result = 0;
             for (int i = 0; i < count; i++)
+            {
                 result = (result << 8) + buffer[index + i];
+            }
+
             return result;
         }
 
@@ -299,27 +301,32 @@ namespace Nikse.SubtitleEdit.Logic.VobSub
         public static int GetEndianWord(byte[] buffer, int index)
         {
             if (index + 1 < buffer.Length)
+            {
                 return (buffer[index] << 8) + buffer[index + 1];
+            }
+
             return 0;
         }
 
         public static int GetLittleEndian32(byte[] buffer, int index)
         {
-            return (buffer[index + 3] << 24 | (int)buffer[index + 2] << 16 | (int)buffer[index + 1] << 8 | (int)buffer[index + 0]);
+            return buffer[index + 3] << 24 | buffer[index + 2] << 16 | buffer[index + 1] << 8 | buffer[index + 0];
         }
 
         public static string GetBinaryString(byte[] buffer, int index, int count)
         {
             var sb = new StringBuilder();
             for (int i = 0; i < count; i++)
+            {
                 sb.Append(Convert.ToString(buffer[index + i], 2).PadLeft(8, '0'));
+            }
+
             return sb.ToString();
         }
 
-        public static UInt64 GetUInt32FromBinaryString(string binaryValue)
+        public static ulong GetUInt32FromBinaryString(string binaryValue)
         {
             return Convert.ToUInt32(binaryValue, 2);
         }
-
     }
 }

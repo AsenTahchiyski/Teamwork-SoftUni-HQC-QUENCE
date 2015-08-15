@@ -1,42 +1,32 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-
-namespace Nikse.SubtitleEdit.Logic.VobSub
+﻿namespace Nikse.SubtitleEdit.Logic.VobSub
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Drawing;
+
     /// <summary>
     /// Subtitle Picture - see http://www.mpucoder.com/DVD/spu.html for more info
     /// </summary>
     public class SubPicture
     {
-        private enum DisplayControlCommand
-        {
-            ForcedStartDisplay = 0,
-            StartDisplay = 1,
-            StopDisplay = 2,
-            SetColor = 3,
-            SetContrast = 4,
-            SetDisplayArea = 5,
-            SetPixelDataAddress = 6,
-            ChangeColorAndContrast = 7,
-            End = 0xFF,
-        }
-
         public readonly int SubPictureDateSize;
+
         public TimeSpan Delay;
-        public int BufferSize { get { return _data.Length; } }
-        private readonly byte[] _data;
+
         public Rectangle ImageDisplayArea;
-        public bool Forced { get; private set; }
-        private int _pixelDataAddressOffset;
-        private int _startDisplayControlSequenceTableAddress;
+
+        private readonly byte[] data;
+
+        private readonly int pixelDataAddressOffset;
+
+        private readonly int startDisplayControlSequenceTableAddress;
 
         public SubPicture(byte[] data)
         {
-            _data = data;
-            SubPictureDateSize = Helper.GetEndianWord(_data, 0);
-            _startDisplayControlSequenceTableAddress = Helper.GetEndianWord(_data, 2);
-            ParseDisplayControlCommands(false, null, null, false);
+            this.data = data;
+            this.SubPictureDateSize = Helper.GetEndianWord(this.data, 0);
+            this.startDisplayControlSequenceTableAddress = Helper.GetEndianWord(this.data, 2);
+            this.ParseDisplayControlCommands(false, null, null, false);
         }
 
         /// <summary>
@@ -47,12 +37,22 @@ namespace Nikse.SubtitleEdit.Logic.VobSub
         /// <param name="pixelDataAddressOffset">Bitmap pixel data address offset</param>
         public SubPicture(byte[] data, int startDisplayControlSequenceTableAddress, int pixelDataAddressOffset)
         {
-            _data = data;
-            SubPictureDateSize = _data.Length;
-            _startDisplayControlSequenceTableAddress = startDisplayControlSequenceTableAddress;
-            _pixelDataAddressOffset = pixelDataAddressOffset;
-            ParseDisplayControlCommands(false, null, null, false);
+            this.data = data;
+            this.SubPictureDateSize = this.data.Length;
+            this.startDisplayControlSequenceTableAddress = startDisplayControlSequenceTableAddress;
+            this.pixelDataAddressOffset = pixelDataAddressOffset;
+            this.ParseDisplayControlCommands(false, null, null, false);
         }
+
+        public int BufferSize
+        {
+            get
+            {
+                return this.data.Length;
+            }
+        }
+
+        public bool Forced { get; private set; }
 
         /// <summary>
         /// Generates the current subtitle image
@@ -67,61 +67,66 @@ namespace Nikse.SubtitleEdit.Logic.VobSub
         public Bitmap GetBitmap(List<Color> colorLookupTable, Color background, Color pattern, Color emphasis1, Color emphasis2, bool useCustomColors)
         {
             var fourColors = new List<Color> { background, pattern, emphasis1, emphasis2 };
-            return ParseDisplayControlCommands(true, colorLookupTable, fourColors, useCustomColors);
+            return this.ParseDisplayControlCommands(true, colorLookupTable, fourColors, useCustomColors);
         }
 
         private Bitmap ParseDisplayControlCommands(bool createBitmap, List<Color> colorLookUpTable, List<Color> fourColors, bool useCustomColors)
         {
-            ImageDisplayArea = new Rectangle();
+            this.ImageDisplayArea = new Rectangle();
             Bitmap bmp = null;
             var displayControlSequenceTableAddresses = new List<int>();
             int imageTopFieldDataAddress = 0;
             int imageBottomFieldDataAddress = 0;
             bool bitmapGenerated = false;
             double largestDelay = -999999;
-            int displayControlSequenceTableAddress = _startDisplayControlSequenceTableAddress - _pixelDataAddressOffset;
+            int displayControlSequenceTableAddress = this.startDisplayControlSequenceTableAddress - this.pixelDataAddressOffset;
             int lastDisplayControlSequenceTableAddress = 0;
             displayControlSequenceTableAddresses.Add(displayControlSequenceTableAddress);
             int commandIndex = 0;
-            while (displayControlSequenceTableAddress > lastDisplayControlSequenceTableAddress && displayControlSequenceTableAddress + 1 < _data.Length && commandIndex < _data.Length)
+            while (displayControlSequenceTableAddress > lastDisplayControlSequenceTableAddress && displayControlSequenceTableAddress + 1 < this.data.Length && commandIndex < this.data.Length)
             {
-                int delayBeforeExecute = Helper.GetEndianWord(_data, displayControlSequenceTableAddress + _pixelDataAddressOffset);
-                commandIndex = displayControlSequenceTableAddress + 4 + _pixelDataAddressOffset;
-                if (commandIndex >= _data.Length)
+                int delayBeforeExecute = Helper.GetEndianWord(this.data, displayControlSequenceTableAddress + this.pixelDataAddressOffset);
+                commandIndex = displayControlSequenceTableAddress + 4 + this.pixelDataAddressOffset;
+                if (commandIndex >= this.data.Length)
+                {
                     break; // invalid index
+                }
 
-                int command = _data[commandIndex];
+                int command = this.data[commandIndex];
                 int numberOfCommands = 0;
-                while (command != (int)DisplayControlCommand.End && numberOfCommands < 1000 && commandIndex < _data.Length)
+                while (command != (int)DisplayControlCommand.End && numberOfCommands < 1000 && commandIndex < this.data.Length)
                 {
                     numberOfCommands++;
                     switch (command)
                     {
                         case (int)DisplayControlCommand.ForcedStartDisplay: // 0
-                            Forced = true;
+                            this.Forced = true;
                             commandIndex++;
                             break;
                         case (int)DisplayControlCommand.StartDisplay: // 1
                             commandIndex++;
                             break;
                         case (int)DisplayControlCommand.StopDisplay: // 2
-                            Delay = TimeSpan.FromMilliseconds(((delayBeforeExecute << 10) + 1023) / 90.0);
-                            if (createBitmap && Delay.TotalMilliseconds > largestDelay) // in case of more than one images, just use the one with the largest display time
+                            this.Delay = TimeSpan.FromMilliseconds(((delayBeforeExecute << 10) + 1023) / 90.0);
+                            if (createBitmap && this.Delay.TotalMilliseconds > largestDelay)
                             {
-                                largestDelay = Delay.TotalMilliseconds;
+                                // in case of more than one images, just use the one with the largest display time
+                                largestDelay = this.Delay.TotalMilliseconds;
                                 if (bmp != null)
                                 {
                                     bmp.Dispose();
                                 }
-                                bmp = GenerateBitmap(ImageDisplayArea, imageTopFieldDataAddress, imageBottomFieldDataAddress, fourColors);
+
+                                bmp = this.GenerateBitmap(this.ImageDisplayArea, imageTopFieldDataAddress, imageBottomFieldDataAddress, fourColors);
                                 bitmapGenerated = true;
                             }
+
                             commandIndex++;
                             break;
                         case (int)DisplayControlCommand.SetColor: // 3
                             if (colorLookUpTable != null && fourColors.Count == 4)
                             {
-                                byte[] imageColor = { _data[commandIndex + 1], _data[commandIndex + 2] };
+                                byte[] imageColor = { this.data[commandIndex + 1], this.data[commandIndex + 2] };
                                 if (!useCustomColors)
                                 {
                                     SetColor(fourColors, 3, imageColor[0] >> 4, colorLookUpTable);
@@ -130,12 +135,13 @@ namespace Nikse.SubtitleEdit.Logic.VobSub
                                     SetColor(fourColors, 0, imageColor[1] & Helper.B00001111, colorLookUpTable);
                                 }
                             }
+
                             commandIndex += 3;
                             break;
                         case (int)DisplayControlCommand.SetContrast: // 4
                             if (colorLookUpTable != null && fourColors.Count == 4)
                             {
-                                var imageContrast = new[] { _data[commandIndex + 1], _data[commandIndex + 2] };
+                                var imageContrast = new[] { this.data[commandIndex + 1], this.data[commandIndex + 2] };
                                 if (imageContrast[0] + imageContrast[1] > 0)
                                 {
                                     SetTransparency(fourColors, 3, (imageContrast[0] & 0xF0) >> 4);
@@ -144,58 +150,76 @@ namespace Nikse.SubtitleEdit.Logic.VobSub
                                     SetTransparency(fourColors, 0, imageContrast[1] & Helper.B00001111);
                                 }
                             }
+
                             commandIndex += 3;
                             break;
                         case (int)DisplayControlCommand.SetDisplayArea: // 5
-                            if (_data.Length > commandIndex + 6)
+                            if (this.data.Length > commandIndex + 6)
                             {
-                                int startingX = (_data[commandIndex + 1] << 8 | _data[commandIndex + 2]) >> 4;
-                                int endingX = (_data[commandIndex + 2] & Helper.B00001111) << 8 | _data[commandIndex + 3];
-                                int startingY = (_data[commandIndex + 4] << 8 | _data[commandIndex + 5]) >> 4;
-                                int endingY = (_data[commandIndex + 5] & Helper.B00001111) << 8 | _data[commandIndex + 6];
-                                ImageDisplayArea = new Rectangle(startingX, startingY, endingX - startingX, endingY - startingY);
+                                int startingX = (this.data[commandIndex + 1] << 8 | this.data[commandIndex + 2]) >> 4;
+                                int endingX = (this.data[commandIndex + 2] & Helper.B00001111) << 8 | this.data[commandIndex + 3];
+                                int startingY = (this.data[commandIndex + 4] << 8 | this.data[commandIndex + 5]) >> 4;
+                                int endingY = (this.data[commandIndex + 5] & Helper.B00001111) << 8 | this.data[commandIndex + 6];
+                                this.ImageDisplayArea = new Rectangle(startingX, startingY, endingX - startingX, endingY - startingY);
                             }
+
                             commandIndex += 7;
                             break;
                         case (int)DisplayControlCommand.SetPixelDataAddress: // 6
-                            imageTopFieldDataAddress = Helper.GetEndianWord(_data, commandIndex + 1) + _pixelDataAddressOffset;
-                            imageBottomFieldDataAddress = Helper.GetEndianWord(_data, commandIndex + 3) + _pixelDataAddressOffset;
+                            imageTopFieldDataAddress = Helper.GetEndianWord(this.data, commandIndex + 1) + this.pixelDataAddressOffset;
+                            imageBottomFieldDataAddress = Helper.GetEndianWord(this.data, commandIndex + 3) + this.pixelDataAddressOffset;
                             commandIndex += 5;
                             break;
                         case (int)DisplayControlCommand.ChangeColorAndContrast: // 7
                             commandIndex++;
-                            //int parameterAreaSize = (int)Helper.GetEndian(_data, commandIndex, 2);
-                            if (commandIndex + 1 < _data.Length)
+
+                            // int parameterAreaSize = (int)Helper.GetEndian(_data, commandIndex, 2);
+                            if (commandIndex + 1 < this.data.Length)
                             {
-                                int parameterAreaSize = _data[commandIndex + 1]; // this should be enough??? (no larger than 255 bytes)
+                                int parameterAreaSize = this.data[commandIndex + 1]; // this should be enough??? (no larger than 255 bytes)
                                 if (colorLookUpTable != null)
                                 {
                                     // TODO: Set fourColors
                                 }
+
                                 commandIndex += parameterAreaSize;
                             }
                             else
                             {
                                 commandIndex++;
                             }
+
                             break;
                         default:
                             commandIndex++;
                             break;
                     }
-                    if (commandIndex >= _data.Length) // in case of bad files...
+
+                    if (commandIndex >= this.data.Length)
+                    {
+                        // in case of bad files...
                         break;
-                    command = _data[commandIndex];
+                    }
+
+                    command = this.data[commandIndex];
                 }
 
                 lastDisplayControlSequenceTableAddress = displayControlSequenceTableAddress;
-                if (_pixelDataAddressOffset == -4)
-                    displayControlSequenceTableAddress = Helper.GetEndianWord(_data, commandIndex + 3);
+                if (this.pixelDataAddressOffset == -4)
+                {
+                    displayControlSequenceTableAddress = Helper.GetEndianWord(this.data, commandIndex + 3);
+                }
                 else
-                    displayControlSequenceTableAddress = Helper.GetEndianWord(_data, displayControlSequenceTableAddress + 2);
+                {
+                    displayControlSequenceTableAddress = Helper.GetEndianWord(this.data, displayControlSequenceTableAddress + 2);
+                }
             }
-            if (createBitmap && !bitmapGenerated) // StopDisplay not needed (delay will be zero - should be just before start of next subtitle)
-                bmp = GenerateBitmap(ImageDisplayArea, imageTopFieldDataAddress, imageBottomFieldDataAddress, fourColors);
+
+            if (createBitmap && !bitmapGenerated)
+            {
+                // StopDisplay not needed (delay will be zero - should be just before start of next subtitle)
+                bmp = this.GenerateBitmap(this.ImageDisplayArea, imageTopFieldDataAddress, imageBottomFieldDataAddress, fourColors);
+            }
 
             return bmp;
         }
@@ -203,21 +227,26 @@ namespace Nikse.SubtitleEdit.Logic.VobSub
         private static void SetColor(List<Color> fourColors, int fourColorIndex, int clutIndex, List<Color> colorLookUpTable)
         {
             if (clutIndex >= 0 && clutIndex < colorLookUpTable.Count && fourColorIndex >= 0)
+            {
                 fourColors[fourColorIndex] = colorLookUpTable[clutIndex];
+            }
         }
 
         private static void SetTransparency(List<Color> fourColors, int fourColorIndex, int alpha)
         {
             // alpha: 0x0 = transparent, 0xF = opaque (in C# 0 is fully transparent, and 255 is fully opaque so we have to multiply by 17)
-
             if (fourColorIndex >= 0)
+            {
                 fourColors[fourColorIndex] = Color.FromArgb(alpha * 17, fourColors[fourColorIndex].R, fourColors[fourColorIndex].G, fourColors[fourColorIndex].B);
+            }
         }
 
         private Bitmap GenerateBitmap(Rectangle imageDisplayArea, int imageTopFieldDataAddress, int imageBottomFieldDataAddress, List<Color> fourColors)
         {
             if (imageDisplayArea.Width <= 0 || imageDisplayArea.Height <= 0)
+            {
                 return new Bitmap(1, 1);
+            }
 
             var bmp = new Bitmap(imageDisplayArea.Width + 1, imageDisplayArea.Height + 1);
             if (fourColors[0] != Color.Transparent)
@@ -226,10 +255,11 @@ namespace Nikse.SubtitleEdit.Logic.VobSub
                 gr.FillRectangle(new SolidBrush(fourColors[0]), new Rectangle(0, 0, bmp.Width, bmp.Height));
                 gr.Dispose();
             }
+
             var fastBmp = new FastBitmap(bmp);
             fastBmp.LockImage();
-            GenerateBitmap(_data, fastBmp, 0, imageTopFieldDataAddress, fourColors, 2);
-            GenerateBitmap(_data, fastBmp, 1, imageBottomFieldDataAddress, fourColors, 2);
+            GenerateBitmap(this.data, fastBmp, 0, imageTopFieldDataAddress, fourColors, 2);
+            GenerateBitmap(this.data, fastBmp, 1, imageBottomFieldDataAddress, fourColors, 2);
             Bitmap cropped = CropBitmapAndUnlok(fastBmp, fourColors[0]);
             bmp.Dispose();
             return cropped;
@@ -252,17 +282,27 @@ namespace Nikse.SubtitleEdit.Logic.VobSub
                     {
                         c = bmp.GetPixelNext();
                         if (c.A != 0 && c.ToArgb() != backgroundArgb)
+                        {
                             break;
+                        }
                     }
                 }
+
                 if (IsBackgroundColor(c, backgroundArgb))
+                {
                     y++;
+                }
             }
+
             int minY = y;
             if (minY > 3)
+            {
                 minY -= 3;
+            }
             else
+            {
                 minY = 0;
+            }
 
             // Crop left
             x = 0;
@@ -273,16 +313,26 @@ namespace Nikse.SubtitleEdit.Logic.VobSub
                 {
                     c = bmp.GetPixel(x, y);
                     if (!IsBackgroundColor(c, backgroundArgb))
+                    {
                         break;
+                    }
                 }
+
                 if (IsBackgroundColor(c, backgroundArgb))
+                {
                     x++;
+                }
             }
+
             int minX = x;
             if (minX > 3)
+            {
                 minX -= 3;
+            }
             else
+            {
                 minX -= 0;
+            }
 
             // Crop bottom
             y = bmp.Height - 1;
@@ -296,15 +346,23 @@ namespace Nikse.SubtitleEdit.Logic.VobSub
                     {
                         c = bmp.GetPixelNext();
                         if (!IsBackgroundColor(c, backgroundArgb))
+                        {
                             break;
+                        }
                     }
                 }
+
                 if (IsBackgroundColor(c, backgroundArgb))
+                {
                     y--;
+                }
             }
+
             int maxY = y + 7;
             if (maxY >= bmp.Height)
+            {
                 maxY = bmp.Height - 1;
+            }
 
             // Crop right
             x = bmp.Width - 1;
@@ -315,14 +373,22 @@ namespace Nikse.SubtitleEdit.Logic.VobSub
                 {
                     c = bmp.GetPixel(x, y);
                     if (!IsBackgroundColor(c, backgroundArgb))
+                    {
                         break;
+                    }
                 }
+
                 if (IsBackgroundColor(c, backgroundArgb))
+                {
                     x--;
+                }
             }
+
             int maxX = x + 7;
             if (maxX >= bmp.Width)
+            {
                 maxX = bmp.Width - 1;
+            }
 
             bmp.UnlockImage();
             Bitmap bmpImage = bmp.GetBitmap();
@@ -331,6 +397,7 @@ namespace Nikse.SubtitleEdit.Logic.VobSub
                 Bitmap bmpCrop = bmpImage.Clone(new Rectangle(minX, minY, maxX - minX, maxY - minY), bmpImage.PixelFormat);
                 return bmpCrop;
             }
+
             return (Bitmap)bmpImage.Clone();
         }
 
@@ -353,7 +420,9 @@ namespace Nikse.SubtitleEdit.Logic.VobSub
                 bool restOfLine;
                 index += DecodeRle(dataAddress + index, data, out color, out runLength, ref onlyHalf, out restOfLine);
                 if (restOfLine)
+                {
                     runLength = bmp.Width - x;
+                }
 
                 Color c = fourColors[color]; // set color via the four colors
                 for (int i = 0; i < runLength; i++, x++)
@@ -361,30 +430,36 @@ namespace Nikse.SubtitleEdit.Logic.VobSub
                     if (x >= bmp.Width - 1)
                     {
                         if (y < bmp.Height && x < bmp.Width && c != fourColors[0])
+                        {
                             bmp.SetPixel(x, y, c);
+                        }
 
                         if (onlyHalf)
                         {
                             onlyHalf = false;
                             index++;
                         }
+
                         x = 0;
                         y += addY;
                         break;
                     }
+
                     if (y < bmp.Height && c.ToArgb() != colorZeroValue)
+                    {
                         bmp.SetPixel(x, y, c);
+                    }
                 }
             }
         }
 
         private static int DecodeRle(int index, byte[] data, out int color, out int runLength, ref bool onlyHalf, out bool restOfLine)
         {
-            //Value      Bits   n=length, c=color
-            //1-3        4      nncc               (half a byte)
-            //4-15       8      00nnnncc           (one byte)
-            //16-63     12      0000nnnnnncc       (one and a half byte)
-            //64-255    16      000000nnnnnnnncc   (two bytes)
+            // Value      Bits   n=length, c=color
+            // 1-3        4      nncc               (half a byte)
+            // 4-15       8      00nnnncc           (one byte)
+            // 16-63     12      0000nnnnnncc       (one and a half byte)
+            // 64-255    16      000000nnnnnnnncc   (two bytes)
             // When reaching EndOfLine, index is byte aligned (skip 4 bits if necessary)
             restOfLine = false;
             byte b1 = data[index];
@@ -411,6 +486,7 @@ namespace Nikse.SubtitleEdit.Logic.VobSub
                         return 3;
                     }
                 }
+
                 return 2;
             }
 
@@ -423,6 +499,7 @@ namespace Nikse.SubtitleEdit.Logic.VobSub
                     onlyHalf = false;
                     return 2;
                 }
+
                 onlyHalf = true;
                 return 1;
             }
@@ -442,70 +519,30 @@ namespace Nikse.SubtitleEdit.Logic.VobSub
                 onlyHalf = false;
                 return 1;
             }
+
             onlyHalf = true;
             return 0;
         }
 
-        //private static int DecodeRleNonOptimized(int index, byte[] data, out int color, out int runLength, ref bool onlyHalf, out bool restOfLine)
-        //{
-        //    //Value      Bits   n=length, c=color
-        //    //1-3        4      n n c c                           (half a byte)
-        //    //4-15       8      0 0 n n n n c c                   (one byte)
-        //    //16-63     12      0 0 0 0 n n n n n n c c           (one and a half byte)
-        //    //64-255    16      0 0 0 0 0 0 n n n n n n n n c c   (two bytes)
-        //    // When reaching EndOfLine, index is byte aligned (skip 4 bits if necessary)
-        //    restOfLine = false;
-        //    string binary2 = Helper.GetBinaryString(data, index, 3);
-        //    if (onlyHalf)
-        //        binary2 = binary2.Substring(4);
+        private enum DisplayControlCommand
+        {
+            ForcedStartDisplay = 0, 
 
-        //    if (binary2.StartsWith("000000"))
-        //    {
-        //        runLength = (int)Helper.GetUInt32FromBinaryString(binary2.Substring(6, 8));
-        //        color = (int)Helper.GetUInt32FromBinaryString(binary2.Substring(14, 2));
-        //        if (runLength == 0)
-        //        {
-        //            // rest of line + skip 4 bits if Only half
-        //            restOfLine = true;
-        //            if (onlyHalf)
-        //            {
-        //                onlyHalf = false;
-        //                return 3;
-        //            }
-        //        }
-        //        return 2;
-        //    }
+            StartDisplay = 1, 
 
-        //    if (binary2.StartsWith("0000"))
-        //    {
-        //        runLength = (int)Helper.GetUInt32FromBinaryString(binary2.Substring(4, 6));
-        //        color = (int)Helper.GetUInt32FromBinaryString(binary2.Substring(10, 2));
-        //        if (onlyHalf)
-        //        {
-        //            onlyHalf = false;
-        //            return 2;
-        //        }
-        //        onlyHalf = true;
-        //        return 1;
-        //    }
+            StopDisplay = 2, 
 
-        //    if (binary2.StartsWith("00"))
-        //    {
-        //        runLength = (int)Helper.GetUInt32FromBinaryString(binary2.Substring(2, 4));
-        //        color = (int)Helper.GetUInt32FromBinaryString(binary2.Substring(6, 2));
-        //        return 1;
-        //    }
+            SetColor = 3, 
 
-        //    runLength = (int)Helper.GetUInt32FromBinaryString(binary2.Substring(0, 2));
-        //    color = (int)Helper.GetUInt32FromBinaryString(binary2.Substring(2, 2));
-        //    if (onlyHalf)
-        //    {
-        //        onlyHalf = false;
-        //        return 1;
-        //    }
-        //    onlyHalf = true;
-        //    return 0;
-        //}
+            SetContrast = 4, 
 
+            SetDisplayArea = 5, 
+
+            SetPixelDataAddress = 6, 
+
+            ChangeColorAndContrast = 7, 
+
+            End = 0xFF, 
+        }
     }
 }

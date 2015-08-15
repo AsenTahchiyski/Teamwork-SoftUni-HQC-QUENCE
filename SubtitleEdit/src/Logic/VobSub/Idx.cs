@@ -1,12 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Globalization;
-using System.IO;
-using System.Text.RegularExpressions;
-
-namespace Nikse.SubtitleEdit.Logic.VobSub
+﻿namespace Nikse.SubtitleEdit.Logic.VobSub
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Drawing;
+    using System.Globalization;
+    using System.IO;
+    using System.Text.RegularExpressions;
+
     internal class Idx
     {
         public readonly List<IdxParagraph> IdxParagraphs = new List<IdxParagraph>();
@@ -28,7 +28,9 @@ namespace Nikse.SubtitleEdit.Logic.VobSub
                 {
                     IdxParagraph p = GetTimeCodeAndFilePosition(line);
                     if (p != null)
-                        IdxParagraphs.Add(p);
+                    {
+                        this.IdxParagraphs.Add(p);
+                    }
                 }
                 else if (line.StartsWith("palette:", StringComparison.OrdinalIgnoreCase) && line.Length > 10)
                 {
@@ -36,13 +38,13 @@ namespace Nikse.SubtitleEdit.Logic.VobSub
                     string[] colors = s.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
                     foreach (string hex in colors)
                     {
-                        Palette.Add(HexToColor(hex));
+                        this.Palette.Add(HexToColor(hex));
                     }
                 }
                 else if (line.StartsWith("id:", StringComparison.OrdinalIgnoreCase) && line.Length > 4)
                 {
-                    //id: en, index: 1
-                    //id: es, index: 2
+                    // id: en, index: 1
+                    // id: es, index: 2
                     string s = line.Substring("id:".Length + 1);
                     string[] parts = s.Split(new[] { ':', ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
                     if (parts.Length > 0)
@@ -51,10 +53,11 @@ namespace Nikse.SubtitleEdit.Logic.VobSub
                         {
                             string twoLetterLanguageId = parts[0];
                             CultureInfo info = CultureInfo.GetCultureInfoByIetfLanguageTag(twoLetterLanguageId);
-                            Languages.Add(string.Format("{0} (0x{1:x})", info.NativeName, Languages.Count + 32));
+                            this.Languages.Add(string.Format("{0} (0x{1:x})", info.NativeName, this.Languages.Count + 32));
                         }
                         catch
                         {
+                            // ignored
                         }
                     }
                 }
@@ -79,6 +82,7 @@ namespace Nikse.SubtitleEdit.Logic.VobSub
                 int b = Convert.ToInt32(hex.Substring(6, 2), 16);
                 return Color.FromArgb(a, r, g, b);
             }
+
             return Color.Red;
         }
 
@@ -100,8 +104,8 @@ namespace Nikse.SubtitleEdit.Logic.VobSub
                     return new IdxParagraph(new TimeSpan(0, hours, minutes, seconds, milliseconds), Convert.ToInt64(parts[6].Trim(), 16));
                 }
             }
+
             return null;
         }
-
     }
 }
