@@ -1,15 +1,25 @@
 ﻿//Downloaded from Visual C# Kicks - http://www.vcskicks.com/
-using System;
-using System.Drawing;
-using System.Drawing.Imaging;
-
 namespace Nikse.SubtitleEdit.Logic
 {
+    using System;
+    using System.Drawing;
+    using System.Drawing.Imaging;
+
     /// <summary>
     /// This class provides a faster way to work with bitmaps compared to the standard.
     /// </summary>
     unsafe public class FastBitmap
     {
+        private PixelData* pixelData = null;
+        private readonly Bitmap workingBitmap;
+        private int width;
+        private BitmapData bitmapData;
+        private Byte* pBase = null;
+
+        public int Width { get; set; }
+
+        public int Height { get; set; }
+
         /// <summary>
         /// Holds the pixel data (byte values for blue, green, red and alpha channel). Overrides ToString to provide pixel data values in order Alpha, Red, Green, Blue.
         /// </summary>
@@ -26,30 +36,29 @@ namespace Nikse.SubtitleEdit.Logic
             }
         }
 
-        public int Width { get; set; }
-        public int Height { get; set; }
-
-        private readonly Bitmap _workingBitmap;
-        private int _width;
-        private BitmapData _bitmapData;
-        private Byte* _pBase = null;
-
         /// <summary>
         /// Creates image in FastBitmap format using a regular bitmap image.
         /// </summary>
         /// <param name="inputBitmap">Input bitmap image.</param>
         public FastBitmap(Bitmap inputBitmap)
         {
-            _workingBitmap = inputBitmap;
+            workingBitmap = inputBitmap;
 
-            if (_workingBitmap.PixelFormat != PixelFormat.Format32bppArgb &&
-                Environment.OSVersion.Version.Major < 6 && Configuration.Settings.General.SubtitleFontName == Utilities.WinXP2KUnicodeFontName) // 6 == Vista/Win2008Server/Win7
+            if (workingBitmap.PixelFormat != PixelFormat.Format32bppArgb &&
+                Environment.OSVersion.Version.Major < 6 && 
+                Configuration.Settings.General.SubtitleFontName == Utilities.WinXP2KUnicodeFontName) // 6 == Vista/Win2008Server/Win7
             { // WinXp Fix
-                var newBitmap = new Bitmap(_workingBitmap.Width, _workingBitmap.Height, PixelFormat.Format32bppArgb);
-                for (int y = 0; y < _workingBitmap.Height; y++)
-                    for (int x = 0; x < _workingBitmap.Width; x++)
-                        newBitmap.SetPixel(x, y, _workingBitmap.GetPixel(x, y));
-                _workingBitmap = newBitmap;
+                var newBitmap = new Bitmap(workingBitmap.Width, workingBitmap.Height, PixelFormat.Format32bppArgb);
+
+                for (int y = 0; y < workingBitmap.Height; y++)
+                {
+                    for (int x = 0; x < workingBitmap.Width; x++)
+                    {
+                        newBitmap.SetPixel(x, y, workingBitmap.GetPixel(x, y));
+                    }
+                }
+
+                workingBitmap = newBitmap;
             }
 
             Width = inputBitmap.Width;
@@ -61,17 +70,18 @@ namespace Nikse.SubtitleEdit.Logic
         /// </summary>
         public void LockImage()
         {
-            var bounds = new Rectangle(Point.Empty, _workingBitmap.Size);
+            var bounds = new Rectangle(Point.Empty, workingBitmap.Size);
 
-            _width = bounds.Width * sizeof(PixelData);
-            if (_width % 4 != 0) _width = 4 * (_width / 4 + 1);
+            width = bounds.Width * sizeof(PixelData);
+            if (width%4 != 0)
+            {
+                width = 4 * (width / 4 + 1);
+            }
 
             //Lock Image
-            _bitmapData = _workingBitmap.LockBits(bounds, ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
-            _pBase = (Byte*)_bitmapData.Scan0.ToPointer();
+            bitmapData = workingBitmap.LockBits(bounds, ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
+            pBase = (Byte*)bitmapData.Scan0.ToPointer();
         }
-
-        private PixelData* _pixelData = null;
 
         /// <summary>
         /// Provides the specified pixel data.
@@ -81,8 +91,8 @@ namespace Nikse.SubtitleEdit.Logic
         /// <returns>Pixel data in ARGB format.</returns>
         public Color GetPixel(int x, int y)
         {
-            _pixelData = (PixelData*)(_pBase + y * _width + x * sizeof(PixelData));
-            return Color.FromArgb(_pixelData->Alpha, _pixelData->Red, _pixelData->Green, _pixelData->Blue);
+            pixelData = (PixelData*)(pBase + y * width + x * sizeof(PixelData));
+            return Color.FromArgb(pixelData->Alpha, pixelData->Red, pixelData->Green, pixelData->Blue);
         }
 
         /// <summary>
@@ -91,8 +101,8 @@ namespace Nikse.SubtitleEdit.Logic
         /// <returns>Pixel data in ARGB format.</returns>
         public Color GetPixelNext()
         {
-            _pixelData++;
-            return Color.FromArgb(_pixelData->Alpha, _pixelData->Red, _pixelData->Green, _pixelData->Blue);
+            pixelData++;
+            return Color.FromArgb(pixelData->Alpha, pixelData->Red, pixelData->Green, pixelData->Blue);
         }
 
         /// <summary>
@@ -103,7 +113,7 @@ namespace Nikse.SubtitleEdit.Logic
         /// <param name="color">New pixel color to set.</param>
         public void SetPixel(int x, int y, Color color)
         {
-            var data = (PixelData*)(_pBase + y * _width + x * sizeof(PixelData));
+            var data = (PixelData*)(pBase + y * width + x * sizeof(PixelData));
             data->Alpha = color.A;
             data->Red = color.R;
             data->Green = color.G;
@@ -119,7 +129,7 @@ namespace Nikse.SubtitleEdit.Logic
         /// <param name="length">Number of pixels.</param>
         public void SetPixel(int x, int y, Color color, int length)
         {
-            var data = (PixelData*)(_pBase + y * _width + x * sizeof(PixelData));
+            var data = (PixelData*)(pBase + y * width + x * sizeof(PixelData));
             for (int i = 0; i < length; i++)
             {
                 data->Alpha = color.A;
@@ -136,7 +146,7 @@ namespace Nikse.SubtitleEdit.Logic
         /// <returns>Image in System.Drawing.Bitmap format.</returns>
         public Bitmap GetBitmap()
         {
-            return _workingBitmap;
+            return workingBitmap;
         }
 
         /// <summary>
@@ -144,9 +154,9 @@ namespace Nikse.SubtitleEdit.Logic
         /// </summary>
         public void UnlockImage()
         {
-            _workingBitmap.UnlockBits(_bitmapData);
-            _bitmapData = null;
-            _pBase = null;
+            workingBitmap.UnlockBits(bitmapData);
+            bitmapData = null;
+            pBase = null;
         }
     }
 }

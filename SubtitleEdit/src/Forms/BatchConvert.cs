@@ -84,7 +84,7 @@ namespace Nikse.SubtitleEdit.Forms
             groupBoxConvertOptions.Text = l.ConvertOptions;
             checkBoxRemoveFormatting.Text = l.RemoveFormatting;
             checkBoxFixCasing.Text = l.RedoCasing;
-            checkBoxRemoveTextForHI.Text = l.RemoveTextForHI;
+            checkBoxRemoveTextForHI.Text = l.RemoveTextForHi;
             checkBoxOverwriteOriginalFiles.Text = l.OverwriteOriginalFiles;
             columnHeaderFName.Text = Configuration.Settings.Language.JoinSubtitles.FileName;
             columnHeaderFormat.Text = Configuration.Settings.Language.Main.Controls.SubtitleFormat;

@@ -1,30 +1,49 @@
-﻿using Nikse.SubtitleEdit.Logic.Enums;
-using System.Text.RegularExpressions;
-using System.Windows.Forms;
-
-namespace Nikse.SubtitleEdit.Logic
+﻿namespace Nikse.SubtitleEdit.Logic
 {
+    using Enums;
+    using System.Text.RegularExpressions;
+    using System.Windows.Forms;
+
     public class FindReplaceDialogHelper
     {
-        private readonly string _findText = string.Empty;
-        private readonly string _replaceText = string.Empty;
-        private readonly Regex _regEx;
-        private int _findTextLenght;
+        private readonly string findText;
+        private readonly string replaceText;
+        private readonly Regex regEx;
+        private int findTextLenght;
 
         public bool Success { get; set; }
+
         public FindType FindType { get; set; }
+
         public int SelectedIndex { get; set; }
+
         public int SelectedPosition { get; set; }
+
         public int WindowPositionLeft { get; set; }
+
         public int WindowPositionTop { get; set; }
+
         public int StartLineIndex { get; set; }
+
         public bool MatchInOriginal { get; set; }
+
+        public FindReplaceDialogHelper(FindType findType, string findText, Regex regEx, string replaceText, int left, int top, int startLineIndex)
+        {
+            FindType = findType;
+            this.findText = findText ?? string.Empty;
+            this.replaceText = replaceText ?? string.Empty;
+            this.regEx = regEx;
+            this.findTextLenght = findText == null ? 0 : findText.Length;
+            WindowPositionLeft = left;
+            WindowPositionTop = top;
+            StartLineIndex = startLineIndex;
+        }
 
         public int FindTextLength
         {
             get
             {
-                return _findTextLenght;
+                return findTextLenght;
             }
         }
 
@@ -32,7 +51,7 @@ namespace Nikse.SubtitleEdit.Logic
         {
             get
             {
-                return _findText;
+                return findText;
             }
         }
 
@@ -40,20 +59,8 @@ namespace Nikse.SubtitleEdit.Logic
         {
             get
             {
-                return _replaceText;
+                return replaceText;
             }
-        }
-
-        public FindReplaceDialogHelper(FindType findType, string findText, Regex regEx, string replaceText, int left, int top, int startLineIndex)
-        {
-            FindType = findType;
-            _findText = findText;
-            _replaceText = replaceText;
-            _regEx = regEx;
-            _findTextLenght = findText.Length;
-            WindowPositionLeft = left;
-            WindowPositionTop = top;
-            StartLineIndex = startLineIndex;
         }
 
         public bool Find(Subtitle subtitle, Subtitle originalSubtitle, int startIndex)
@@ -68,32 +75,39 @@ namespace Nikse.SubtitleEdit.Logic
 
         private int FindPositionInText(string text, int startIndex)
         {
-            if (startIndex >= text.Length && !(FindType == FindType.RegEx && startIndex == 0))
+            if (startIndex >= text.Length && 
+                !(FindType == FindType.RegEx && 
+                startIndex == 0))
+            {
                 return -1;
+            }
 
             switch (FindType)
             {
                 case FindType.Normal:
-                    return (text.IndexOf(_findText, startIndex, System.StringComparison.OrdinalIgnoreCase));
+                    return (text.IndexOf(findText, startIndex, System.StringComparison.OrdinalIgnoreCase));
                 case FindType.CaseSensitive:
-                    return (text.IndexOf(_findText, startIndex, System.StringComparison.Ordinal));
+                    return (text.IndexOf(findText, startIndex, System.StringComparison.Ordinal));
                 case FindType.RegEx:
                     {
-                        Match match = _regEx.Match(text, startIndex);
+                        Match match = regEx.Match(text, startIndex);
                         if (match.Success)
                         {
-                            string groupName = Utilities.GetRegExGroup(_findText);
+                            string groupName = Utilities.GetRegExGroup(findText);
                             if (groupName != null && match.Groups[groupName] != null && match.Groups[groupName].Success)
                             {
-                                _findTextLenght = match.Groups[groupName].Length;
+                                findTextLenght = match.Groups[groupName].Length;
                                 return match.Groups[groupName].Index;
                             }
-                            _findTextLenght = match.Length;
+
+                            findTextLenght = match.Length;
                             return match.Index;
                         }
+
                         return -1;
                     }
             }
+
             return -1;
         }
 
@@ -102,92 +116,199 @@ namespace Nikse.SubtitleEdit.Logic
             Success = false;
             int index = 0;
             if (position < 0)
+            {
                 position = 0;
-            foreach (Paragraph p in subtitle.Paragraphs)
+            }
+
+            foreach (Paragraph paragraph in subtitle.Paragraphs)
             {
                 if (index >= startIndex)
                 {
-                    int pos = 0;
+                    int findPositionInText = 0;
                     if (!MatchInOriginal)
                     {
-                        pos = FindPositionInText(p.Text, position);
-                        if (pos >= 0)
+                        findPositionInText = FindPositionInText(paragraph.Text, position);
+                        if (findPositionInText >= 0)
                         {
                             MatchInOriginal = false;
                             SelectedIndex = index;
-                            SelectedPosition = pos;
+                            SelectedPosition = findPositionInText;
                             Success = true;
                             return true;
                         }
+
                         position = 0;
                     }
+
                     MatchInOriginal = false;
 
                     if (originalSubtitle != null && allowEditOfOriginalSubtitle)
                     {
-                        Paragraph o = Utilities.GetOriginalParagraph(index, p, originalSubtitle.Paragraphs);
-                        if (o != null)
+                        Paragraph originalParagraph = Utilities.GetOriginalParagraph(index, paragraph, originalSubtitle.Paragraphs);
+                        if (originalParagraph != null)
                         {
-                            pos = FindPositionInText(o.Text, position);
-                            if (pos >= 0)
+                            findPositionInText = FindPositionInText(originalParagraph.Text, position);
+                            if (findPositionInText >= 0)
                             {
                                 MatchInOriginal = true;
                                 SelectedIndex = index;
-                                SelectedPosition = pos;
+                                SelectedPosition = findPositionInText;
                                 Success = true;
                                 return true;
                             }
                         }
                     }
                 }
+
                 index++;
             }
+
             return false;
         }
 
         public static ContextMenu GetRegExContextMenu(TextBox textBox)
         {
-            var cm = new ContextMenu();
-            var l = Configuration.Settings.Language.RegularExpressionContextMenu;
-            cm.MenuItems.Add(l.WordBoundary, delegate { textBox.SelectedText = "\\b"; });
-            cm.MenuItems.Add(l.NonWordBoundary, delegate { textBox.SelectedText = "\\B"; });
-            cm.MenuItems.Add(l.NewLine, delegate { textBox.SelectedText = "\\r\\n"; });
-            cm.MenuItems.Add(l.AnyDigit, delegate { textBox.SelectedText = "\\d"; });
-            cm.MenuItems.Add(l.NonDigit, delegate { textBox.SelectedText = "\\D"; });
-            cm.MenuItems.Add(l.AnyCharacter, delegate { textBox.SelectedText = "."; });
-            cm.MenuItems.Add(l.AnyWhitespace, delegate { textBox.SelectedText = "\\s"; });
-            cm.MenuItems.Add(l.NonSpaceCharacter, delegate { textBox.SelectedText = "\\S"; });
-            cm.MenuItems.Add(l.ZeroOrMore, delegate { textBox.SelectedText = "*"; });
-            cm.MenuItems.Add(l.OneOrMore, delegate { textBox.SelectedText = "+"; });
-            cm.MenuItems.Add(l.InCharacterGroup, delegate { textBox.SelectedText = "[test]"; });
-            cm.MenuItems.Add(l.NotInCharacterGroup, delegate { textBox.SelectedText = "[^test]"; });
-            return cm;
+            var contextMenu = new ContextMenu();
+            var regularExpressionContextMenu = Configuration.Settings.Language.RegularExpressionContextMenu;
+            contextMenu.MenuItems.Add(regularExpressionContextMenu.WordBoundary, delegate
+            {
+                textBox.SelectedText = "\\b";
+            });
+
+            contextMenu.MenuItems.Add(regularExpressionContextMenu.NonWordBoundary, delegate
+            {
+                textBox.SelectedText = "\\B";
+            });
+
+            contextMenu.MenuItems.Add(regularExpressionContextMenu.NewLine, delegate
+            {
+                textBox.SelectedText = "\\r\\n";
+            });
+
+            contextMenu.MenuItems.Add(regularExpressionContextMenu.AnyDigit, delegate
+            {
+                textBox.SelectedText = "\\d";
+            });
+
+            contextMenu.MenuItems.Add(regularExpressionContextMenu.NonDigit, delegate
+            {
+                textBox.SelectedText = "\\D";
+            });
+
+            contextMenu.MenuItems.Add(regularExpressionContextMenu.AnyCharacter, delegate
+            {
+                textBox.SelectedText = ".";
+            });
+
+            contextMenu.MenuItems.Add(regularExpressionContextMenu.AnyWhitespace, delegate
+            {
+                textBox.SelectedText = "\\s";
+            });
+
+            contextMenu.MenuItems.Add(regularExpressionContextMenu.NonSpaceCharacter, delegate
+            {
+                textBox.SelectedText = "\\S";
+            });
+
+            contextMenu.MenuItems.Add(regularExpressionContextMenu.ZeroOrMore, delegate
+            {
+                textBox.SelectedText = "*";
+            });
+
+            contextMenu.MenuItems.Add(regularExpressionContextMenu.OneOrMore, delegate
+            {
+                textBox.SelectedText = "+";
+            });
+
+            contextMenu.MenuItems.Add(regularExpressionContextMenu.InCharacterGroup, delegate
+            {
+                textBox.SelectedText = "[test]";
+            });
+
+            contextMenu.MenuItems.Add(regularExpressionContextMenu.NotInCharacterGroup, delegate
+            {
+                textBox.SelectedText = "[^test]";
+            });
+
+            return contextMenu;
         }
 
         public static ContextMenu GetRegExContextMenu(ComboBox comboBox)
         {
-            var cm = new ContextMenu();
-            var l = Configuration.Settings.Language.RegularExpressionContextMenu;
-            cm.MenuItems.Add(l.WordBoundary, delegate { comboBox.SelectedText = "\\b"; });
-            cm.MenuItems.Add(l.NonWordBoundary, delegate { comboBox.SelectedText = "\\B"; });
-            cm.MenuItems.Add(l.NewLine, delegate { comboBox.SelectedText = "\\r\\n"; });
-            cm.MenuItems.Add(l.AnyDigit, delegate { comboBox.SelectedText = "\\d"; });
-            cm.MenuItems.Add(l.NonDigit, delegate { comboBox.SelectedText = "\\D"; });
-            cm.MenuItems.Add(l.AnyCharacter, delegate { comboBox.SelectedText = "."; });
-            cm.MenuItems.Add(l.AnyWhitespace, delegate { comboBox.SelectedText = "\\s"; });
-            cm.MenuItems.Add(l.NonSpaceCharacter, delegate { comboBox.SelectedText = "\\S"; });
-            cm.MenuItems.Add(l.ZeroOrMore, delegate { comboBox.SelectedText = "*"; });
-            cm.MenuItems.Add(l.OneOrMore, delegate { comboBox.SelectedText = "+"; });
-            cm.MenuItems.Add(l.InCharacterGroup, delegate { comboBox.SelectedText = "[test]"; });
-            cm.MenuItems.Add(l.NotInCharacterGroup, delegate { comboBox.SelectedText = "[^test]"; });
-            return cm;
+            var contextMenu = new ContextMenu();
+            var regularExpressionContextMenu = Configuration.Settings.Language.RegularExpressionContextMenu;
+            contextMenu.MenuItems.Add(regularExpressionContextMenu.WordBoundary, delegate
+            {
+                comboBox.SelectedText = "\\b";
+            });
+
+            contextMenu.MenuItems.Add(regularExpressionContextMenu.NonWordBoundary, delegate
+            {
+                comboBox.SelectedText = "\\B";
+            });
+
+            contextMenu.MenuItems.Add(regularExpressionContextMenu.NewLine, delegate
+            {
+                comboBox.SelectedText = "\\r\\n";
+            });
+
+            contextMenu.MenuItems.Add(regularExpressionContextMenu.AnyDigit, delegate
+            {
+                comboBox.SelectedText = "\\d";
+            });
+
+            contextMenu.MenuItems.Add(regularExpressionContextMenu.NonDigit, delegate
+            {
+                comboBox.SelectedText = "\\D";
+            });
+
+            contextMenu.MenuItems.Add(regularExpressionContextMenu.AnyCharacter, delegate
+            {
+                comboBox.SelectedText = ".";
+            });
+
+            contextMenu.MenuItems.Add(regularExpressionContextMenu.AnyWhitespace, delegate
+            {
+                comboBox.SelectedText = "\\s";
+            });
+
+            contextMenu.MenuItems.Add(regularExpressionContextMenu.NonSpaceCharacter, delegate
+            {
+                comboBox.SelectedText = "\\S";
+            });
+
+            contextMenu.MenuItems.Add(regularExpressionContextMenu.ZeroOrMore, delegate
+            {
+                comboBox.SelectedText = "*";
+            });
+
+            contextMenu.MenuItems.Add(regularExpressionContextMenu.OneOrMore, delegate
+            {
+                comboBox.SelectedText = "+";
+            });
+
+            contextMenu.MenuItems.Add(regularExpressionContextMenu.InCharacterGroup, delegate
+            {
+                comboBox.SelectedText = "[test]";
+            });
+
+            contextMenu.MenuItems.Add(regularExpressionContextMenu.NotInCharacterGroup, delegate
+            {
+                comboBox.SelectedText = "[^test]";
+            });
+
+            return contextMenu;
         }
 
         public static ContextMenu GetReplaceTextContextMenu(TextBox textBox)
         {
-            var cm = new ContextMenu();
-            cm.MenuItems.Add(Configuration.Settings.Language.RegularExpressionContextMenu.NewLineShort, delegate { textBox.SelectedText = "\\n"; });
-            return cm;
+            var contextMenu = new ContextMenu();
+            contextMenu.MenuItems.Add(Configuration.Settings.Language.RegularExpressionContextMenu.NewLineShort, delegate
+            {
+                textBox.SelectedText = "\\n";
+            });
+
+            return contextMenu;
         }
 
         public bool FindNext(TextBox textBox, int startIndex)
@@ -198,24 +319,29 @@ namespace Nikse.SubtitleEdit.Logic
             {
                 if (FindType == FindType.RegEx)
                 {
-                    Match match = _regEx.Match(textBox.Text, startIndex);
+                    Match match = regEx.Match(textBox.Text, startIndex);
                     if (match.Success)
                     {
-                        string groupName = Utilities.GetRegExGroup(_findText);
-                        if (groupName != null && match.Groups[groupName] != null && match.Groups[groupName].Success)
+                        string groupName = Utilities.GetRegExGroup(findText);
+                        if (groupName != null && 
+                            match.Groups[groupName] != null && 
+                            match.Groups[groupName].Success)
                         {
-                            _findTextLenght = match.Groups[groupName].Length;
+                            findTextLenght = match.Groups[groupName].Length;
                             SelectedIndex = match.Groups[groupName].Index;
                         }
                         else
                         {
-                            _findTextLenght = match.Length;
+                            findTextLenght = match.Length;
                             SelectedIndex = match.Index;
                         }
+
                         Success = true;
                     }
+
                     return match.Success;
                 }
+
                 string searchText = textBox.Text.Substring(startIndex);
                 int pos = FindPositionInText(searchText, 0);
                 if (pos >= 0)
@@ -224,8 +350,8 @@ namespace Nikse.SubtitleEdit.Logic
                     return true;
                 }
             }
+
             return false;
         }
-
     }
 }

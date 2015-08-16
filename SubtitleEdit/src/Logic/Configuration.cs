@@ -10,7 +10,6 @@
     public class Configuration
     {
         private static readonly Lazy<Configuration> Instance = new Lazy<Configuration>(() => new Configuration());
-
         private readonly string baseDir;
         private readonly string dataDir;
         private readonly Lazy<Settings> settings;
@@ -212,8 +211,12 @@
             var hasDictionaryFolder = Directory.Exists(Path.Combine(baseDir, "Dictionaries"));
             var appDataRoamingPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Subtitle Edit");
 
-            if ((installerPath == null || !installerPath.TrimEnd(Path.DirectorySeparatorChar).Equals(baseDir.TrimEnd(Path.DirectorySeparatorChar), StringComparison.OrdinalIgnoreCase))
-                && !hasUninstallFiles && (hasDictionaryFolder || !Directory.Exists(Path.Combine(appDataRoamingPath, "Dictionaries"))))
+            if ((installerPath == null || 
+                !installerPath.TrimEnd(Path.DirectorySeparatorChar)
+                .Equals(baseDir.TrimEnd(Path.DirectorySeparatorChar), StringComparison.OrdinalIgnoreCase)) && 
+                !hasUninstallFiles && (
+                hasDictionaryFolder || 
+                !Directory.Exists(Path.Combine(appDataRoamingPath, "Dictionaries"))))
             {
                 return baseDir;
             }

@@ -5,7 +5,9 @@
     public class BmpReader
     {
         public string HeaderId { get; private set; }
+
         public UInt32 HeaderFileSize { get; private set; }
+
         public UInt32 OffsetToPixelArray { get; private set; }
 
         public BmpReader(string fileName)
