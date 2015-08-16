@@ -5314,7 +5314,7 @@
                                 foreach (int index in this.SubtitleListview1.SelectedIndices)
                                 {
                                     var pOld = this._subtitle.Paragraphs[index];
-                                    var p = fixErrors.FixedSubtitle.GetParagraphOrDefaultById(pOld.ID);
+                                    var p = fixErrors.FixedSubtitle.GetParagraphOrDefaultById(pOld.Id);
                                     if (p == null)
                                     {
                                         deletes.Add(index);
@@ -5335,7 +5335,7 @@
                                 for (int index = this.SubtitleListview1.SelectedIndices.Count - 1; index >= 0; index--)
                                 {
                                     var pOld = this._subtitle.Paragraphs[index];
-                                    var p = fixErrors.FixedSubtitle.GetParagraphOrDefaultById(pOld.ID);
+                                    var p = fixErrors.FixedSubtitle.GetParagraphOrDefaultById(pOld.Id);
                                     if (p == null)
                                     {
                                         this._subtitle.Paragraphs.RemoveAt(index);
@@ -13053,9 +13053,9 @@
                     foreach (int index in this.SubtitleListview1.SelectedIndices)
                     {
                         var p = this._subtitle.GetParagraphOrDefault(index);
-                        if (autoBreakUnbreakLines.FixedText.ContainsKey(p.ID))
+                        if (autoBreakUnbreakLines.FixedText.ContainsKey(p.Id))
                         {
-                            p.Text = autoBreakUnbreakLines.FixedText[p.ID];
+                            p.Text = autoBreakUnbreakLines.FixedText[p.Id];
                             this.SubtitleListview1.SetText(index, p.Text);
                             this.SubtitleListview1.SyntaxColorLine(this._subtitle.Paragraphs, index, p);
                         }
@@ -13095,9 +13095,9 @@
                     foreach (int index in this.SubtitleListview1.SelectedIndices)
                     {
                         var p = this._subtitle.GetParagraphOrDefault(index);
-                        if (autoBreakUnbreakLines.FixedText.ContainsKey(p.ID))
+                        if (autoBreakUnbreakLines.FixedText.ContainsKey(p.Id))
                         {
-                            p.Text = autoBreakUnbreakLines.FixedText[p.ID];
+                            p.Text = autoBreakUnbreakLines.FixedText[p.Id];
                             this.SubtitleListview1.SetText(index, p.Text);
                             this.SubtitleListview1.SyntaxColorLine(this._subtitle.Paragraphs, index, p);
                         }

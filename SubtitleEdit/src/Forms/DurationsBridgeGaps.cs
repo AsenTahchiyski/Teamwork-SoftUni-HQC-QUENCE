@@ -131,7 +131,7 @@ namespace Nikse.SubtitleEdit.Forms
                         info = string.Format("{0} => {1:0.000}", before, msToNext / TimeCode.BaseUnit);
                     else
                         info = string.Format("{0:0.000}", msToNext / TimeCode.BaseUnit);
-                    _dic.Add(cur.ID, info);
+                    _dic.Add(cur.Id, info);
                 }
             }
 
@@ -139,8 +139,8 @@ namespace Nikse.SubtitleEdit.Forms
             for (int i = 0; i < _fixedSubtitle.Paragraphs.Count - 1; i++)
             {
                 Paragraph cur = _fixedSubtitle.Paragraphs[i];
-                if (_dic != null && _dic.ContainsKey(cur.ID))
-                    SubtitleListview1.SetExtraText(i, _dic[cur.ID], SubtitleListview1.ForeColor);
+                if (_dic != null && _dic.ContainsKey(cur.Id))
+                    SubtitleListview1.SetExtraText(i, _dic[cur.Id], SubtitleListview1.ForeColor);
                 SubtitleListview1.SetBackgroundColor(i, SubtitleListview1.BackColor);
             }
 

@@ -1,8 +1,8 @@
-﻿using System;
-using System.Text.RegularExpressions;
-
-namespace Nikse.SubtitleEdit.Logic
+﻿namespace Nikse.SubtitleEdit.Logic
 {
+    using System;
+    using System.Text.RegularExpressions;
+
     public class NoBreakAfterItem : IComparable
     {
         public readonly Regex Regex;
@@ -22,10 +22,14 @@ namespace Nikse.SubtitleEdit.Logic
         public bool IsMatch(string line)
         {
             if (Regex != null)
+            {
                 return Regex.IsMatch(line);
+            }
 
             if (!string.IsNullOrEmpty(Text) && line.EndsWith(Text, StringComparison.Ordinal))
+            {
                 return true;
+            }
 
             return false;
         }
@@ -37,18 +41,21 @@ namespace Nikse.SubtitleEdit.Logic
 
         public int CompareTo(object obj)
         {
-            if (obj == null)
-                return -1;
-
             var o = obj as NoBreakAfterItem;
             if (o == null)
+            {
                 return -1;
+            }
 
             if (o.Text == null && this.Text == null)
+            {
                 return 0;
+            }
 
             if (o.Text == null)
+            {
                 return -1;
+            }
 
             return string.Compare(this.Text, o.Text, StringComparison.Ordinal);
         }
