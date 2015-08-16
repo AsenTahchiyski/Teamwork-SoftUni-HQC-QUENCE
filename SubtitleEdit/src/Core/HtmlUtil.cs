@@ -4,8 +4,7 @@
     using System.Linq;
     using System.Text;
     using System.Text.RegularExpressions;
-
-    using Nikse.SubtitleEdit.Logic;
+    using Logic;
 
     /// <summary>
     /// HTML specific string manipulations.

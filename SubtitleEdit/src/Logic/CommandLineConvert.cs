@@ -1,5 +1,4 @@
-﻿using System.Windows.Forms.VisualStyles;
-using Nikse.SubtitleEdit.Core;
+﻿using Nikse.SubtitleEdit.Core;
 using Nikse.SubtitleEdit.Forms;
 using Nikse.SubtitleEdit.Logic.BluRaySup;
 using Nikse.SubtitleEdit.Logic.ContainerFormats.Matroska;
