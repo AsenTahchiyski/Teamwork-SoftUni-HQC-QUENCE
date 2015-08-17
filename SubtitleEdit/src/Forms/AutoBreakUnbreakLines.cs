@@ -118,7 +118,7 @@ namespace Nikse.SubtitleEdit.Forms
                     if (text != p.Text)
                     {
                         AddToListView(p, text);
-                        _fixedText.Add(p.ID, text);
+                        _fixedText.Add(p.Id, text);
                         _changes++;
                     }
                 }
@@ -145,7 +145,7 @@ namespace Nikse.SubtitleEdit.Forms
                     if (text != p.Text)
                     {
                         AddToListView(p, text);
-                        _fixedText.Add(p.ID, text);
+                        _fixedText.Add(p.Id, text);
                         _changes++;
                     }
                 }
@@ -175,9 +175,9 @@ namespace Nikse.SubtitleEdit.Forms
             for (int i = _paragraphs.Count - 1; i >= 0; i--)
             {
                 var p = _paragraphs[i];
-                if (_notAllowedFixes.Contains(p.ID))
+                if (_notAllowedFixes.Contains(p.Id))
                 {
-                    _fixedText.Remove(p.ID);
+                    _fixedText.Remove(p.Id);
                 }
             }
             DialogResult = DialogResult.OK;
@@ -201,9 +201,9 @@ namespace Nikse.SubtitleEdit.Forms
                 return;
 
             if (e.Item.Checked)
-                _notAllowedFixes.Remove(p.ID);
+                _notAllowedFixes.Remove(p.Id);
             else
-                _notAllowedFixes.Add(p.ID);
+                _notAllowedFixes.Add(p.Id);
         }
 
         private void listViewFixes_Resize(object sender, EventArgs e)

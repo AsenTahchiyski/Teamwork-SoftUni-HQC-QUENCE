@@ -1,25 +1,24 @@
-﻿using Nikse.SubtitleEdit.Core;
-using System;
-using System.IO;
-
-namespace Nikse.SubtitleEdit.Logic
+﻿namespace Nikse.SubtitleEdit.Logic
 {
+    using Core;
+    using System;
+    using System.IO;
+
     /// <summary>
     /// Configuration settings via Singleton pattern
     /// </summary>
     public class Configuration
     {
-        private static readonly Lazy<Configuration> _instance = new Lazy<Configuration>(() => new Configuration());
-
-        private readonly string _baseDir;
-        private readonly string _dataDir;
-        private readonly Lazy<Settings> _settings;
+        private static readonly Lazy<Configuration> Instance = new Lazy<Configuration>(() => new Configuration());
+        private readonly string baseDir;
+        private readonly string dataDir;
+        private readonly Lazy<Settings> settings;
 
         private Configuration()
         {
-            _baseDir = GetBaseDirectory();
-            _dataDir = GetDataDirectory();
-            _settings = new Lazy<Settings>(Settings.GetSettings);
+            baseDir = GetBaseDirectory();
+            dataDir = GetDataDirectory();
+            settings = new Lazy<Settings>(Settings.GetSettings);
         }
 
         public static string SettingsFileName
@@ -63,12 +62,21 @@ namespace Nikse.SubtitleEdit.Logic
                 if (IsRunningOnLinux() || IsRunningOnMac())
                 {
                     if (Directory.Exists("/usr/share/tesseract-ocr/tessdata"))
+                    {
                         return "/usr/share/tesseract-ocr/tessdata";
+                    }
+
                     if (Directory.Exists("/usr/share/tesseract/tessdata"))
+                    {
                         return "/usr/share/tesseract/tessdata";
+                    }
+
                     if (Directory.Exists("/usr/share/tessdata"))
+                    {
                         return "/usr/share/tessdata";
+                    }
                 }
+
                 return TesseractFolder + "tessdata";
             }
         }
@@ -141,7 +149,7 @@ namespace Nikse.SubtitleEdit.Logic
         {
             get
             {
-                return _instance.Value._dataDir;
+                return Instance.Value.dataDir;
             }
         }
 
@@ -149,7 +157,7 @@ namespace Nikse.SubtitleEdit.Logic
         {
             get
             {
-                return _instance.Value._baseDir;
+                return Instance.Value.baseDir;
             }
         }
 
@@ -157,7 +165,7 @@ namespace Nikse.SubtitleEdit.Logic
         {
             get
             {
-                return _instance.Value._settings.Value;
+                return Instance.Value.settings.Value;
             }
         }
 
@@ -195,18 +203,22 @@ namespace Nikse.SubtitleEdit.Logic
         {
             if (IsRunningOnLinux() || IsRunningOnMac())
             {
-                return _baseDir;
+                return baseDir;
             }
 
             var installerPath = GetInstallerPath();
-            var hasUninstallFiles = Directory.GetFiles(_baseDir, "unins*.*").Length > 0;
-            var hasDictionaryFolder = Directory.Exists(Path.Combine(_baseDir, "Dictionaries"));
+            var hasUninstallFiles = Directory.GetFiles(baseDir, "unins*.*").Length > 0;
+            var hasDictionaryFolder = Directory.Exists(Path.Combine(baseDir, "Dictionaries"));
             var appDataRoamingPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Subtitle Edit");
 
-            if ((installerPath == null || !installerPath.TrimEnd(Path.DirectorySeparatorChar).Equals(_baseDir.TrimEnd(Path.DirectorySeparatorChar), StringComparison.OrdinalIgnoreCase))
-                && !hasUninstallFiles && (hasDictionaryFolder || !Directory.Exists(Path.Combine(appDataRoamingPath, "Dictionaries"))))
+            if ((installerPath == null || 
+                !installerPath.TrimEnd(Path.DirectorySeparatorChar)
+                .Equals(baseDir.TrimEnd(Path.DirectorySeparatorChar), StringComparison.OrdinalIgnoreCase)) && 
+                !hasUninstallFiles && (
+                hasDictionaryFolder || 
+                !Directory.Exists(Path.Combine(appDataRoamingPath, "Dictionaries"))))
             {
-                return _baseDir;
+                return baseDir;
             }
 
             if (Directory.Exists(appDataRoamingPath))
@@ -224,7 +236,7 @@ namespace Nikse.SubtitleEdit.Logic
             {
                 System.Windows.Forms.MessageBox.Show("Please re-install Subtitle Edit (installer version)");
                 System.Windows.Forms.Application.ExitThread();
-                return _baseDir;
+                return baseDir;
             }
         }
     }

@@ -1,8 +1,8 @@
-﻿using System;
-using System.Runtime.InteropServices;
-
-namespace Nikse.SubtitleEdit.Logic
+﻿namespace Nikse.SubtitleEdit.Logic
 {
+    using System;
+    using System.Runtime.InteropServices;
+
     internal static class NativeMethods
     {
 
@@ -127,5 +127,4 @@ namespace Nikse.SubtitleEdit.Logic
         #endregion VLC
 
     }
-
 }

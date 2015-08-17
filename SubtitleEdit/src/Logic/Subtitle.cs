@@ -91,7 +91,7 @@ namespace Nikse.SubtitleEdit.Logic
         {
             foreach (Paragraph p in _paragraphs)
             {
-                if (p.ID == id)
+                if (p.Id == id)
                     return p;
             }
             return null;
@@ -410,9 +410,9 @@ namespace Nikse.SubtitleEdit.Logic
 
             for (int i = 0; i < _paragraphs.Count; i++)
             {
-                if (p.ID == _paragraphs[i].ID)
+                if (p.Id == _paragraphs[i].Id)
                     return i;
-                if (i < _paragraphs.Count - 1 && p.ID == _paragraphs[i + 1].ID)
+                if (i < _paragraphs.Count - 1 && p.Id == _paragraphs[i + 1].Id)
                     return i + 1;
                 if (p.StartTime.TotalMilliseconds == _paragraphs[i].StartTime.TotalMilliseconds &&
                     p.EndTime.TotalMilliseconds == _paragraphs[i].EndTime.TotalMilliseconds)

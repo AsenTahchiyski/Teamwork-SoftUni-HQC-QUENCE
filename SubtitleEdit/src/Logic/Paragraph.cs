@@ -1,8 +1,8 @@
-﻿using Nikse.SubtitleEdit.Core;
-using System;
-
-namespace Nikse.SubtitleEdit.Logic
+﻿namespace Nikse.SubtitleEdit.Logic
 {
+    using Core;
+    using System;
+
     public class Paragraph
     {
         public int Number { get; set; }
@@ -37,7 +37,7 @@ namespace Nikse.SubtitleEdit.Logic
 
         public int Layer { get; set; }
 
-        public string ID { get; private set; }
+        public string Id { get; private set; }
 
         public string Language { get; set; }
 
@@ -45,7 +45,7 @@ namespace Nikse.SubtitleEdit.Logic
 
         public bool NewSection { get; set; }
 
-        private string GenerateId()
+        private static string GenerateId()
         {
             return Guid.NewGuid().ToString();
         }
@@ -55,7 +55,7 @@ namespace Nikse.SubtitleEdit.Logic
             StartTime = TimeCode.FromSeconds(0);
             EndTime = TimeCode.FromSeconds(0);
             Text = string.Empty;
-            ID = GenerateId();
+            Id = GenerateId();
         }
 
         public Paragraph(TimeCode startTime, TimeCode endTime, string text)
@@ -63,7 +63,7 @@ namespace Nikse.SubtitleEdit.Logic
             StartTime = startTime;
             EndTime = endTime;
             Text = text;
-            ID = GenerateId();
+            Id = GenerateId();
         }
 
         public Paragraph(Paragraph paragraph)
@@ -80,7 +80,7 @@ namespace Nikse.SubtitleEdit.Logic
             Actor = paragraph.Actor;
             Effect = paragraph.Effect;
             Layer = paragraph.Layer;
-            ID = GenerateId(); // Do not reuse unique ID
+            Id = GenerateId(); // Do not reuse unique ID
             Language = paragraph.Language;
             Style = paragraph.Style;
             NewSection = paragraph.NewSection;
@@ -93,7 +93,7 @@ namespace Nikse.SubtitleEdit.Logic
             StartFrame = startFrame;
             EndFrame = endFrame;
             Text = text;
-            ID = GenerateId();
+            Id = GenerateId();
         }
 
         public Paragraph(string text, double startTotalMilliseconds, double endTotalMilliseconds)
@@ -101,13 +101,15 @@ namespace Nikse.SubtitleEdit.Logic
             StartTime = new TimeCode(startTotalMilliseconds);
             EndTime = new TimeCode(endTotalMilliseconds);
             Text = text;
-            ID = GenerateId();
+            Id = GenerateId();
         }
 
         internal void Adjust(double factor, double adjust)
         {
             if (StartTime.IsMaxTime)
+            {
                 return;
+            }
 
             double seconds = StartTime.TimeSpan.TotalSeconds * factor + adjust;
             StartTime.TimeSpan = TimeSpan.FromSeconds(seconds);
@@ -146,8 +148,12 @@ namespace Nikse.SubtitleEdit.Logic
             get
             {
                 if (string.IsNullOrEmpty(Text))
+                {
                     return 0;
+                }
+
                 int wordCount = HtmlUtil.RemoveHtmlTags(Text, true).Split(new[] { ' ', ',', '.', '!', '?', ';', ':', '(', ')', '[', ']', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries).Length;
+
                 return (60.0 / Duration.TotalSeconds) * wordCount;
             }
         }

@@ -1,17 +1,19 @@
-﻿using System;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.IO;
-using Nikse.SubtitleEdit.Logic.VobSub;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-
-namespace Nikse.SubtitleEdit.Logic
+﻿namespace Nikse.SubtitleEdit.Logic
 {
+    using System;
+    using System.Drawing;
+    using System.Drawing.Imaging;
+    using System.IO;
+    using VobSub;
+    using System.Collections.Generic;
+    using System.Runtime.InteropServices;
+
     public class RunLengthTwoParts
     {
         public byte[] Buffer1 { get; set; }
+
         public byte[] Buffer2 { get; set; }
+
         public int Length { get { return Buffer1.Length + Buffer2.Length; } }
     }
 
@@ -20,27 +22,29 @@ namespace Nikse.SubtitleEdit.Logic
         public int Width { get; private set; }
         public int Height { get; private set; }
 
-        private byte[] _bitmapData;
-        private int _pixelAddress;
+        private byte[] bitmapData;
+        private int pixelAddress;
 
         public NikseBitmap(int width, int height)
         {
             Width = width;
             Height = height;
-            _bitmapData = new byte[Width * Height * 4];
+            bitmapData = new byte[Width * Height * 4];
         }
 
         public NikseBitmap(int width, int height, byte[] bitmapData)
         {
             Width = width;
             Height = height;
-            _bitmapData = bitmapData;
+            this.bitmapData = bitmapData;
         }
 
         public NikseBitmap(Bitmap inputBitmap)
         {
             if (inputBitmap == null)
+            {
                 return;
+            }
 
             Width = inputBitmap.Width;
             Height = inputBitmap.Height;
@@ -52,13 +56,14 @@ namespace Nikse.SubtitleEdit.Logic
                 {
                     gr.DrawImage(inputBitmap, 0, 0);
                 }
+
                 inputBitmap.Dispose();
                 inputBitmap = newBitmap;
             }
 
             var bitmapData = inputBitmap.LockBits(new Rectangle(0, 0, Width, Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
-            _bitmapData = new byte[bitmapData.Stride * Height];
-            Marshal.Copy(bitmapData.Scan0, _bitmapData, 0, _bitmapData.Length);
+            this.bitmapData = new byte[bitmapData.Stride * Height];
+            Marshal.Copy(bitmapData.Scan0, this.bitmapData, 0, this.bitmapData.Length);
             inputBitmap.UnlockBits(bitmapData);
         }
 
@@ -66,8 +71,8 @@ namespace Nikse.SubtitleEdit.Logic
         {
             Width = input.Width;
             Height = input.Height;
-            _bitmapData = new byte[input._bitmapData.Length];
-            Buffer.BlockCopy(input._bitmapData, 0, _bitmapData, 0, _bitmapData.Length);
+            bitmapData = new byte[input.bitmapData.Length];
+            Buffer.BlockCopy(input.bitmapData, 0, bitmapData, 0, bitmapData.Length);
         }
 
         public void ReplaceNotDarkWithWhite()
@@ -76,11 +81,14 @@ namespace Nikse.SubtitleEdit.Logic
             buffer[0] = 255;
             buffer[1] = 255;
             buffer[2] = 255;
-            for (int i = 0; i < _bitmapData.Length; i += 4)
+
+            for (int i = 0; i < bitmapData.Length; i += 4)
             {
-                if (_bitmapData[i + 3] > 200 && // Alpha
-                    _bitmapData[i + 2] + _bitmapData[i + 1] + _bitmapData[i] > 200)
-                    Buffer.BlockCopy(buffer, 0, _bitmapData, i, 3);
+                if (bitmapData[i + 3] > 200 && // Alpha
+                    bitmapData[i + 2] + bitmapData[i + 1] + bitmapData[i] > 200)
+                {
+                    Buffer.BlockCopy(buffer, 0, bitmapData, i, 3);
+                }
             }
         }
 
@@ -90,13 +98,16 @@ namespace Nikse.SubtitleEdit.Logic
             buffer[0] = 255;
             buffer[1] = 255;
             buffer[2] = 255;
-            for (int i = 0; i < _bitmapData.Length; i += 4)
+
+            for (int i = 0; i < bitmapData.Length; i += 4)
             {
-                if (_bitmapData[i + 3] > 200 && // Alpha
-                    _bitmapData[i + 2] > 199 && // Red
-                    _bitmapData[i + 1] > 190 && // Green
-                    _bitmapData[i] < 40) // Blue
-                    Buffer.BlockCopy(buffer, 0, _bitmapData, i, 3);
+                if (bitmapData[i + 3] > 200 && // Alpha
+                    bitmapData[i + 2] > 199 && // Red
+                    bitmapData[i + 1] > 190 && // Green
+                    bitmapData[i] < 40) // Blue
+                {
+                    Buffer.BlockCopy(buffer, 0, bitmapData, i, 3);
+                }
             }
         }
 
@@ -107,10 +118,12 @@ namespace Nikse.SubtitleEdit.Logic
             buffer[1] = 0; // G
             buffer[2] = 0; // R
             buffer[3] = 0; // A
-            for (int i = 0; i < _bitmapData.Length; i += 4)
+            for (int i = 0; i < bitmapData.Length; i += 4)
             {
-                if (_bitmapData[i + 2] + _bitmapData[i + 1] + _bitmapData[i] < 300)
-                    Buffer.BlockCopy(buffer, 0, _bitmapData, i, 4);
+                if (bitmapData[i + 2] + bitmapData[i + 1] + bitmapData[i] < 300)
+                {
+                    Buffer.BlockCopy(buffer, 0, bitmapData, i, 4);
+                }
             }
         }
 
@@ -121,10 +134,12 @@ namespace Nikse.SubtitleEdit.Logic
             buffer[1] = c.G;
             buffer[2] = c.R;
             buffer[3] = c.A;
-            for (int i = 0; i < _bitmapData.Length; i += 4)
+            for (int i = 0; i < bitmapData.Length; i += 4)
             {
-                if (_bitmapData[i + 3] < 10)
-                    Buffer.BlockCopy(buffer, 0, _bitmapData, i, 4);
+                if (bitmapData[i + 3] < 10)
+                {
+                    Buffer.BlockCopy(buffer, 0, bitmapData, i, 4);
+                }
             }
         }
 
@@ -141,12 +156,10 @@ namespace Nikse.SubtitleEdit.Logic
             bufferTransparent[1] = 0;
             bufferTransparent[2] = 0;
             bufferTransparent[3] = 0;
-            for (int i = 0; i < _bitmapData.Length; i += 4)
+
+            for (int i = 0; i < bitmapData.Length; i += 4)
             {
-                if (_bitmapData[i] > 20)
-                    Buffer.BlockCopy(buffer, 0, _bitmapData, i, 4);
-                else
-                    Buffer.BlockCopy(bufferTransparent, 0, _bitmapData, i, 4);
+                Buffer.BlockCopy(bitmapData[i] > 20 ? buffer : bufferTransparent, 0, bitmapData, i, 4);
             }
         }
 
@@ -170,36 +183,41 @@ namespace Nikse.SubtitleEdit.Logic
             bufferTransparent[2] = 0;
             bufferTransparent[3] = 0;
             int count = 0;
-            for (int i = 0; i < _bitmapData.Length; i += 4)
+
+            for (int i = 0; i < bitmapData.Length; i += 4)
             {
-                if (_bitmapData[i + 3] > 20)
+                if (bitmapData[i + 3] > 20)
                 {
-                    if ((Math.Abs(buffer1[0] - _bitmapData[i]) < maxDif &&
-                        Math.Abs(buffer1[1] - _bitmapData[i + 1]) < maxDif &&
-                        Math.Abs(buffer1[2] - _bitmapData[i + 2]) < maxDif) ||
-                        (Math.Abs(buffer2[0] - _bitmapData[i]) < maxDif &&
-                        Math.Abs(buffer2[1] - _bitmapData[i + 1]) < maxDif &&
-                        Math.Abs(buffer2[2] - _bitmapData[i + 2]) < maxDif))
+                    if ((Math.Abs(buffer1[0] - bitmapData[i]) < maxDif &&
+                        Math.Abs(buffer1[1] - bitmapData[i + 1]) < maxDif &&
+                        Math.Abs(buffer1[2] - bitmapData[i + 2]) < maxDif) ||
+                        (Math.Abs(buffer2[0] - bitmapData[i]) < maxDif &&
+                        Math.Abs(buffer2[1] - bitmapData[i + 1]) < maxDif &&
+                        Math.Abs(buffer2[2] - bitmapData[i + 2]) < maxDif))
                     {
                         count++;
                     }
                     else
                     {
-                        Buffer.BlockCopy(bufferTransparent, 0, _bitmapData, i, 4);
+                        Buffer.BlockCopy(bufferTransparent, 0, bitmapData, i, 4);
                     }
                 }
                 else
                 {
-                    Buffer.BlockCopy(bufferTransparent, 0, _bitmapData, i, 4);
+                    Buffer.BlockCopy(bufferTransparent, 0, bitmapData, i, 4);
                 }
             }
+
             return count;
         }
 
         private static Color GetOutlineColor(Color borderColor)
         {
             if (borderColor.R + borderColor.G + borderColor.B < 30)
+            {
                 return Color.FromArgb(200, 75, 75, 75);
+            }
+
             return Color.FromArgb(150, borderColor.R, borderColor.G, borderColor.B);
         }
 
@@ -240,23 +258,26 @@ namespace Nikse.SubtitleEdit.Logic
                 emphasis2Buffer[3] = emphasis2.A;
             }
 
-            for (int i = 0; i < _bitmapData.Length; i += 4)
+            for (int i = 0; i < bitmapData.Length; i += 4)
             {
                 int smallestDiff = 10000;
                 byte[] buffer = backgroundBuffer;
-                if (backgroundBuffer[3] == 0 && _bitmapData[i + 3] < 10) // transparent
+                if (!(backgroundBuffer[3] == 0 && bitmapData[i + 3] < 10)) // transparent
                 {
-                }
-                else
-                {
-                    int patternDiff = Math.Abs(patternBuffer[0] - _bitmapData[i]) + Math.Abs(patternBuffer[1] - _bitmapData[i + 1]) + Math.Abs(patternBuffer[2] - _bitmapData[i + 2]) + Math.Abs(patternBuffer[3] - _bitmapData[i + 3]);
+                    int patternDiff = Math.Abs(patternBuffer[0] - bitmapData[i]) + Math.Abs(patternBuffer[1] - 
+                        bitmapData[i + 1]) + Math.Abs(patternBuffer[2] - bitmapData[i + 2]) + 
+                        Math.Abs(patternBuffer[3] - bitmapData[i + 3]);
+
                     if (patternDiff < smallestDiff)
                     {
                         smallestDiff = patternDiff;
                         buffer = patternBuffer;
                     }
 
-                    int emphasis1Diff = Math.Abs(emphasis1Buffer[0] - _bitmapData[i]) + Math.Abs(emphasis1Buffer[1] - _bitmapData[i + 1]) + Math.Abs(emphasis1Buffer[2] - _bitmapData[i + 2]) + Math.Abs(emphasis1Buffer[3] - _bitmapData[i + 3]);
+                    int emphasis1Diff = Math.Abs(emphasis1Buffer[0] - bitmapData[i]) + Math.Abs(emphasis1Buffer[1] - 
+                        bitmapData[i + 1]) + Math.Abs(emphasis1Buffer[2] - bitmapData[i + 2]) + 
+                        Math.Abs(emphasis1Buffer[3] - bitmapData[i + 3]);
+
                     if (useInnerAntialize)
                     {
                         if (emphasis1Diff - 20 < smallestDiff)
@@ -272,22 +293,28 @@ namespace Nikse.SubtitleEdit.Logic
                             buffer = emphasis1Buffer;
                         }
 
-                        int emphasis2Diff = Math.Abs(emphasis2Buffer[0] - _bitmapData[i]) + Math.Abs(emphasis2Buffer[1] - _bitmapData[i + 1]) + Math.Abs(emphasis2Buffer[2] - _bitmapData[i + 2]) + Math.Abs(emphasis2Buffer[3] - _bitmapData[i + 3]);
+                        int emphasis2Diff = Math.Abs(emphasis2Buffer[0] - bitmapData[i]) + Math.Abs(emphasis2Buffer[1] - 
+                            bitmapData[i + 1]) + Math.Abs(emphasis2Buffer[2] - bitmapData[i + 2]) + 
+                            Math.Abs(emphasis2Buffer[3] - bitmapData[i + 3]);
+
                         if (emphasis2Diff < smallestDiff)
                         {
                             buffer = emphasis2Buffer;
                         }
-                        else if (_bitmapData[i + 3] >= 10 && _bitmapData[i + 3] < 90) // anti-alias
+                        else if (bitmapData[i + 3] >= 10 && bitmapData[i + 3] < 90) // anti-alias
                         {
                             buffer = emphasis2Buffer;
                         }
                     }
                 }
-                Buffer.BlockCopy(buffer, 0, _bitmapData, i, 4);
+
+                Buffer.BlockCopy(buffer, 0, bitmapData, i, 4);
             }
 
             if (useInnerAntialize)
+            {
                 return VobSubAntialize(pattern, emphasis1);
+            }
 
             return emphasis2;
         }
@@ -306,16 +333,25 @@ namespace Nikse.SubtitleEdit.Logic
                     if (GetPixel(x, y) == pattern)
                     {
                         if (GetPixel(x - 1, y) == emphasis1 && GetPixel(x, y - 1) == emphasis1)
+                        {
                             SetPixel(x, y, antializeColor);
+                        }
                         else if (GetPixel(x - 1, y) == emphasis1 && GetPixel(x, y + 1) == emphasis1)
+                        {
                             SetPixel(x, y, antializeColor);
+                        }
                         else if (GetPixel(x + 1, y) == emphasis1 && GetPixel(x, y + 1) == emphasis1)
+                        {
                             SetPixel(x, y, antializeColor);
+                        }
                         else if (GetPixel(x + 1, y) == emphasis1 && GetPixel(x, y - 1) == emphasis1)
+                        {
                             SetPixel(x, y, antializeColor);
+                        }
                     }
                 }
             }
+
             return antializeColor;
         }
 
@@ -350,7 +386,7 @@ namespace Nikse.SubtitleEdit.Logic
             int indexBufferEqual = 0;
             int indexBufferUnEqual = 0;
 
-            _pixelAddress = -4;
+            pixelAddress = -4;
             for (int y = 0; y < Height; y++)
             {
                 int index;
@@ -365,6 +401,7 @@ namespace Nikse.SubtitleEdit.Logic
                     index = indexBufferUnEqual;
                     buffer = bufferUnEqual;
                 }
+
                 var indexHalfNibble = false;
                 var lastColor = -1;
                 var count = 0;
@@ -389,11 +426,16 @@ namespace Nikse.SubtitleEdit.Logic
                         count = 1;
                     }
                 }
+
                 if (count > 0)
+                {
                     WriteRle(ref indexHalfNibble, lastColor, count, ref index, buffer);
+                }
 
                 if (indexHalfNibble)
+                {
                     index++;
+                }
 
                 if (y % 2 == 0)
                 {
@@ -432,11 +474,15 @@ namespace Nikse.SubtitleEdit.Logic
             {
                 int factor = count / 255;
                 for (int i = 0; i < factor; i++)
+                {
                     WriteFourNibbles(buffer, 0xff, lastColor, ref index, indexHalfNibble);
+                }
 
                 int rest = count % 255;
                 if (rest > 0)
+                {
                     WriteFourNibbles(buffer, rest, lastColor, ref index, indexHalfNibble);
+                }
             }
         }
 
@@ -480,6 +526,7 @@ namespace Nikse.SubtitleEdit.Logic
                 index++;
                 buffer[index] = (byte)((n & Helper.B00011111) << 4);
             }
+
             indexHalfNibble = !indexHalfNibble;
         }
 
@@ -488,6 +535,7 @@ namespace Nikse.SubtitleEdit.Logic
             //Value      Bits   n=length, c=color
             //4-15       8      0 0 n n n n c c                   (one byte)
             var n = (byte)((count << 2) + color);
+
             if (indexHalfNibble)
             {
                 var firstNibble = (byte)(n >> 4);
@@ -506,6 +554,7 @@ namespace Nikse.SubtitleEdit.Logic
         private static void WriteOneNibble(byte[] buffer, int count, int color, ref int index, ref bool indexHalfNibble)
         {
             var n = (byte)((count << 2) + color);
+
             if (indexHalfNibble)
             {
                 buffer[index] = (byte)(buffer[index] | n);
@@ -515,23 +564,33 @@ namespace Nikse.SubtitleEdit.Logic
             {
                 buffer[index] = (byte)(n << 4);
             }
+
             indexHalfNibble = !indexHalfNibble;
         }
 
-        private int GetDvdColor(byte[] pattern, byte[] emphasis1, byte[] emphasis2)
+        private int GetDvdColor(IList<byte> pattern, IList<byte> emphasis1, IList<byte> emphasis2)
         {
-            _pixelAddress += 4;
-            int a = _bitmapData[_pixelAddress + 3];
-            int r = _bitmapData[_pixelAddress + 2];
-            int g = _bitmapData[_pixelAddress + 1];
-            int b = _bitmapData[_pixelAddress];
+            pixelAddress += 4;
+            int a = bitmapData[pixelAddress + 3];
+            int r = bitmapData[pixelAddress + 2];
+            int g = bitmapData[pixelAddress + 1];
+            int b = bitmapData[pixelAddress];
 
             if (pattern[0] == b && pattern[1] == g && pattern[2] == r && pattern[3] == a)
+            {
                 return 1;
+            }
+
             if (emphasis1[0] == b && emphasis1[1] == g && emphasis1[2] == r && emphasis1[3] == a)
+            {
                 return 2;
+            }
+
             if (emphasis2[0] == b && emphasis2[1] == g && emphasis2[2] == r && emphasis2[3] == a)
+            {
                 return 3;
+            }
+
             return 0;
         }
 
@@ -544,6 +603,7 @@ namespace Nikse.SubtitleEdit.Logic
             while (!done && x < Width)
             {
                 y = 0;
+
                 while (!done && y < Height)
                 {
                     int alpha = GetAlpha(x, y);
@@ -553,10 +613,14 @@ namespace Nikse.SubtitleEdit.Logic
                         leftStart = x;
                         leftStart -= maximumCropping;
                         if (leftStart < 0)
+                        {
                             leftStart = 0;
+                        }
                     }
+
                     y++;
                 }
+
                 x++;
             }
 
@@ -575,10 +639,14 @@ namespace Nikse.SubtitleEdit.Logic
                         rightEnd = x;
                         rightEnd += maximumCropping;
                         if (rightEnd >= Width)
+                        {
                             rightEnd = Width - 1;
+                        }
                     }
+
                     y++;
                 }
+
                 x--;
             }
 
@@ -599,32 +667,41 @@ namespace Nikse.SubtitleEdit.Logic
                             done = true;
                             newHeight = y + maximumCropping + 1;
                             if (newHeight > Height)
+                            {
                                 newHeight = Height;
+                            }
                         }
+
                         x++;
                     }
+
                     y--;
                 }
             }
 
             if (leftStart < 2 && rightEnd >= Width - 3)
+            {
                 return;
+            }
 
             int newWidth = rightEnd - leftStart + 1;
             if (newWidth <= 0)
+            {
                 return;
+            }
 
             var newBitmapData = new byte[newWidth * newHeight * 4];
             int index = 0;
             for (y = 0; y < newHeight; y++)
             {
                 int pixelAddress = (leftStart * 4) + (y * 4 * Width);
-                Buffer.BlockCopy(_bitmapData, pixelAddress, newBitmapData, index, 4 * newWidth);
+                Buffer.BlockCopy(bitmapData, pixelAddress, newBitmapData, index, 4 * newWidth);
                 index += 4 * newWidth;
             }
+
             Width = newWidth;
             Height = newHeight;
-            _bitmapData = newBitmapData;
+            bitmapData = newBitmapData;
         }
 
         public void CropSidesAndBottom(int maximumCropping, Color transparentColor, bool bottom)
@@ -638,17 +715,21 @@ namespace Nikse.SubtitleEdit.Logic
                 y = 0;
                 while (!done && y < Height)
                 {
-                    Color c = GetPixel(x, y);
-                    if (c != transparentColor)
+                    Color color = GetPixel(x, y);
+                    if (color != transparentColor)
                     {
                         done = true;
                         leftStart = x;
                         leftStart -= maximumCropping;
                         if (leftStart < 0)
+                        {
                             leftStart = 0;
+                        }
                     }
+
                     y++;
                 }
+
                 x++;
             }
 
@@ -660,17 +741,21 @@ namespace Nikse.SubtitleEdit.Logic
                 y = 0;
                 while (!done && y < Height)
                 {
-                    Color c = GetPixel(x, y);
-                    if (c != transparentColor)
+                    Color color = GetPixel(x, y);
+                    if (color != transparentColor)
                     {
                         done = true;
                         rightEnd = x;
                         rightEnd += maximumCropping;
                         if (rightEnd >= Width)
+                        {
                             rightEnd = Width - 1;
+                        }
                     }
+
                     y++;
                 }
+
                 x--;
             }
 
@@ -685,38 +770,47 @@ namespace Nikse.SubtitleEdit.Logic
                     x = 0;
                     while (!done && x < Width)
                     {
-                        Color c = GetPixel(x, y);
-                        if (c != transparentColor)
+                        Color color = GetPixel(x, y);
+                        if (color != transparentColor)
                         {
                             done = true;
                             newHeight = y + maximumCropping;
                             if (newHeight > Height)
+                            {
                                 newHeight = Height;
+                            }
                         }
+
                         x++;
                     }
+
                     y--;
                 }
             }
 
             if (leftStart < 2 && rightEnd >= Width - 3)
+            {
                 return;
+            }
 
             int newWidth = rightEnd - leftStart + 1;
             if (newWidth <= 0)
+            {
                 return;
+            }
 
             var newBitmapData = new byte[newWidth * newHeight * 4];
             int index = 0;
             for (y = 0; y < newHeight; y++)
             {
                 int pixelAddress = (leftStart * 4) + (y * 4 * Width);
-                Buffer.BlockCopy(_bitmapData, pixelAddress, newBitmapData, index, 4 * newWidth);
+                Buffer.BlockCopy(bitmapData, pixelAddress, newBitmapData, index, 4 * newWidth);
                 index += 4 * newWidth;
             }
+
             Width = newWidth;
             Height = newHeight;
-            _bitmapData = newBitmapData;
+            bitmapData = newBitmapData;
         }
 
         public void CropTop(int maximumCropping, Color transparentColor)
@@ -729,21 +823,27 @@ namespace Nikse.SubtitleEdit.Logic
                 var x = 0;
                 while (!done && x < Width)
                 {
-                    Color c = GetPixel(x, y);
-                    if (c != transparentColor && !(c.A == 0 && transparentColor.A == 0))
+                    Color color = GetPixel(x, y);
+                    if (color != transparentColor && !(color.A == 0 && transparentColor.A == 0))
                     {
                         done = true;
                         newTop = y - maximumCropping;
                         if (newTop < 0)
+                        {
                             newTop = 0;
+                        }
                     }
+
                     x++;
                 }
+
                 y++;
             }
 
             if (newTop == 0)
+            {
                 return;
+            }
 
             int newHeight = Height - newTop;
             var newBitmapData = new byte[Width * newHeight * 4];
@@ -751,11 +851,12 @@ namespace Nikse.SubtitleEdit.Logic
             for (y = newTop; y < Height; y++)
             {
                 int pixelAddress = y * 4 * Width;
-                Buffer.BlockCopy(_bitmapData, pixelAddress, newBitmapData, index, 4 * Width);
+                Buffer.BlockCopy(bitmapData, pixelAddress, newBitmapData, index, 4 * Width);
                 index += 4 * Width;
             }
+
             Height = newHeight;
-            _bitmapData = newBitmapData;
+            bitmapData = newBitmapData;
         }
 
         public int CropTopTransparent(int maximumCropping)
@@ -774,15 +875,21 @@ namespace Nikse.SubtitleEdit.Logic
                         done = true;
                         newTop = y - maximumCropping;
                         if (newTop < 0)
+                        {
                             newTop = 0;
+                        }
                     }
+
                     x++;
                 }
+
                 y++;
             }
 
             if (newTop == 0)
+            {
                 return 0;
+            }
 
             int newHeight = Height - newTop;
             var newBitmapData = new byte[Width * newHeight * 4];
@@ -790,11 +897,12 @@ namespace Nikse.SubtitleEdit.Logic
             for (y = newTop; y < Height; y++)
             {
                 int pixelAddress = y * 4 * Width;
-                Buffer.BlockCopy(_bitmapData, pixelAddress, newBitmapData, index, 4 * Width);
+                Buffer.BlockCopy(bitmapData, pixelAddress, newBitmapData, index, 4 * Width);
                 index += 4 * Width;
             }
+
             Height = newHeight;
-            _bitmapData = newBitmapData;
+            bitmapData = newBitmapData;
             return newTop;
         }
 
@@ -805,49 +913,51 @@ namespace Nikse.SubtitleEdit.Logic
             buffer[1] = color.G;
             buffer[2] = color.R;
             buffer[3] = color.A;
-            for (int i = 0; i < _bitmapData.Length; i += 4)
-                Buffer.BlockCopy(buffer, 0, _bitmapData, i, 4);
+            for (int i = 0; i < bitmapData.Length; i += 4)
+            {
+                Buffer.BlockCopy(buffer, 0, bitmapData, i, 4);
+            }
         }
 
         public int GetAlpha(int x, int y)
         {
-            return _bitmapData[(x * 4) + (y * 4 * Width) + 3];
+            return bitmapData[(x * 4) + (y * 4 * Width) + 3];
         }
 
         public Color GetPixel(int x, int y)
         {
-            _pixelAddress = (x * 4) + (y * 4 * Width);
-            return Color.FromArgb(_bitmapData[_pixelAddress + 3], _bitmapData[_pixelAddress + 2], _bitmapData[_pixelAddress + 1], _bitmapData[_pixelAddress]);
+            pixelAddress = (x * 4) + (y * 4 * Width);
+            return Color.FromArgb(bitmapData[pixelAddress + 3], bitmapData[pixelAddress + 2], bitmapData[pixelAddress + 1], bitmapData[pixelAddress]);
         }
 
         public byte[] GetPixelColors(int x, int y)
         {
-            _pixelAddress = (x * 4) + (y * 4 * Width);
-            return new[] { _bitmapData[_pixelAddress + 3], _bitmapData[_pixelAddress + 2], _bitmapData[_pixelAddress + 1], _bitmapData[_pixelAddress] };
+            pixelAddress = (x * 4) + (y * 4 * Width);
+            return new[] { bitmapData[pixelAddress + 3], bitmapData[pixelAddress + 2], bitmapData[pixelAddress + 1], bitmapData[pixelAddress] };
         }
 
         public Color GetPixelNext()
         {
-            _pixelAddress += 4;
-            return Color.FromArgb(_bitmapData[_pixelAddress + 3], _bitmapData[_pixelAddress + 2], _bitmapData[_pixelAddress + 1], _bitmapData[_pixelAddress]);
+            pixelAddress += 4;
+            return Color.FromArgb(bitmapData[pixelAddress + 3], bitmapData[pixelAddress + 2], bitmapData[pixelAddress + 1], bitmapData[pixelAddress]);
         }
 
         public void SetPixel(int x, int y, Color color)
         {
-            _pixelAddress = (x * 4) + (y * 4 * Width);
-            _bitmapData[_pixelAddress] = color.B;
-            _bitmapData[_pixelAddress + 1] = color.G;
-            _bitmapData[_pixelAddress + 2] = color.R;
-            _bitmapData[_pixelAddress + 3] = color.A;
+            pixelAddress = (x * 4) + (y * 4 * Width);
+            bitmapData[pixelAddress] = color.B;
+            bitmapData[pixelAddress + 1] = color.G;
+            bitmapData[pixelAddress + 2] = color.R;
+            bitmapData[pixelAddress + 3] = color.A;
         }
 
         public void SetPixelNext(Color color)
         {
-            _pixelAddress += 4;
-            _bitmapData[_pixelAddress] = color.B;
-            _bitmapData[_pixelAddress + 1] = color.G;
-            _bitmapData[_pixelAddress + 2] = color.R;
-            _bitmapData[_pixelAddress + 3] = color.A;
+            pixelAddress += 4;
+            bitmapData[pixelAddress] = color.B;
+            bitmapData[pixelAddress + 1] = color.G;
+            bitmapData[pixelAddress + 2] = color.R;
+            bitmapData[pixelAddress + 3] = color.A;
         }
 
         public Bitmap GetBitmap()
@@ -855,7 +965,7 @@ namespace Nikse.SubtitleEdit.Logic
             var bitmap = new Bitmap(Width, Height, PixelFormat.Format32bppArgb);
             BitmapData bitmapdata = bitmap.LockBits(new Rectangle(0, 0, Width, Height), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
             IntPtr destination = bitmapdata.Scan0;
-            Marshal.Copy(_bitmapData, 0, destination, _bitmapData.Length);
+            Marshal.Copy(bitmapData, 0, destination, bitmapData.Length);
             bitmap.UnlockBits(bitmapdata);
             return bitmap;
         }
@@ -878,8 +988,10 @@ namespace Nikse.SubtitleEdit.Logic
                         return smallestDiffIndex;
                     }
                 }
+
                 i++;
             }
+
             maxDiff = smallestDiff;
             return smallestDiffIndex;
         }
@@ -887,11 +999,17 @@ namespace Nikse.SubtitleEdit.Logic
         public Bitmap ConverTo8BitsPerPixel()
         {
             var newBitmap = new Bitmap(Width, Height, PixelFormat.Format8bppIndexed);
-            var palette = new List<Color> { Color.Transparent };
+            var palette = new List<Color>
+            {
+                Color.Transparent
+            };
+
             ColorPalette bPalette = newBitmap.Palette;
             var entries = bPalette.Entries;
             for (int i = 0; i < newBitmap.Palette.Entries.Length; i++)
+            {
                 entries[i] = Color.Transparent;
+            }
 
             BitmapData data = newBitmap.LockBits(new Rectangle(0, 0, Width, Height), ImageLockMode.WriteOnly, PixelFormat.Format8bppIndexed);
             var bytes = new byte[data.Height * data.Stride];
@@ -939,6 +1057,7 @@ namespace Nikse.SubtitleEdit.Logic
                     }
                 }
             }
+
             Marshal.Copy(bytes, 0, data.Scan0, bytes.Length);
             newBitmap.UnlockBits(data);
             newBitmap.Palette = bPalette;
@@ -948,17 +1067,24 @@ namespace Nikse.SubtitleEdit.Logic
         public NikseBitmap CopyRectangle(Rectangle section)
         {
             if (section.Bottom > Height)
+            {
                 section = new Rectangle(section.Left, section.Top, section.Width, Height - section.Top);
+            }
+
             if (section.Width + section.Left > Width)
+            {
                 section = new Rectangle(section.Left, section.Top, Width - section.Left, section.Height);
+            }
+
             var newBitmapData = new byte[section.Width * section.Height * 4];
             int index = 0;
             for (int y = section.Top; y < section.Bottom; y++)
             {
                 int pixelAddress = (section.Left * 4) + (y * 4 * Width);
-                Buffer.BlockCopy(_bitmapData, pixelAddress, newBitmapData, index, 4 * section.Width);
+                Buffer.BlockCopy(bitmapData, pixelAddress, newBitmapData, index, 4 * section.Width);
                 index += 4 * section.Width;
             }
+
             return new NikseBitmap(section.Width, section.Height, newBitmapData);
         }
 
@@ -972,32 +1098,51 @@ namespace Nikse.SubtitleEdit.Logic
             Color brightest = Color.Black;
             for (int i = 0; i < max; i++)
             {
-                Color c = GetPixelNext();
-                if (c.A > 220 && c.R + c.G + c.B > 200 && c.R + c.G + c.B > brightest.R + brightest.G + brightest.B)
-                    brightest = c;
+                Color color = GetPixelNext();
+                if (color.A > 220 &&
+                    color.R + color.G + color.B > 200 &&
+                    color.R + color.G + color.B > brightest.R + brightest.G + brightest.B)
+                {
+                    brightest = color;
+                }
             }
+
             if (IsColorClose(Color.White, brightest, 40))
+            {
                 return Color.Transparent;
+            }
+
             if (IsColorClose(Color.Black, brightest, 10))
+            {
                 return Color.Transparent;
+            }
+
             return brightest;
         }
 
         private static bool IsColorClose(Color color1, Color color2, int maxDiff)
         {
-            if (Math.Abs(color1.R - color2.R) < maxDiff && Math.Abs(color1.G - color2.G) < maxDiff && Math.Abs(color1.B - color2.B) < maxDiff)
+            if (Math.Abs(color1.R - color2.R) < maxDiff &&
+                Math.Abs(color1.G - color2.G) < maxDiff &&
+                Math.Abs(color1.B - color2.B) < maxDiff)
+            {
                 return true;
+            }
+
             return false;
         }
 
         public void GrayScale()
         {
-            for (int i = 0; i < _bitmapData.Length; i += 4)
+            for (int i = 0; i < bitmapData.Length; i += 4)
             {
-                int medium = Convert.ToInt32((_bitmapData[i + 2] + _bitmapData[i + 1] + _bitmapData[i]) * 1.5 / 3.0 + 2);
+                int medium = Convert.ToInt32((bitmapData[i + 2] + bitmapData[i + 1] + bitmapData[i]) * 1.5 / 3.0 + 2);
                 if (medium > byte.MaxValue)
+                {
                     medium = byte.MaxValue;
-                _bitmapData[i + 2] = _bitmapData[i + 1] = _bitmapData[i] = (byte)medium;
+                }
+
+                bitmapData[i + 2] = bitmapData[i + 1] = bitmapData[i] = (byte)medium;
             }
         }
 
@@ -1012,10 +1157,12 @@ namespace Nikse.SubtitleEdit.Logic
             buffer[1] = 0; // G
             buffer[2] = 0; // R
             buffer[3] = 0; // A
-            for (int i = 0; i < _bitmapData.Length; i += 4)
+            for (int i = 0; i < bitmapData.Length; i += 4)
             {
-                if (_bitmapData[i + 3] < minAlpha)
-                    Buffer.BlockCopy(buffer, 0, _bitmapData, i, 4);
+                if (bitmapData[i + 3] < minAlpha)
+                {
+                    Buffer.BlockCopy(buffer, 0, bitmapData, i, 4);
+                }
             }
         }
 
@@ -1031,27 +1178,37 @@ namespace Nikse.SubtitleEdit.Logic
             bufferWhite[1] = 255; // G
             bufferWhite[2] = 255; // R
             bufferWhite[3] = 255; // A
-            for (int i = 0; i < _bitmapData.Length; i += 4)
+            for (int i = 0; i < bitmapData.Length; i += 4)
             {
-                if (_bitmapData[i + 3] < 1 || (_bitmapData[i + 0] + _bitmapData[i + 1] + _bitmapData[i + 2] < minRgb))
-                    Buffer.BlockCopy(buffer, 0, _bitmapData, i, 4);
+                if (bitmapData[i + 3] < 1 || (bitmapData[i + 0] + bitmapData[i + 1] + bitmapData[i + 2] < minRgb))
+                {
+                    Buffer.BlockCopy(buffer, 0, bitmapData, i, 4);
+                }
                 else
-                    Buffer.BlockCopy(bufferWhite, 0, _bitmapData, i, 4);
+                {
+                    Buffer.BlockCopy(bufferWhite, 0, bitmapData, i, 4);
+                }
             }
         }
 
         internal void MakeVerticalLinePartTransparent(int xStart, int xEnd, int y)
         {
             if (xEnd > Width - 1)
+            {
                 xEnd = Width - 1;
+            }
+
             if (xStart < 0)
+            {
                 xStart = 0;
+            }
 
             int i = (xStart * 4) + (y * 4 * Width);
             int end = (xEnd * 4) + (y * 4 * Width) + 4;
+
             while (i < end)
             {
-                _bitmapData[i] = 0;
+                bitmapData[i] = 0;
                 i++;
             }
         }
@@ -1065,11 +1222,12 @@ namespace Nikse.SubtitleEdit.Logic
             for (int y = 0; y < Height; y++)
             {
                 int pixelAddress = (0 * 4) + (y * 4 * Width);
-                Buffer.BlockCopy(_bitmapData, pixelAddress, newBitmapData, index, 4 * Width);
+                Buffer.BlockCopy(bitmapData, pixelAddress, newBitmapData, index, 4 * Width);
                 index += 4 * newWidth;
             }
+
             Width = newWidth;
-            _bitmapData = newBitmapData;
+            bitmapData = newBitmapData;
             for (int y = 0; y < Height; y++)
             {
                 SetPixel(Width - 1, y, Color.Transparent);
@@ -1096,7 +1254,7 @@ namespace Nikse.SubtitleEdit.Logic
                  0 //  Image Descriptor
              };
 
-            var pixels = new byte[_bitmapData.Length];
+            var pixels = new byte[bitmapData.Length];
             int offsetDest = 0;
             for (int y = Height-1; y >= 0; y--) // takes lines from bottom lines to top (mirrowed horizontally)
             {
@@ -1117,6 +1275,5 @@ namespace Nikse.SubtitleEdit.Logic
                 fileStream.Write(pixels, 0, pixels.Length);
             }
         }
-
     }
 }

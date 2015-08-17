@@ -1,7 +1,7 @@
-﻿using System;
-
-namespace Nikse.SubtitleEdit.Logic
+﻿namespace Nikse.SubtitleEdit.Logic
 {
+    using System;
+
     /// <summary>
     /// Fourier transform
     ///
@@ -24,22 +24,24 @@ namespace Nikse.SubtitleEdit.Logic
         public const double W0Blackman = 0.42;
         private const double Pi = 3.14159265358979;
 
-        private double[] cosarray;
-        private double[] sinarray;
-        private bool _forward;
-        private int _arraySize;
-        private int _ldArraysize = 0;
+        private readonly double[] cosarray;
+        private readonly double[] sinarray;
+        private readonly bool forward;
+        private readonly int arraySize;
+        private readonly int ldArraysize;
 
         public Fourier(int arraySize, bool forward)
         {
-            _arraySize = arraySize;
-            _forward = forward;
+            this.arraySize = arraySize;
+            this.forward = forward;
             cosarray = new double[arraySize];
             sinarray = new double[arraySize];
 
             double sign = 1.0;
             if (forward)
+            {
                 sign = -1.0;
+            }
 
             double phase0 = 2.0 * Pi / arraySize;
             for (int i = 0; i <= arraySize - 1; i++)
@@ -48,10 +50,10 @@ namespace Nikse.SubtitleEdit.Logic
                 cosarray[i] = Math.Cos(phase0 * i);
             }
 
-            int j = _arraySize;
+            int j = this.arraySize;
             while (j != 1)
             {
-                _ldArraysize++;
+                ldArraysize++;
                 j /= 2;
             }
         }
@@ -60,8 +62,10 @@ namespace Nikse.SubtitleEdit.Logic
         {
             int i;
             magnitude[0] = Math.Sqrt(SquareSum(real[0], imag[0]));
-            for (i = 1; i <= (_arraySize / 2 - 1); i++)
-                magnitude[i] = (Math.Sqrt(SquareSum(real[i], imag[i]) + SquareSum(real[_arraySize - i], imag[_arraySize - i]))) / w0;
+            for (i = 1; i <= (arraySize/2 - 1); i++)
+            {
+                magnitude[i] = (Math.Sqrt(SquareSum(real[i], imag[i]) + SquareSum(real[arraySize - i], imag[arraySize - i]))) / w0;
+            }
         }
 
         public static double Hanning(int n, int j)
@@ -94,43 +98,45 @@ namespace Nikse.SubtitleEdit.Logic
         public void FourierTransform(double[] real, double[] imag)
         {
             int i;
-            if (_forward)
+            if (forward)
             {
-                for (i = 0; i <= _arraySize - 1; i++)
+                for (i = 0; i <= arraySize - 1; i++)
                 {
-                    real[i] /= _arraySize;
-                    imag[i] /= _arraySize;
+                    real[i] /= arraySize;
+                    imag[i] /= arraySize;
                 }
             }
 
             int k;
             int j = 0;
-            for (i = 0; i <= _arraySize - 2; i++)
+            for (i = 0; i <= arraySize - 2; i++)
             {
                 if (i < j)
                 {
                     Swap(ref real[i], ref real[j]);
                     Swap(ref imag[i], ref imag[j]);
                 }
-                k = _arraySize / 2;
+
+                k = arraySize / 2;
                 while (k <= j)
                 {
                     j -= k;
                     k /= 2;
                 }
+
                 j += k;
             }
 
             int a = 2;
             int b = 1;
-            for (int count = 1; count <= _ldArraysize; count++)
+            for (int count = 1; count <= ldArraysize; count++)
             {
-                int c0 = _arraySize / a;
+                int c0 = arraySize / a;
                 int c1 = 0;
                 for (k = 0; k <= b - 1; k++)
                 {
                     i = k;
-                    while (i < _arraySize)
+                    while (i < arraySize)
                     {
                         int arg = i + b;
                         double prodreal;
@@ -145,18 +151,20 @@ namespace Nikse.SubtitleEdit.Logic
                             prodreal = real[arg] * cosarray[c1] - imag[arg] * sinarray[c1];
                             prodimag = real[arg] * sinarray[c1] + imag[arg] * cosarray[c1];
                         }
+
                         real[arg] = real[i] - prodreal;
                         imag[arg] = imag[i] - prodimag;
                         real[i] += prodreal;
                         imag[i] += prodimag;
                         i += a;
                     }
+
                     c1 += c0;
                 }
+
                 a *= 2;
                 b *= 2;
             }
         }
-
     }
 }

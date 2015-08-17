@@ -1,10 +1,10 @@
-﻿using System;
-using System.IO;
-using System.Text;
-using System.Xml.Serialization;
-
-namespace Nikse.SubtitleEdit.Logic
+﻿namespace Nikse.SubtitleEdit.Logic
 {
+    using System;
+    using System.IO;
+    using System.Text;
+    using System.Xml.Serialization;
+
     public class Language
     {
         [XmlAttribute("Name")]
@@ -289,7 +289,7 @@ namespace Nikse.SubtitleEdit.Logic
                 Output = "Output",
                 ChooseOutputFolder = "Choose output folder",
                 ConvertOptions = "Convert options",
-                RemoveTextForHI = "Remove text for HI",
+                RemoveTextForHi = "Remove text for HI",
                 InputDescription = "Input files (browse or drag-n-drop)",
                 Convert = "Convert",
                 OverwriteExistingFiles = "Overwrite existing files",

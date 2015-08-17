@@ -435,8 +435,8 @@ namespace Nikse.SubtitleEdit.Logic
                 case "BatchConvert/RemoveFormatting":
                     language.BatchConvert.RemoveFormatting = reader.Value;
                     break;
-                case "BatchConvert/RemoveTextForHI":
-                    language.BatchConvert.RemoveTextForHI = reader.Value;
+                case "BatchConvert/RemoveTextForHi":
+                    language.BatchConvert.RemoveTextForHi = reader.Value;
                     break;
                 case "BatchConvert/OverwriteOriginalFiles":
                     language.BatchConvert.OverwriteOriginalFiles = reader.Value;

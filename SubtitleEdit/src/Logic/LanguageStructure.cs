@@ -6,198 +6,341 @@
         public class General
         {
             public string Title { get; set; }
+
             public string Version { get; set; }
+
             public string TranslatedBy { get; set; }
+            
             public string CultureName { get; set; }
+            
             public string HelpFile { get; set; }
+            
             public string Ok { get; set; }
+            
             public string Cancel { get; set; }
+            
             public string Apply { get; set; }
+            
             public string None { get; set; }
+            
             public string All { get; set; }
+            
             public string Preview { get; set; }
+            
             public string SubtitleFiles { get; set; }
+            
             public string AllFiles { get; set; }
+            
             public string VideoFiles { get; set; }
+            
             public string AudioFiles { get; set; }
+            
             public string OpenSubtitle { get; set; }
+            
             public string OpenVideoFile { get; set; }
+            
             public string OpenVideoFileTitle { get; set; }
+            
             public string NoVideoLoaded { get; set; }
+            
             public string VideoInformation { get; set; }
+            
             public string PositionX { get; set; }
+            
             public string StartTime { get; set; }
+            
             public string EndTime { get; set; }
+            
             public string Duration { get; set; }
+            
             public string NumberSymbol { get; set; }
+            
             public string Number { get; set; }
+            
             public string Text { get; set; }
+            
             public string HourMinutesSecondsMilliseconds { get; set; }
+            
             public string Bold { get; set; }
+            
             public string Italic { get; set; }
+            
             public string Underline { get; set; }
+            
             public string Visible { get; set; }
+            
             public string FrameRate { get; set; }
+            
             public string Name { get; set; }
+            
             public string FileNameXAndSize { get; set; }
+            
             public string ResolutionX { get; set; }
+            
             public string FrameRateX { get; set; }
+            
             public string TotalFramesX { get; set; }
+            
             public string VideoEncodingX { get; set; }
+            
             public string SingleLineLengths { get; set; }
+            
             public string TotalLengthX { get; set; }
+            
             public string TotalLengthXSplitLine { get; set; }
+            
             public string SplitLine { get; set; }
+            
             public string NotAvailable { get; set; }
+            
             public string OverlapPreviousLineX { get; set; }
+            
             public string OverlapX { get; set; }
+            
             public string OverlapNextX { get; set; }
+            
             public string Negative { get; set; }
+            
             public string RegularExpressionIsNotValid { get; set; }
+            
             public string SubtitleSaved { get; set; }
+            
             public string CurrentSubtitle { get; set; }
+            
             public string OriginalText { get; set; }
+            
             public string OpenOriginalSubtitleFile { get; set; }
+            
             public string PleaseWait { get; set; }
+            
             public string SessionKey { get; set; }
+            
             public string UserName { get; set; }
+            
             public string UserNameAlreadyInUse { get; set; }
+            
             public string WebServiceUrl { get; set; }
+            
             public string IP { get; set; }
+            
             public string VideoWindowTitle { get; set; }
+            
             public string AudioWindowTitle { get; set; }
+          
             public string ControlsWindowTitle { get; set; }
+            
             public string Advanced { get; set; }
+            
             public string Style { get; set; }
+            
             public string StyleLanguage { get; set; }
+            
             public string Character { get; set; }
+            
             public string Class { get; set; }
+            
             public string GeneralText { get; set; }
+            
             public string LineNumber { get; set; }
+            
             public string Before { get; set; }
+            
             public string After { get; set; }
+            
             public string Size { get; set; }
         }
 
         public class About
         {
             public string Title { get; set; }
+
             public string AboutText1 { get; set; }
         }
 
         public class AddToNames
         {
             public string Title { get; set; }
+
             public string Description { get; set; }
         }
 
         public class AddToOcrReplaceList
         {
             public string Title { get; set; }
+
             public string Description { get; set; }
         }
 
         public class AddToUserDictionary
         {
             public string Title { get; set; }
+
             public string Description { get; set; }
         }
 
         public class AddWaveform
         {
             public string Title { get; set; }
+            
             public string SourceVideoFile { get; set; }
+            
             public string GenerateWaveformData { get; set; }
+            
             public string PleaseWait { get; set; }
+            
             public string VlcMediaPlayerNotFoundTitle { get; set; }
+            
             public string VlcMediaPlayerNotFound { get; set; }
+            
             public string GoToVlcMediaPlayerHomePage { get; set; }
+            
             public string GeneratingPeakFile { get; set; }
+            
             public string GeneratingSpectrogram { get; set; }
+            
             public string ExtractingSeconds { get; set; }
+            
             public string ExtractingMinutes { get; set; }
+            
             public string WaveFileNotFound { get; set; }
+            
             public string WaveFileMalformed { get; set; }
+            
             public string LowDiskSpace { get; set; }
+            
             public string FreeDiskSpace { get; set; }
         }
 
         public class AddWaveformBatch
         {
             public string Title { get; set; }
+            
             public string ExtractingAudio { get; set; }
+            
             public string Calculating { get; set; }
+            
             public string Done { get; set; }
+            
             public string Error { get; set; }
         }
 
         public class AdjustDisplayDuration
         {
             public string Title { get; set; }
+            
             public string AdjustVia { get; set; }
+            
             public string Seconds { get; set; }
+            
             public string Percent { get; set; }
+            
             public string Recalculate { get; set; }
+            
             public string AddSeconds { get; set; }
+            
             public string SetAsPercent { get; set; }
+            
             public string Note { get; set; }
+            
             public string PleaseSelectAValueFromTheDropDownList { get; set; }
+            
             public string PleaseChoose { get; set; }
         }
 
         public class ApplyDurationLimits
         {
             public string Title { get; set; }
+            
             public string FixesAvailable { get; set; }
+            
             public string UnableToFix { get; set; }
         }
 
         public class AutoBreakUnbreakLines
         {
             public string TitleAutoBreak { get; set; }
+            
             public string TitleUnbreak { get; set; }
+            
             public string LinesFoundX { get; set; }
+            
             public string OnlyBreakLinesLongerThan { get; set; }
+            
             public string OnlyUnbreakLinesLongerThan { get; set; }
         }
 
         public class BatchConvert
         {
             public string Title { get; set; }
+            
             public string Input { get; set; }
+            
             public string InputDescription { get; set; }
+            
             public string Status { get; set; }
+            
             public string Output { get; set; }
+            
             public string ChooseOutputFolder { get; set; }
+            
             public string OverwriteExistingFiles { get; set; }
+            
             public string Style { get; set; }
+            
             public string ConvertOptions { get; set; }
+            
             public string RemoveFormatting { get; set; }
-            public string RemoveTextForHI { get; set; }
+            
+            public string RemoveTextForHi { get; set; }
+            
             public string OverwriteOriginalFiles { get; set; }
+            
             public string RedoCasing { get; set; }
+            
             public string Convert { get; set; }
+            
             public string NothingToConvert { get; set; }
+            
             public string PleaseChooseOutputFolder { get; set; }
+            
             public string NotConverted { get; set; }
+            
             public string Converted { get; set; }
+            
             public string ConvertedX { get; set; }
+
             public string Settings { get; set; }
+
             public string SplitLongLines { get; set; }
+            
             public string AutoBalance { get; set; }
+            
             public string ScanFolder { get; set; }
+            
             public string ScanningFolder { get; set; }
+            
             public string Recursive { get; set; }
+            
             public string SetMinMsBetweenSubtitles { get; set; }
+            
             public string PlainText { get; set; }
+            
             public string Ocr { get; set; }
+            
             public string Filter { get; set; }
+            
             public string FilterSkipped { get; set; }
+            
             public string FilterSrtNoUtf8BOM { get; set; }
+            
             public string FilterMoreThanTwoLines { get; set; }
+            
             public string FilterContains { get; set; }
+            
             public string FixCommonErrorsErrorX { get; set; }
+            
             public string MultipleReplaceErrorX { get; set; }
+            
             public string AutoBalanceErrorX { get; set; }
         }
 
@@ -209,51 +352,77 @@
         public class ChangeCasing
         {
             public string Title { get; set; }
+            
             public string ChangeCasingTo { get; set; }
+            
             public string NormalCasing { get; set; }
+            
             public string FixNamesCasing { get; set; }
+            
             public string FixOnlyNamesCasing { get; set; }
+            
             public string OnlyChangeAllUppercaseLines { get; set; }
+            
             public string AllUppercase { get; set; }
+            
             public string AllLowercase { get; set; }
         }
 
         public class ChangeCasingNames
         {
             public string Title { get; set; }
+            
             public string NamesFoundInSubtitleX { get; set; }
+            
             public string Enabled { get; set; }
+            
             public string Name { get; set; }
+            
             public string LinesFoundX { get; set; }
         }
 
         public class ChangeFrameRate
         {
             public string Title { get; set; }
+            
             public string ConvertFrameRateOfSubtitle { get; set; }
+            
             public string FromFrameRate { get; set; }
+            
             public string ToFrameRate { get; set; }
+            
             public string FrameRateNotCorrect { get; set; }
+            
             public string FrameRateNotChanged { get; set; }
         }
 
         public class ChangeSpeedInPercent
         {
             public string Title { get; set; }
+            
             public string Info { get; set; }
+            
             public string Custom { get; set; }
+            
             public string ToDropFrame { get; set; }
+            
             public string FromDropFrame { get; set; }
         }
 
         public class CheckForUpdates
         {
             public string Title { get; set; }
+            
             public string CheckingForUpdates { get; set; }
+            
             public string CheckingForUpdatesFailedX { get; set; }
+            
             public string CheckingForUpdatesNoneAvailable { get; set; }
+            
             public string CheckingForUpdatesNewVersion { get; set; }
+            
             public string InstallUpdate { get; set; }
+            
             public string NoUpdates { get; set; }
         }
 
@@ -265,271 +434,462 @@
         public class ChooseEncoding
         {
             public string Title { get; set; }
+            
             public string CodePage { get; set; }
+            
             public string DisplayName { get; set; }
+            
             public string PleaseSelectAnEncoding { get; set; }
         }
 
         public class ChooseLanguage
         {
             public string Title { get; set; }
+            
             public string Language { get; set; }
         }
 
         public class ColorChooser
         {
             public string Title { get; set; }
+            
             public string Red { get; set; }
+            
             public string Green { get; set; }
+            
             public string Blue { get; set; }
+            
             public string Alpha { get; set; }
         }
 
         public class ColumnPaste
         {
             public string Title { get; set; }
+            
             public string ChooseColumn { get; set; }
+            
             public string OverwriteShiftCellsDown { get; set; }
+            
             public string Overwrite { get; set; }
+            
             public string ShiftCellsDown { get; set; }
+            
             public string TimeCodesOnly { get; set; }
+            
             public string TextOnly { get; set; }
+            
             public string OriginalTextOnly { get; set; }
         }
 
         public class CompareSubtitles
         {
             public string Title { get; set; }
+            
             public string PreviousDifference { get; set; }
+            
             public string NextDifference { get; set; }
+            
             public string SubtitlesNotAlike { get; set; }
+            
             public string XNumberOfDifference { get; set; }
+            
             public string XNumberOfDifferenceAndPercentChanged { get; set; }
+            
             public string XNumberOfDifferenceAndPercentLettersChanged { get; set; }
+            
             public string ShowOnlyDifferences { get; set; }
+            
             public string IgnoreLineBreaks { get; set; }
+            
             public string OnlyLookForDifferencesInText { get; set; }
+            
             public string CannotCompareWithImageBasedSubtitles { get; set; }
         }
 
         public class DCinemaProperties
         {
             public string Title { get; set; }
+            
             public string TitleSmpte { get; set; }
+            
             public string SubtitleId { get; set; }
+            
             public string GenerateId { get; set; }
+            
             public string MovieTitle { get; set; }
+            
             public string ReelNumber { get; set; }
+            
             public string Language { get; set; }
+            
             public string IssueDate { get; set; }
+            
             public string EditRate { get; set; }
+            
             public string TimeCodeRate { get; set; }
+            
             public string StartTime { get; set; }
+            
             public string Font { get; set; }
+            
             public string FontId { get; set; }
+            
             public string FontUri { get; set; }
+            
             public string FontColor { get; set; }
+            
             public string FontEffect { get; set; }
+            
             public string FontEffectColor { get; set; }
+            
             public string FontSize { get; set; }
+            
             public string TopBottomMargin { get; set; }
+            
             public string FadeUpTime { get; set; }
+            
             public string FadeDownTime { get; set; }
+            
             public string ZPosition { get; set; }
+            
             public string ZPositionHelp { get; set; }
+            
             public string ChooseColor { get; set; }
+            
             public string Generate { get; set; }
         }
 
         public class DurationsBridgeGaps
         {
             public string Title { get; set; }
+        
             public string GapsBridgedX { get; set; }
+            
             public string GapToNext { get; set; }
+            
             public string BridgeGapsSmallerThanXPart1 { get; set; }
+            
             public string BridgeGapsSmallerThanXPart2 { get; set; }
+            
             public string MinMillisecondsBetweenLines { get; set; }
+            
             public string ProlongEndTime { get; set; }
+            
             public string DivideEven { get; set; }
         }
 
         public class DvdSubRip
         {
             public string Title { get; set; }
+        
             public string DvdGroupTitle { get; set; }
+            
             public string IfoFile { get; set; }
+            
             public string IfoFiles { get; set; }
+            
             public string VobFiles { get; set; }
+            
             public string Add { get; set; }
+            
             public string Remove { get; set; }
+            
             public string Clear { get; set; }
+            
             public string MoveUp { get; set; }
+            
             public string MoveDown { get; set; }
+            
             public string Languages { get; set; }
+            
             public string PalNtsc { get; set; }
+            
             public string Pal { get; set; }
+            
             public string Ntsc { get; set; }
+            
             public string StartRipping { get; set; }
+            
             public string Abort { get; set; }
+            
             public string AbortedByUser { get; set; }
+            
             public string ReadingSubtitleData { get; set; }
+            
             public string RippingVobFileXofYZ { get; set; }
+            
             public string WrongIfoType { get; set; }
         }
 
         public class DvdSubRipChooseLanguage
         {
             public string Title { get; set; }
+        
             public string ChooseLanguageStreamId { get; set; }
+            
             public string UnknownLanguage { get; set; }
+            
             public string SubtitleImageXofYAndWidthXHeight { get; set; }
+            
             public string SubtitleImage { get; set; }
         }
 
         public class EbuSaveOptions
         {
             public string Title { get; set; }
+        
             public string GeneralSubtitleInformation { get; set; }
+            
             public string CodePageNumber { get; set; }
+            
             public string DiskFormatCode { get; set; }
+            
             public string DisplayStandardCode { get; set; }
+            
             public string CharacterCodeTable { get; set; }
+            
             public string LanguageCode { get; set; }
+            
             public string OriginalProgramTitle { get; set; }
+            
             public string OriginalEpisodeTitle { get; set; }
+            
             public string TranslatedProgramTitle { get; set; }
+            
             public string TranslatedEpisodeTitle { get; set; }
+            
             public string TranslatorsName { get; set; }
+            
             public string SubtitleListReferenceCode { get; set; }
+            
             public string CountryOfOrigin { get; set; }
+            
             public string TimeCodeStatus { get; set; }
+            
             public string TimeCodeStartOfProgramme { get; set; }
+            
             public string RevisionNumber { get; set; }
+            
             public string MaxNoOfDisplayableChars { get; set; }
+            
             public string MaxNumberOfDisplayableRows { get; set; }
+            
             public string DiskSequenceNumber { get; set; }
+            
             public string TotalNumberOfDisks { get; set; }
+            
             public string Import { get; set; }
+            
             public string TextAndTimingInformation { get; set; }
+            
             public string JustificationCode { get; set; }
+            
             public string Errors { get; set; }
+            
             public string ErrorsX { get; set; }
+            
             public string MaxLengthError { get; set; }
+            
             public string TextUnchangedPresentation { get; set; }
+            
             public string TextLeftJustifiedText { get; set; }
+            
             public string TextCenteredText { get; set; }
+            
             public string TextRightJustifiedText { get; set; }
         }
 
         public class EffectKaraoke
         {
             public string Title { get; set; }
+            
             public string ChooseColor { get; set; }
+            
             public string TotalMilliseconds { get; set; }
+            
             public string EndDelayInMilliseconds { get; set; }
         }
 
         public class EffectTypewriter
         {
             public string Title { get; set; }
+           
             public string TotalMilliseconds { get; set; }
+            
             public string EndDelayInMilliseconds { get; set; }
         }
 
         public class ExportCustomText
         {
             public string Title { get; set; }
+            
             public string Formats { get; set; }
+            
             public string New { get; set; }
+            
             public string Edit { get; set; }
+            
             public string Delete { get; set; }
+            
             public string SaveAs { get; set; }
+            
             public string SaveSubtitleAs { get; set; }
+            
             public string SubtitleExportedInCustomFormatToX { get; set; }
         }
 
         public class ExportCustomTextFormat
         {
             public string Title { get; set; }
+           
             public string Template { get; set; }
+            
             public string Header { get; set; }
+            
             public string TextLine { get; set; }
+            
             public string TimeCode { get; set; }
+            
             public string NewLine { get; set; }
+            
             public string Footer { get; set; }
+            
             public string DoNotModify { get; set; }
         }
 
         public class ExportPngXml
         {
             public string Title { get; set; }
+            
             public string ImageSettings { get; set; }
+            
             public string FontFamily { get; set; }
+            
             public string FontSize { get; set; }
+            
             public string FontColor { get; set; }
+            
             public string BorderColor { get; set; }
+            
             public string BorderWidth { get; set; }
+            
             public string BorderStyle { get; set; }
+            
             public string BorderStyleOneBox { get; set; }
+            
             public string BorderStyleBoxForEachLine { get; set; }
+            
             public string BorderStyleNormalWidthX { get; set; }
+            
             public string ShadowColor { get; set; }
+            
             public string ShadowWidth { get; set; }
+            
             public string Transparency { get; set; }
+            
             public string ImageFormat { get; set; }
+            
             public string FullFrameImage { get; set; }
+            
             public string SimpleRendering { get; set; }
+            
             public string AntiAliasingWithTransparency { get; set; }
+            
             public string Text3D { get; set; }
+            
             public string SideBySide3D { get; set; }
+            
             public string HalfTopBottom3D { get; set; }
+            
             public string Depth { get; set; }
+            
             public string ExportAllLines { get; set; }
+            
             public string XImagesSavedInY { get; set; }
+            
             public string VideoResolution { get; set; }
+            
             public string Align { get; set; }
+            
             public string Left { get; set; }
+            
             public string Right { get; set; }
+            
             public string Center { get; set; }
+            
             public string BottomMargin { get; set; }
+            
             public string LeftRightMargin { get; set; }
+            
             public string SaveBluRraySupAs { get; set; }
+            
             public string SaveVobSubAs { get; set; }
+            
             public string SaveFabImageScriptAs { get; set; }
+            
             public string SaveDvdStudioProStlAs { get; set; }
+            
             public string SaveDigitalCinemaInteropAs { get; set; }
+          
             public string SavePremiereEdlAs { get; set; }
+            
             public string SaveFcpAs { get; set; }
+            
             public string SaveDostAs { get; set; }
+            
             public string SomeLinesWereTooLongX { get; set; }
+            
             public string LineHeight { get; set; }
+            
             public string BoxSingleLine { get; set; }
+            
             public string BoxMultiLine { get; set; }
+            
             public string Forced { get; set; }
+            
             public string ChooseBackgroundColor { get; set; }
+            
             public string SaveImageAs { get; set; }
         }
 
         public class ExportText
         {
             public string Title { get; set; }
+          
             public string Preview { get; set; }
+            
             public string ExportOptions { get; set; }
+            
             public string FormatText { get; set; }
+            
             public string None { get; set; }
+            
             public string MergeAllLines { get; set; }
+            
             public string UnbreakLines { get; set; }
+            
             public string RemoveStyling { get; set; }
+            
             public string ShowLineNumbers { get; set; }
+            
             public string AddNewLineAfterLineNumber { get; set; }
+            
             public string ShowTimeCode { get; set; }
+            
             public string AddNewLineAfterTimeCode { get; set; }
+            
             public string AddNewLineAfterTexts { get; set; }
+            
             public string AddNewLineBetweenSubtitles { get; set; }
+            
             public string TimeCodeFormat { get; set; }
+            
             public string Srt { get; set; }
+            
             public string Milliseconds { get; set; }
+            
             public string HHMMSSFF { get; set; }
+            
             public string TimeCodeSeparator { get; set; }
         }
 
