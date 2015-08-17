@@ -10,8 +10,6 @@
     using Nikse.SubtitleEdit.Logic;
     using Nikse.SubtitleEdit.Logic.Forms;
 
-
-
     [TestClass]
     public class UtilitiesTest
     {
@@ -28,7 +26,7 @@
         [ExpectedException(typeof(WebException))]
         public void TestDownloadString()
         {
-            string actualResult = Utilities.DownloadString("test");
+            Utilities.DownloadString("test");
         }
 
         [TestMethod]
@@ -70,7 +68,7 @@
         {
             Assert.AreEqual(string.Empty, Utilities.AssemblyDescription);
         }
-        
+
         [TestMethod]
         public void TestIsMPlayerAvailable()
         {
@@ -274,7 +272,7 @@
         }
 
         [TestMethod]
-        public void TestFormatBytesToDisplayFileSize_WithGigaBytes()
+        public void TestFormatBytesToDisplayFileSizeWithGigaBytes()
         {
             long fileSize = 1073741825;
             string expectedRsult = string.Format("{0:0.0} gb", (float)fileSize / (1024 * 1024 * 1024));
@@ -284,7 +282,7 @@
         }
 
         [TestMethod]
-        public void TestFormatBytesToDisplayFileSize_WithKiloBytes()
+        public void TestFormatBytesToDisplayFileSizeWithKiloBytes()
         {
             string expectedRsult = "1024 kb";
 
@@ -293,7 +291,7 @@
         }
 
         [TestMethod]
-        public void TestFormatBytesToDisplayFileSize_WithBytes()
+        public void TestFormatBytesToDisplayFileSizeWithBytes()
         {
             string expectedRsult = "1024 bytes";
 
@@ -312,7 +310,7 @@
         }
 
         [TestMethod]
-        public void TestGetSubtitleFormatByFriendlyName_WithIncorrectName()
+        public void TestGetSubtitleFormatByFriendlyNameWithIncorrectName()
         {
             string formatName = "a";
             var format = Utilities.GetSubtitleFormatByFriendlyName(formatName);
@@ -354,7 +352,8 @@
         [TestMethod]
         public void AutoBreakLine2()
         {
-            // TODO: Implement me
+            var actualOutput = Utilities.AutoBreakLine("This is" + Environment.NewLine + "test.", 5, 33, string.Empty);
+            Assert.IsFalse(actualOutput == "This is" + Environment.NewLine + "test.");
         }
 
         [TestMethod]
@@ -362,8 +361,8 @@
         public void AutoBreakLine3()
         {
             string s1 = "- We're gonna lose him." + Environment.NewLine + "- He's left him four signals in the last week.";
-            string s2 = Utilities.AutoBreakLine(s1);
-            Assert.AreEqual(s1, s2);
+            string actualOutput = Utilities.AutoBreakLine(s1);
+            Assert.AreEqual(s1, actualOutput);
         }
 
         [TestMethod]
@@ -372,9 +371,9 @@
         {
             Configuration.Settings.General.SubtitleLineMaximumLength = 43;
             const string TestInput = "- Seriously, though. Are you being bullied? - Nope.";
-            string s2 = Utilities.AutoBreakLine(TestInput);
+            string actualOutput = Utilities.AutoBreakLine(TestInput);
             string target = "- Seriously, though. Are you being bullied?" + Environment.NewLine + "- Nope.";
-            Assert.AreEqual(target, s2);
+            Assert.AreEqual(target, actualOutput);
         }
 
         [TestMethod]
@@ -383,9 +382,9 @@
         {
             Configuration.Settings.General.SubtitleLineMaximumLength = 43;
             const string TestInput = "Oh, snap, we're still saying the same thing. This is amazing!";
-            string s2 = Utilities.AutoBreakLine(TestInput);
+            string actualOutput = Utilities.AutoBreakLine(TestInput);
             string target = "Oh, snap, we're still saying the" + Environment.NewLine + "same thing. This is amazing!";
-            Assert.AreEqual(target, s2);
+            Assert.AreEqual(target, actualOutput);
         }
 
         [TestMethod]
@@ -394,8 +393,8 @@
         {
             Configuration.Settings.General.SubtitleLineMaximumLength = 43;
             string s1 = "- That's hilarious, I don't--" + Environment.NewLine + "- Are the cheeks turning nice and pink?";
-            string s2 = Utilities.AutoBreakLine(s1);
-            Assert.AreEqual(s1, s2);
+            string actualOutput = Utilities.AutoBreakLine(s1);
+            Assert.AreEqual(s1, actualOutput);
         }
 
         [TestMethod]
@@ -403,8 +402,8 @@
         public void AutoBreakLineDialog1()
         {
             const string TestInput = "- Qu'est ce qui se passe ? - Je veux voir ce qu'ils veulent être.";
-            string s2 = Utilities.AutoBreakLine(TestInput);
-            Assert.AreEqual("- Qu'est ce qui se passe ?" + Environment.NewLine + "- Je veux voir ce qu'ils veulent être.", s2);
+            string actualOutput = Utilities.AutoBreakLine(TestInput);
+            Assert.AreEqual("- Qu'est ce qui se passe ?" + Environment.NewLine + "- Je veux voir ce qu'ils veulent être.", actualOutput);
         }
 
         [TestMethod]
@@ -412,8 +411,8 @@
         public void AutoBreakLineDialog2()
         {
             const string TestInput = "- Je veux voir ce qu'ils veulent être. - Qu'est ce qui se passe ?";
-            string s2 = Utilities.AutoBreakLine(TestInput);
-            Assert.AreEqual("- Je veux voir ce qu'ils veulent être." + Environment.NewLine + "- Qu'est ce qui se passe ?", s2);
+            string actualOutput = Utilities.AutoBreakLine(TestInput);
+            Assert.AreEqual("- Je veux voir ce qu'ils veulent être." + Environment.NewLine + "- Qu'est ce qui se passe ?", actualOutput);
         }
 
         [TestMethod]
@@ -421,17 +420,17 @@
         public void FixInvalidItalicTags2()
         {
             const string TestInput = "Gledaj prema kameri i rici <i>zdravo!";
-            string s2 = HtmlUtil.FixInvalidItalicTags(TestInput);
-            Assert.AreEqual(s2, "Gledaj prema kameri i rici zdravo!");
+            string actualOutput = HtmlUtil.FixInvalidItalicTags(TestInput);
+            Assert.AreEqual(actualOutput, "Gledaj prema kameri i rici zdravo!");
         }
 
         [TestMethod]
         [DeploymentItem("SubtitleEdit.exe")]
         public void FixInvalidItalicTags3()
         {
-            string TestInput = "Gledaj prema kameri i rici <i>zdravo!" + Environment.NewLine + "<i> Sup Brah?";
-            string s2 = HtmlUtil.FixInvalidItalicTags(TestInput);
-            Assert.AreEqual(s2, "Gledaj prema kameri i rici <i>zdravo!" + Environment.NewLine + "</i> Sup Brah?");
+            string testInput = "Gledaj prema kameri i rici <i>zdravo!" + Environment.NewLine + "<i> Sup Brah?";
+            string actualOutput = HtmlUtil.FixInvalidItalicTags(testInput);
+            Assert.AreEqual(actualOutput, "Gledaj prema kameri i rici <i>zdravo!" + Environment.NewLine + "</i> Sup Brah?");
         }
 
         [TestMethod]
@@ -439,8 +438,8 @@
         public void FixInvalidItalicTags4()
         {
             string s1 = "It <i>is</i> a telegram," + Environment.NewLine + "it <i>is</i> ordering an advance,";
-            string s2 = HtmlUtil.FixInvalidItalicTags(s1);
-            Assert.AreEqual(s2, s1);
+            string actualOutput = HtmlUtil.FixInvalidItalicTags(s1);
+            Assert.AreEqual(actualOutput, s1);
         }
 
         [TestMethod]
@@ -448,8 +447,8 @@
         public void FixInvalidItalicTags5()
         {
             string s1 = "- <i>It is a telegram?</i>" + Environment.NewLine + "<i>- It is.</i>";
-            string s2 = HtmlUtil.FixInvalidItalicTags(s1);
-            Assert.AreEqual(s2, "<i>- It is a telegram?" + Environment.NewLine + "- It is.</i>");
+            string actualOutput = HtmlUtil.FixInvalidItalicTags(s1);
+            Assert.AreEqual(actualOutput, "<i>- It is a telegram?" + Environment.NewLine + "- It is.</i>");
         }
 
         [TestMethod]
