@@ -503,18 +503,18 @@ namespace Test
             }
         }
 
-        [TestMethod]
-        [DeploymentItem("SubtitleEdit.exe")]
-        [Ignore]
-        public void FixCommonOcrErrorsSlashIsL() // requires hardcoded rules enabled
-        {
-            using (var target = GetFixCommonErrorsLib())
-            {
-                InitializeFixCommonErrorsLine(target, "The font is ita/ic!");
-                target.FixOcrErrorsViaReplaceList("eng");
-                Assert.AreEqual(target.Subtitle.Paragraphs[0].Text, "The font is italic!"); // will fail if English dictionary is not found
-            }
-        }
+        //[TestMethod]
+        //[DeploymentItem("SubtitleEdit.exe")]
+        //[Ignore]
+        //public void FixCommonOcrErrorsSlashIsL() // requires hardcoded rules enabled
+        //{
+        //    using (var target = GetFixCommonErrorsLib())
+        //    {
+        //        InitializeFixCommonErrorsLine(target, "The font is ita/ic!");
+        //        target.FixOcrErrorsViaReplaceList("eng");
+        //        Assert.AreEqual(target.Subtitle.Paragraphs[0].Text, "The font is italic!"); // will fail if English dictionary is not found
+        //    }
+        //}
 
         [TestMethod]
         [DeploymentItem("SubtitleEdit.exe")]

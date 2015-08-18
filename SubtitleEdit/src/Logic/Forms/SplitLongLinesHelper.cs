@@ -1,40 +1,41 @@
-﻿using System;
-using System.Collections.Generic;
-using Nikse.SubtitleEdit.Core;
-
-namespace Nikse.SubtitleEdit.Logic.Forms
+﻿namespace Nikse.SubtitleEdit.Logic.Forms
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Core;
+
     public static class SplitLongLinesHelper
     {
         public static bool QualifiesForSplit(string text, int singleLineMaxCharacters, int totalLineMaxCharacters)
         {
             string s = HtmlUtil.RemoveHtmlTags(text.Trim(), true);
             if (s.Length > totalLineMaxCharacters)
+            {
                 return true;
+            }
 
             var arr = s.SplitToLines();
-            foreach (string line in arr)
+            if (arr.Any(line => line.Length > singleLineMaxCharacters))
             {
-                if (line.Length > singleLineMaxCharacters)
-                    return true;
+                return true;
             }
 
             var tempText = Utilities.UnbreakLine(text);
-            if (Utilities.CountTagInText(tempText, '-') == 2 && (text.StartsWith('-') || text.StartsWith("<i>-")))
+            if (Utilities.CountTagInText(tempText, '-') != 2 || (!text.StartsWith('-') && !text.StartsWith("<i>-")))
             {
-                var idx = tempText.IndexOfAny(new[] { ". -", "! -", "? -" }, StringComparison.Ordinal);
-                if (idx > 1)
-                {
-                    idx++;
-                    string dialogText = tempText.Remove(idx, 1).Insert(idx, Environment.NewLine);
-                    foreach (string line in dialogText.SplitToLines())
-                    {
-                        if (line.Length > singleLineMaxCharacters)
-                            return true;
-                    }
-                }
+                return false;
             }
-            return false;
+
+            var idx = tempText.IndexOfAny(new[] { ". -", "! -", "? -" }, StringComparison.Ordinal);
+            if (idx <= 1)
+            {
+                return false;
+            }
+
+            idx++;
+            string dialogText = tempText.Remove(idx, 1).Insert(idx, Environment.NewLine);
+            return dialogText.SplitToLines().Any(line => line.Length > singleLineMaxCharacters);
         }
 
         public static Subtitle SplitLongLinesInSubtitle(Subtitle subtitle, int totalLineMaxCharacters, int singleLineMaxCharacters)
@@ -69,8 +70,10 @@ namespace Nikse.SubtitleEdit.Logic.Forms
                                     var minMsBtwnLnBy2 = Configuration.Settings.General.MinimumMillisecondsBetweenLines / 2;
                                     int spacing1 = minMsBtwnLnBy2;
                                     int spacing2 = minMsBtwnLnBy2;
-                                    if (Configuration.Settings.General.MinimumMillisecondsBetweenLines % 2 == 1)
+                                    if (Configuration.Settings.General.MinimumMillisecondsBetweenLines%2 == 1)
+                                    {
                                         spacing2++;
+                                    }
 
                                     double duration = p.Duration.TotalMilliseconds / 2.0;
                                     var newParagraph1 = new Paragraph(p);
@@ -96,7 +99,10 @@ namespace Nikse.SubtitleEdit.Logic.Forms
                                         {
                                             newParagraph1.Text = newParagraph1.Text.Remove(3, 1).Trim();
                                             if (newParagraph1.Text.StartsWith("<i> ", StringComparison.Ordinal))
+                                            {
                                                 newParagraph1.Text = newParagraph1.Text.Remove(3, 1).Trim();
+                                            }
+
                                             newParagraph2.Text = newParagraph2.Text.Remove(0, 1).Trim();
                                         }
                                     }
@@ -134,11 +140,13 @@ namespace Nikse.SubtitleEdit.Logic.Forms
                     }
                 }
                 if (!added)
+                {
                     splittedSubtitle.Paragraphs.Add(new Paragraph(p));
+                }
             }
+
             splittedSubtitle.Renumber();
             return splittedSubtitle;
         }
-
     }
 }

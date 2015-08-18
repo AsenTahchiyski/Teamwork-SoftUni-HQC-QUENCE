@@ -54,7 +54,7 @@ namespace Nikse.SubtitleEdit.Forms
 
         private string _assStyle;
         private string _ssaStyle;
-        private readonly Logic.Forms.RemoveTextForHI _removeTextForHearingImpaired;
+        private readonly Logic.Forms.RemoveTextForHi _removeTextForHearingImpaired;
         private readonly ChangeCasing _changeCasing = new ChangeCasing();
         private readonly ChangeCasingNames _changeCasingNames = new ChangeCasingNames();
         private bool _converting;
@@ -193,7 +193,7 @@ namespace Nikse.SubtitleEdit.Forms
             radioButtonShowLater.Text = Configuration.Settings.Language.ShowEarlierLater.ShowLater;
             checkBoxSetMinimumDisplayTimeBetweenSubs.Text = l.SetMinMsBetweenSubtitles;
 
-            _removeTextForHearingImpaired = new Logic.Forms.RemoveTextForHI(new Logic.Forms.RemoveTextForHISettings());
+            _removeTextForHearingImpaired = new Logic.Forms.RemoveTextForHi(new Logic.Forms.RemoveTextForHiSettings());
 
             labelFilter.Text = l.Filter;
             comboBoxFilter.Items[0] = Configuration.Settings.Language.General.AllFiles;

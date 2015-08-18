@@ -864,7 +864,7 @@
     <Compile Include="Logic\DetectEncoding\Multilang\tagMIMECPINFO.cs" />
     <Compile Include="Logic\DetectEncoding\Multilang\tagMIMECSETINFO.cs" />
     <Compile Include="Logic\DetectEncoding\Multilang\tagMLCPF.cs" />
-    <Compile Include="Logic\DetectEncoding\Multilang\tagMLDETECTCP.cs" />
+    <Compile Include="Logic\DetectEncoding\Multilang\MLDETECTCP.cs" />
     <Compile Include="Logic\DetectEncoding\Multilang\tagMLSTR_FLAGS.cs" />
     <Compile Include="Logic\DetectEncoding\Multilang\tagRFC1766INFO.cs" />
     <Compile Include="Logic\DetectEncoding\Multilang\tagSCRIPFONTINFO.cs" />

@@ -1,32 +1,35 @@
-﻿using System;
-using System.Net;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading;
-using Nikse.SubtitleEdit.Core;
-
-namespace Nikse.SubtitleEdit.Logic.Forms
+﻿namespace Nikse.SubtitleEdit.Logic.Forms
 {
+    using System;
+    using System.Net;
+    using System.Text;
+    using System.Text.RegularExpressions;
+    using System.Threading;
+    using Core;
+
     public class CheckForUpdatesHelper
     {
-        private readonly static Regex regex = new Regex(@"\d\.\d", RegexOptions.Compiled); // 3.4.0 (xth June 2014)
+        private readonly static Regex Regex = new Regex(@"\d\.\d", RegexOptions.Compiled); // 3.4.0 (xth June 2014)
 
         //private const string ReleasesUrl = "https://api.github.com/repos/SubtitleEdit/subtitleedit/releases";
         private const string ChangeLogUrl = "https://raw.githubusercontent.com/SubtitleEdit/subtitleedit/master/Changelog.txt";
 
         //private string _jsonReleases;
-        private string _changeLog;
-        private int _successCount;
+        private string changeLog;
+        private int successCount;
 
         public string Error { get; set; }
+
         public bool Done
         {
             get
             {
-                return _successCount == 1;
+                return successCount == 1;
             }
         }
+
         public string LatestVersionNumber { get; set; }
+
         public string LatestChangeLog { get; set; }
 
         private void StartDownloadString(string url, string contentType, AsyncCallback callback)
@@ -70,8 +73,8 @@ namespace Nikse.SubtitleEdit.Logic.Forms
         {
             try
             {
-                _changeLog = GetStringFromResponse(result);
-                LatestChangeLog = GetLastestChangeLog(_changeLog);
+                changeLog = GetStringFromResponse(result);
+                LatestChangeLog = GetLastestChangeLog(changeLog);
                 LatestVersionNumber = GetLastestVersionNumber(LatestChangeLog);
             }
             catch (Exception exception)
@@ -88,13 +91,19 @@ namespace Nikse.SubtitleEdit.Logic.Forms
             foreach (string line in latestChangeLog.Replace(Environment.NewLine, "\n").Split('\n'))
             {
                 string s = line.Trim();
-                if (!s.Contains("BETA", StringComparison.OrdinalIgnoreCase) && !s.Contains('x') && !s.Contains('*') && s.Contains('(') && s.Contains(')') && regex.IsMatch(s))
+                if (!s.Contains("BETA", StringComparison.OrdinalIgnoreCase) && 
+                    !s.Contains('x') && !s.Contains('*') && 
+                    s.Contains('(') && s.Contains(')') && 
+                    Regex.IsMatch(s))
                 {
                     int indexOfSpace = s.IndexOf(' ');
                     if (indexOfSpace > 0)
+                    {
                         return s.Substring(0, indexOfSpace).Trim();
+                    }
                 }
             }
+
             return null;
         }
 
@@ -106,12 +115,16 @@ namespace Nikse.SubtitleEdit.Logic.Forms
             {
                 string s = line.Trim();
                 if (s.Length == 0 && releaseOn)
+                {
                     return sb.ToString();
+                }
 
                 if (!releaseOn)
                 {
-                    if (!s.Contains('x') && !s.Contains('*') && s.Contains('(') && s.Contains(')') && regex.IsMatch(s))
+                    if (!s.Contains('x') && !s.Contains('*') && s.Contains('(') && s.Contains(')') && Regex.IsMatch(s))
+                    {
                         releaseOn = true;
+                    }
                 }
 
                 if (releaseOn)
@@ -119,6 +132,7 @@ namespace Nikse.SubtitleEdit.Logic.Forms
                     sb.AppendLine(line);
                 }
             }
+
             return sb.ToString();
         }
 
@@ -131,18 +145,26 @@ namespace Nikse.SubtitleEdit.Logic.Forms
             int index = 0;
             while (count > 0)
             {
-                count = responseStream.Read(buffer, index, 2048);
+                if (responseStream != null)
+                {
+                    count = responseStream.Read(buffer, index, 2048);
+                }
+
                 index += count;
             }
+
             if (index > 0)
-                _successCount++;
+            {
+                successCount++;
+            }
+
             return Encoding.UTF8.GetString(buffer, 0, index);
         }
 
         public CheckForUpdatesHelper()
         {
             Error = null;
-            _successCount = 0;
+            successCount = 0;
         }
 
         public void CheckForUpdates()
@@ -162,26 +184,33 @@ namespace Nikse.SubtitleEdit.Logic.Forms
                 string[] currentVersionInfo = Utilities.AssemblyVersion.Split('.');
                 string minorMinorVersion = string.Empty;
                 if (currentVersionInfo.Length >= 3 && currentVersionInfo[2] != "0")
+                {
                     minorMinorVersion = "." + currentVersionInfo[2];
+                }
+
                 string currentVersion = String.Format("{0}.{1}{2}", currentVersionInfo[0], currentVersionInfo[1], minorMinorVersion);
                 if (currentVersion == LatestVersionNumber)
+                {
                     return false;
+                }
 
                 string[] latestVersionInfo = LatestVersionNumber.Split('.');
                 if (int.Parse(latestVersionInfo[0]) > int.Parse(currentVersionInfo[0]))
+                {
                     return true;
-                if (int.Parse(latestVersionInfo[0]) == int.Parse(currentVersionInfo[0]) && int.Parse(latestVersionInfo[1]) > int.Parse(currentVersionInfo[1]))
-                    return true;
-                if (int.Parse(latestVersionInfo[0]) == int.Parse(currentVersionInfo[0]) && int.Parse(latestVersionInfo[1]) == int.Parse(currentVersionInfo[1]) && int.Parse(latestVersionInfo[2]) > int.Parse(currentVersionInfo[2]))
-                    return true;
+                }
 
-                return false;
+                if (int.Parse(latestVersionInfo[0]) == int.Parse(currentVersionInfo[0]) && int.Parse(latestVersionInfo[1]) > int.Parse(currentVersionInfo[1]))
+                {
+                    return true;
+                }
+
+                return int.Parse(latestVersionInfo[0]) == int.Parse(currentVersionInfo[0]) && int.Parse(latestVersionInfo[1]) == int.Parse(currentVersionInfo[1]) && int.Parse(latestVersionInfo[2]) > int.Parse(currentVersionInfo[2]);
             }
             catch
             {
                 return false;
             }
         }
-
     }
 }

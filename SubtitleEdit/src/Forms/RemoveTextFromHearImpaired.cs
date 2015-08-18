@@ -12,14 +12,14 @@ namespace Nikse.SubtitleEdit.Forms
     {
         private Subtitle _subtitle;
         private readonly LanguageStructure.RemoveTextFromHearImpaired _language;
-        private readonly RemoveTextForHI _removeTextForHiLib;
+        private readonly RemoveTextForHi _removeTextForHiLib;
         private Dictionary<Paragraph, string> _fixes;
 
         public FormRemoveTextForHearImpaired()
         {
             InitializeComponent();
 
-            _removeTextForHiLib = new RemoveTextForHI(GetSettings());
+            _removeTextForHiLib = new RemoveTextForHi(GetSettings());
 
             checkBoxRemoveTextBetweenSquares.Checked = Configuration.Settings.RemoveTextForHearingImpaired.RemoveTextBetweenBrackets;
             checkBoxRemoveTextBetweenParentheses.Checked = Configuration.Settings.RemoveTextForHearingImpaired.RemoveTextBetweenParentheses;
@@ -240,9 +240,9 @@ namespace Nikse.SubtitleEdit.Forms
             Cursor = Cursors.Default;
         }
 
-        public RemoveTextForHISettings GetSettings()
+        public RemoveTextForHiSettings GetSettings()
         {
-            var settings = new RemoveTextForHISettings
+            var settings = new RemoveTextForHiSettings
             {
                 OnlyIfInSeparateLine = checkBoxOnlyIfInSeparateLine.Checked,
                 RemoveIfAllUppercase = checkBoxRemoveIfAllUppercase.Checked,
