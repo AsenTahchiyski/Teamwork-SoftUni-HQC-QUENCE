@@ -1,11 +1,11 @@
-﻿namespace MultiLanguage
+﻿namespace Nikse.SubtitleEdit.Logic.DetectEncoding.Multilang
 {
     using System.Runtime.InteropServices;
 
     [StructLayout(LayoutKind.Sequential, Pack = 4)]
-    public struct _RemotableHandle
+    public struct RemotableHandle
     {
         public int fContext;
-        public __MIDL_IWinTypes_0009 u;
+        public MidlIWinTypes0009 u;
     }
 }

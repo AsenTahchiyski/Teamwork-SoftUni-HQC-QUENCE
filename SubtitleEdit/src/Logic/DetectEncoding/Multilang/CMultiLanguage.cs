@@ -1,4 +1,4 @@
-﻿namespace MultiLanguage
+﻿namespace Nikse.SubtitleEdit.Logic.DetectEncoding.Multilang
 {
     using System.Runtime.InteropServices;
 

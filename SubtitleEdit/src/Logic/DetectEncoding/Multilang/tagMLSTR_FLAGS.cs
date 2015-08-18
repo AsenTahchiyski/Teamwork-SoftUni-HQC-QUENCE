@@ -1,9 +1,8 @@
-﻿namespace MultiLanguage
+﻿namespace Nikse.SubtitleEdit.Logic.DetectEncoding.Multilang
 {
-
-    public enum tagMLSTR_FLAGS
+    public enum TagMlstrFlags
     {
-        MLSTR_READ = 1,
-        MLSTR_WRITE = 2
+        MlstrRead = 1,
+        MlstrWrite = 2
     }
 }
