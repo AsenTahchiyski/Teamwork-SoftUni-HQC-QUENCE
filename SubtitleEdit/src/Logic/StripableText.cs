@@ -1,15 +1,18 @@
-﻿using Nikse.SubtitleEdit.Core;
-using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Nikse.SubtitleEdit.Logic
+﻿namespace Nikse.SubtitleEdit.Logic
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Text;
+    using Core;
+
     public class StripableText
     {
         public string Pre { get; set; }
+        
         public string Post { get; set; }
+        
         public string StrippedText { get; set; }
+        
         public string OriginalText { get; private set; }
 
         public string MergedString
@@ -62,6 +65,7 @@ namespace Nikse.SubtitleEdit.Logic
                         text = text.Remove(0, endIndex);
                     }
                 }
+
                 while (text.Length < beginLength);
             }
 
@@ -98,6 +102,7 @@ namespace Nikse.SubtitleEdit.Logic
                         }
                     }
                 }
+
                 while (text.Length < beginLength);
             }
 
@@ -113,6 +118,7 @@ namespace Nikse.SubtitleEdit.Logic
                 i++;
                 id = string.Format("_@{0}_", i);
             }
+
             replaceIds.Add(id);
             replaceNames.Add(name);
             return id;
@@ -138,14 +144,18 @@ namespace Nikse.SubtitleEdit.Logic
                                    Environment.NewLine.EndsWith(lower[start - 1]);
 
                     if (startOk && string.CompareOrdinal(name, "Don") == 0 && lower.Substring(start).StartsWith("don't"))
+                    {
                         startOk = false;
+                    }
 
                     if (startOk)
                     {
                         int end = start + name.Length;
                         bool endOk = end <= lower.Length;
                         if (endOk)
+                        {
                             endOk = end == lower.Length || (@" ,.!?:;')- <""" + Environment.NewLine).Contains(lower[end]);
+                        }
 
                         if (endOk && StrippedText.Length >= start + name.Length)
                         {
@@ -156,10 +166,15 @@ namespace Nikse.SubtitleEdit.Logic
                             lower = StrippedText.ToLower();
                         }
                     }
+
                     if (start + 3 > lower.Length)
+                    {
                         start = lower.Length + 1;
+                    }
                     else
+                    {
                         start = lower.IndexOf(name.ToLower(), start + 3, StringComparison.Ordinal);
+                    }
                 }
             }
 
@@ -204,7 +219,9 @@ namespace Nikse.SubtitleEdit.Logic
                 if (!startWithUppercase && (s.EndsWith('♪') || s.EndsWith('♫')))
                 {
                     if (!Pre.Contains(new[] { '♪', '♫' }))
+                    {
                         startWithUppercase = true;
+                    }
                 }
 
                 if (startWithUppercase && StrippedText.Length > 0 && !Pre.Contains("..."))
@@ -228,7 +245,8 @@ namespace Nikse.SubtitleEdit.Logic
                         {
                             sb.Append(s);
                         }
-                        else if ((sb.EndsWith('<') || sb.ToString().EndsWith("</", StringComparison.Ordinal)) && i + 1 < StrippedText.Length && StrippedText[i + 1] == '>')
+                        else if ((sb.EndsWith('<') || sb.ToString().EndsWith("</", StringComparison.Ordinal)) && 
+                            i + 1 < StrippedText.Length && StrippedText[i + 1] == '>')
                         { // tags
                             sb.Append(s);
                         }
@@ -264,7 +282,9 @@ namespace Nikse.SubtitleEdit.Logic
                             { // I [Motor roaring] love you!
                                 string temp = sb.ToString(0, idx - 1).Trim();
                                 if (temp.Length > 0 && !Utilities.LowercaseLetters.Contains(temp[temp.Length - 1]))
+                                {
                                     lastWasBreak = true;
+                                }
                             }
                             else
                             {
@@ -273,14 +293,11 @@ namespace Nikse.SubtitleEdit.Logic
                         }
                     }
                 }
+
                 StrippedText = sb.ToString();
             }
 
-            if (changeNameCases)
-                ReplaceNames2Fix(replaceIds, replaceNames);
-            else
-                ReplaceNames2Fix(replaceIds, originalNames);
+            ReplaceNames2Fix(replaceIds, changeNameCases ? replaceNames : originalNames);
         }
-
     }
 }

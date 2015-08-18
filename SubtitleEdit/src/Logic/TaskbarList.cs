@@ -1,8 +1,8 @@
-﻿using System;
-using System.Runtime.InteropServices;
-
-namespace Nikse.SubtitleEdit.Logic
+﻿namespace Nikse.SubtitleEdit.Logic
 {
+    using System;
+    using System.Runtime.InteropServices;
+
     /// <summary>
     /// Windows 7+ taskbar list - http://msdn.microsoft.com/en-us/library/windows/desktop/dd391692%28v=vs.85%29.aspx
     /// </summary>
@@ -17,19 +17,25 @@ namespace Nikse.SubtitleEdit.Logic
         public static void MarkFullscreenWindow(IntPtr hwnd, bool fullScreen)
         {
             if (Supported && hwnd != IntPtr.Zero)
+            {
                 Taskbar.MarkFullscreenWindow(hwnd, fullScreen ? 1 : 0);
+            }
         }
 
         public static void SetProgressState(IntPtr hwnd, TaskbarButtonProgressFlags state)
         {
             if (Supported && hwnd != IntPtr.Zero)
+            {
                 Taskbar.SetProgressState(hwnd, state);
+            }
         }
 
         public static void SetProgressValue(IntPtr hwnd, double value, double max)
         {
             if (Supported && hwnd != IntPtr.Zero)
+            {
                 Taskbar.SetProgressValue(hwnd, (ulong)value, (ulong)max);
+            }
         }
 
         [ClassInterface(ClassInterfaceType.None),
@@ -37,7 +43,6 @@ namespace Nikse.SubtitleEdit.Logic
         private class CLSID_TaskbarList
         {
         }
-
     }
 
     /// <summary>Extends ITaskbarList2 by exposing methods that support the unified launching and switching
@@ -198,14 +203,14 @@ namespace Nikse.SubtitleEdit.Logic
     {
 #pragma warning disable 0169
 
-        private ThumbButtonMask _mask;
-        private uint _id;
-        private uint _bitmap;
-        private IntPtr _icon;
+        private ThumbButtonMask mask;
+        private uint id;
+        private uint bitmap;
+        private IntPtr icon;
 
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
         public string Tip;
-        private ThumbButtonFlags _flags;
+        private ThumbButtonFlags flags;
 
 #pragma warning restore 0169
     }
@@ -230,5 +235,4 @@ namespace Nikse.SubtitleEdit.Logic
         Error = 0x4,
         Paused = 0x8
     }
-
 }

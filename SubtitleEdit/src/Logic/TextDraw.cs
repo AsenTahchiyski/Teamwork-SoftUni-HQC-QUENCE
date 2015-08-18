@@ -1,9 +1,9 @@
-﻿using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Text;
-
-namespace Nikse.SubtitleEdit.Logic
+﻿namespace Nikse.SubtitleEdit.Logic
 {
+    using System.Drawing;
+    using System.Drawing.Drawing2D;
+    using System.Text;
+
     public static class TextDraw
     {
         public static void DrawText(Font font, StringFormat sf, GraphicsPath path, StringBuilder sb, bool isItalic, bool isBold, bool isUnderline, float left, float top, ref bool newLine, float leftMargin, ref int pathPointsStart)
@@ -18,12 +18,20 @@ namespace Nikse.SubtitleEdit.Logic
                 for (int i = list.Length - 1; i >= 0; i--)
                 {
                     if (list[i].X > next.X)
+                    {
                         next.X = list[i].X;
+                    }
+
                     k++;
                     if (k > 60)
+                    {
                         break;
+                    }
+
                     if (i <= pathPointsStart && pathPointsStart != -1)
+                    {
                         break;
+                    }
                 }
             }
 
@@ -36,11 +44,19 @@ namespace Nikse.SubtitleEdit.Logic
 
             var fontStyle = FontStyle.Regular;
             if (isItalic)
+            {
                 fontStyle |= FontStyle.Italic;
+            }
+
             if (isBold)
+            {
                 fontStyle |= FontStyle.Bold;
+            }
+
             if (isUnderline)
+            {
                 fontStyle |= FontStyle.Underline;
+            }
 
             try
             {
@@ -58,12 +74,13 @@ namespace Nikse.SubtitleEdit.Logic
                     path.AddString(sb.ToString(), new FontFamily("Arial"), (int)fontStyle, font.Size, next, sf);
                 }
             }
+
             sb.Length = 0;
         }
 
         public static float MeasureTextWidth(Font font, string text, bool bold)
         {
-            using (var sf = new StringFormat { Alignment = StringAlignment.Near, LineAlignment = StringAlignment.Near })
+            using (var format = new StringFormat { Alignment = StringAlignment.Near, LineAlignment = StringAlignment.Near })
             {
                 using (var path = new GraphicsPath())
                 {
@@ -71,7 +88,7 @@ namespace Nikse.SubtitleEdit.Logic
                     bool newLine = false;
                     const int leftMargin = 0;
                     int pathPointsStart = -1;
-                    DrawText(font, sf, path, sb, false, bold, false, 0, 0, ref newLine, leftMargin, ref pathPointsStart);
+                    DrawText(font, format, path, sb, false, bold, false, 0, 0, ref newLine, leftMargin, ref pathPointsStart);
                     if (path.PathData.Points.Length == 0)
                     {
                         return 0;
@@ -81,19 +98,29 @@ namespace Nikse.SubtitleEdit.Logic
                     var list = (PointF[])path.PathPoints.Clone(); // avoid using very slow path.PathPoints indexer!!!
                     int index = list.Length - 42;
                     if (index < 0)
+                    {
                         index = 0;
+                    }
+
                     for (int i = index; i < list.Length; i += 2)
                     {
                         if (list[i].X > width)
+                        {
                             width = list[i].X;
+                        }
                     }
                     int max = 52;
                     if (max > list.Length)
+                    {
                         max = list.Length;
+                    }
+
                     for (int i = 0; i < max; i += 2)
                     {
                         if (list[i].X > width)
+                        {
                             width = list[i].X;
+                        }
                     }
 
                     return width;
@@ -103,7 +130,7 @@ namespace Nikse.SubtitleEdit.Logic
 
         public static float MeasureTextHeight(Font font, string text, bool bold)
         {
-            using (var sf = new StringFormat { Alignment = StringAlignment.Near, LineAlignment = StringAlignment.Near })
+            using (var format = new StringFormat { Alignment = StringAlignment.Near, LineAlignment = StringAlignment.Near })
             {
                 using (var path = new GraphicsPath())
                 {
@@ -111,29 +138,35 @@ namespace Nikse.SubtitleEdit.Logic
                     bool newLine = false;
                     const int leftMargin = 0;
                     int pathPointsStart = -1;
-                    DrawText(font, sf, path, sb, false, bold, false, 0, 0, ref newLine, leftMargin, ref pathPointsStart);
+                    DrawText(font, format, path, sb, false, bold, false, 0, 0, ref newLine, leftMargin, ref pathPointsStart);
 
                     float height = 0;
                     var list = (PointF[])path.PathPoints.Clone(); // avoid using very slow path.PathPoints indexer!!!
                     int index = list.Length - 80;
                     if (index < 0)
+                    {
                         index = 0;
+                    }
+
                     for (int i = index; i < list.Length; i += 2)
                     {
                         if (list[i].Y > height)
+                        {
                             height = list[i].Y;
+                        }
                     }
 
                     for (int i = 0; i < list.Length; i += 2)
                     {
                         if (list[i].Y > height)
+                        {
                             height = list[i].Y;
+                        }
                     }
 
                     return height;
                 }
             }
         }
-
     }
 }
