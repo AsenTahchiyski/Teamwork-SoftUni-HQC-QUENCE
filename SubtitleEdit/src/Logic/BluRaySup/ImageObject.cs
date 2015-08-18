@@ -16,10 +16,9 @@
  * NOTE: Converted to C# and modified by Nikse.dk@gmail.com
  */
 
-using System.Collections.Generic;
-
 namespace Nikse.SubtitleEdit.Logic.BluRaySup
 {
+    using System.Collections.Generic;
 
     public class ImageObject
     {

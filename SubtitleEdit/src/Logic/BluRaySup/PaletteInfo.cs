@@ -16,10 +16,10 @@
  * NOTE: Converted to C# and modified by Nikse.dk@gmail.com
  */
 
-using System;
-
 namespace Nikse.SubtitleEdit.Logic.BluRaySup
 {
+    using System;
+
     /// <summary>
     /// contains offset and size of one update of a palette
     /// </summary>
@@ -45,6 +45,5 @@ namespace Nikse.SubtitleEdit.Logic.BluRaySup
             PaletteBuffer = new byte[paletteInfo.PaletteBuffer.Length];
             Buffer.BlockCopy(paletteInfo.PaletteBuffer, 0, PaletteBuffer, 0, PaletteBuffer.Length);
         }
-
     }
 }

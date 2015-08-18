@@ -1,12 +1,11 @@
-﻿using System;
-using System.Globalization;
-using System.IO;
-
-namespace Nikse.SubtitleEdit.Logic.ContainerFormats.Mp4.Boxes
+﻿namespace Nikse.SubtitleEdit.Logic.ContainerFormats.Mp4.Boxes
 {
+    using System;
+    using System.Globalization;
+    using System.IO;
+
     public class Mdhd : Box
     {
-
         public readonly UInt64 CreationTime;
         public readonly UInt64 ModificationTime;
         public readonly UInt32 TimeScale;
@@ -482,6 +481,7 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats.Mp4.Boxes
                     case ("zul"): return "Zulu";
                     case ("zun"): return "Zuni";
                 }
+
                 return "Any";
             }
         }

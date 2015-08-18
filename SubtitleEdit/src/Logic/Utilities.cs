@@ -258,10 +258,10 @@
                 {
                     var dh = new RiffDecodeHeader(rp);
                     rp.OpenFile(fileName);
-                    info.FileType = RiffParser.FromFourCC(rp.FileType);
-                    if (RiffParser.ckidAVI == rp.FileType)
+                    info.FileType = RiffParser.FromFourCc(rp.FileType);
+                    if (RiffParser.CkidAvi == rp.FileType)
                     {
-                        dh.ProcessMainAVI();
+                        dh.ProcessMainAvi();
                         info.Width = dh.Width;
                         info.Height = dh.Height;
                         info.FramesPerSecond = dh.FrameRate;

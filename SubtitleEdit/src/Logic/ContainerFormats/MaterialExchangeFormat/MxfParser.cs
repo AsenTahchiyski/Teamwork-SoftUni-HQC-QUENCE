@@ -1,28 +1,30 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-
-namespace Nikse.SubtitleEdit.Logic.ContainerFormats.MaterialExchangeFormat
+﻿namespace Nikse.SubtitleEdit.Logic.ContainerFormats.MaterialExchangeFormat
 {
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+
     public class MxfParser
     {
+        private readonly List<string> subtitleList = new List<string>();
+
         public string FileName { get; private set; }
         public bool IsValid { get; private set; }
 
-        private readonly List<string> _subtitleList = new List<string>();
         public List<string> GetSubtitles()
         {
-            return _subtitleList;
+            return subtitleList;
         }
 
-        private long _startPosition;
+        private long startPosition;
 
         public MxfParser(string fileName)
         {
             FileName = fileName;
-            using (var fs = new FileStream(FileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            using (var fileStream = new FileStream(FileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
             {
-                ParseMxf(fs);
+                ParseMxf(fileStream);
             }
         }
 
@@ -36,37 +38,40 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats.MaterialExchangeFormat
         {
             stream.Seek(0, SeekOrigin.Begin);
             ReadHeaderPartitionPack(stream);
-            if (IsValid)
+            if (!IsValid)
             {
-                var length = stream.Length;
-                long next = _startPosition;
-                while (next + 20 < length)
+                return;
+            }
+
+            var length = stream.Length;
+            long next = startPosition;
+            while (next + 20 < length)
+            {
+                stream.Seek(next, SeekOrigin.Begin);
+                var klv = new KlvPacket(stream);
+
+                //Console.WriteLine();
+                //Console.WriteLine("Key: " + klv.DisplayKey);
+                //Console.WriteLine("Type: " + klv.IdentifyerType);
+                //Console.WriteLine("Total size: " + klv.TotalSize);
+                //Console.WriteLine("Data position: " + klv.DataPosition);
+                //if (klv.IdentifyerType == KeyIdentifier.PartitionPack)
+                //    Console.WriteLine("Partition status: " + klv.PartionStatus);
+
+                next += klv.TotalSize;
+
+                if (klv.IdentifierType != KeyIdentifier.EssenceElement || klv.DataSize >= 500000)
                 {
-                    stream.Seek(next, SeekOrigin.Begin);
-                    var klv = new KlvPacket(stream);
+                    continue;
+                }
 
-                    //Console.WriteLine();
-                    //Console.WriteLine("Key: " + klv.DisplayKey);
-                    //Console.WriteLine("Type: " + klv.IdentifyerType);
-                    //Console.WriteLine("Total size: " + klv.TotalSize);
-                    //Console.WriteLine("Data position: " + klv.DataPosition);
-                    //if (klv.IdentifyerType == KeyIdentifier.PartitionPack)
-                    //    Console.WriteLine("Partition status: " + klv.PartionStatus);
-
-                    next += klv.TotalSize;
-
-                    if (klv.IdentifierType == KeyIdentifier.EssenceElement &&
-                        klv.DataSize < 500000)
-                    {
-                        stream.Seek(klv.DataPosition, SeekOrigin.Begin);
-                        var buffer = new byte[klv.DataSize];
-                        stream.Read(buffer, 0, buffer.Length);
-                        string s = System.Text.Encoding.UTF8.GetString(buffer);
-                        if (IsSubtitle(s))
-                        {
-                            _subtitleList.Add(s);
-                        }
-                    }
+                stream.Seek(klv.DataPosition, SeekOrigin.Begin);
+                var buffer = new byte[klv.DataSize];
+                stream.Read(buffer, 0, buffer.Length);
+                string s = System.Text.Encoding.UTF8.GetString(buffer);
+                if (IsSubtitle(s))
+                {
+                    subtitleList.Add(s);
                 }
             }
         }
@@ -77,16 +82,13 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats.MaterialExchangeFormat
             {
                 return false;
             }
+
             if (!s.Contains("xml") && !s.Contains(" --> ") && !s.Contains("00:00"))
             {
                 return false;
             }
 
-            var list = new List<string>();
-            foreach (string line in s.Replace(Environment.NewLine, "\r").Replace("\n", "\r").Split('\r'))
-            {
-                list.Add(line);
-            }
+            var list = s.Replace(Environment.NewLine, "\r").Replace("\n", "\r").Split('\r').ToList();
             var subtitle = new Subtitle();
             return subtitle.ReloadLoadSubtitle(list, null) != null;
         }
@@ -100,7 +102,8 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats.MaterialExchangeFormat
             {
                 return;
             }
-            _startPosition = 0;
+
+            startPosition = 0;
 
             for (int i = 0; i < count - 11; i++)
             {
@@ -117,12 +120,11 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats.MaterialExchangeFormat
                     buffer[i + 09] == 0x01 &&
                     buffer[i + 10] == 0x02)
                 {
-                    _startPosition = i;
+                    startPosition = i;
                     IsValid = true;
                     break;
                 }
             }
         }
-
     }
 }

@@ -16,15 +16,16 @@
  * NOTE: Converted to C# and modified by Nikse.dk@gmail.com
  */
 
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.IO;
-using System.Text;
-
 namespace Nikse.SubtitleEdit.Logic.BluRaySup
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Drawing;
+    using System.Drawing.Imaging;
+    using System.IO;
+    using System.Linq;
+    using System.Text;
+
     public static class BluRaySupParser
     {
 
@@ -48,6 +49,7 @@ namespace Nikse.SubtitleEdit.Logic.BluRaySup
             /// <summary>
             /// segment DTS time stamp
             /// </summary>
+            //public long DtsTimestamp;
             public long DtsTimestamp;
         }
 
@@ -70,9 +72,8 @@ namespace Nikse.SubtitleEdit.Logic.BluRaySup
                 // also all entries must be fully transparent after initialization
 
                 bool fadeOut = false;
-                for (int j = 0; j < paletteInfos.Count; j++)
+                foreach (PaletteInfo p in paletteInfos)
                 {
-                    PaletteInfo p = paletteInfos[j];
                     int index = 0;
 
                     for (int i = 0; i < p.PaletteSize; i++)
@@ -105,10 +106,12 @@ namespace Nikse.SubtitleEdit.Logic.BluRaySup
                         index++;
                     }
                 }
+
                 if (fadeOut)
                 {
                     System.Diagnostics.Debug.Print("fade out detected -> patched palette\n");
                 }
+
                 return palette;
             }
 
@@ -118,10 +121,10 @@ namespace Nikse.SubtitleEdit.Logic.BluRaySup
             /// <returns>bitmap of the decoded caption</returns>
             public static Bitmap DecodeImage(PcsObject pcs, IList<OdsData> data, List<PaletteInfo> palettes)
             {
-                long ticks = DateTime.Now.Ticks;
-
                 if (pcs == null || data == null || data.Count == 0)
+                {
                     return new Bitmap(1, 1);
+                }
 
                 int w = data[0].Size.Width;
                 int h = data[0].Size.Height;
@@ -147,57 +150,76 @@ namespace Nikse.SubtitleEdit.Logic.BluRaySup
                             // next line
                             ofs = (ofs / w) * w;
                             if (xpos < w)
+                            {
                                 ofs += w;
+                            }
+
                             xpos = 0;
                         }
                         else
                         {
                             int size;
-                            if ((b & 0xC0) == 0x40)
+                            switch ((b & 0xC0))
                             {
-                                if (index < buf.Length)
+                                case 0x40:
                                 {
+                                    if (index >= buf.Length) continue;
                                     // 00 4x xx -> xxx zeroes
                                     size = ((b - 0x40) << 8) + (buf[index++] & 0xff);
                                     Color c = Color.FromArgb(pal.GetArgb(0));
                                     for (int i = 0; i < size; i++)
+                                    {
                                         PutPixel(bm, ofs++, c);
+                                    }
+
                                     xpos += size;
                                 }
-                            }
-                            else if ((b & 0xC0) == 0x80)
-                            {
-                                if (index < buf.Length)
+                                    break;
+                                case 0x80:
                                 {
+                                    if (index >= buf.Length) continue;
                                     // 00 8x yy -> x times value y
                                     size = (b - 0x80);
                                     b = buf[index++] & 0xff;
                                     Color c = Color.FromArgb(pal.GetArgb(b));
                                     for (int i = 0; i < size; i++)
+                                    {
                                         PutPixel(bm, ofs++, c);
+                                    }
+
                                     xpos += size;
                                 }
-                            }
-                            else if ((b & 0xC0) != 0)
-                            {
-                                if (index < buf.Length)
-                                {
-                                    // 00 cx yy zz -> xyy times value z
-                                    size = ((b - 0xC0) << 8) + (buf[index++] & 0xff);
-                                    b = buf[index++] & 0xff;
-                                    Color c = Color.FromArgb(pal.GetArgb(b));
-                                    for (int i = 0; i < size; i++)
-                                        PutPixel(bm, ofs++, c);
-                                    xpos += size;
-                                }
-                            }
-                            else
-                            {
-                                // 00 xx -> xx times 0
-                                Color c = Color.FromArgb(pal.GetArgb(0));
-                                for (int i = 0; i < b; i++)
-                                    PutPixel(bm, ofs++, c);
-                                xpos += b;
+                                    break;
+                                default:
+                                    if ((b & 0xC0) != 0)
+                                    {
+                                        if (index < buf.Length)
+                                        {
+                                            // 00 cx yy zz -> xyy times value z
+                                            size = ((b - 0xC0) << 8) + (buf[index++] & 0xff);
+                                            b = buf[index++] & 0xff;
+                                            Color c = Color.FromArgb(pal.GetArgb(b));
+                                            for (int i = 0; i < size; i++)
+                                            {
+                                                PutPixel(bm, ofs++, c);
+                                            }
+
+                                            xpos += size;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        // 00 xx -> xx times 0
+                                        Color c = Color.FromArgb(pal.GetArgb(0));
+                                        for (int i = 0; i < b; i++)
+                                        {
+                                            PutPixel(bm, ofs++, c);
+                                        }
+
+                                        xpos += b;
+                                    }
+
+                                    break;
                             }
                         }
                     }
@@ -217,17 +239,23 @@ namespace Nikse.SubtitleEdit.Logic.BluRaySup
                 int x = index % bmp.Width;
                 int y = index / bmp.Width;
                 if (x < bmp.Width && y < bmp.Height)
+                {
                     bmp.SetPixel(x, y, Color.FromArgb(palette.GetArgb(color)));
+                }
             }
 
             private static void PutPixel(FastBitmap bmp, int index, Color color)
             {
-                if (color.A > 0)
+                if (color.A <= 0)
                 {
-                    int x = index % bmp.Width;
-                    int y = index / bmp.Width;
-                    if (x < bmp.Width && y < bmp.Height)
-                        bmp.SetPixel(x, y, color);
+                    return;
+                }
+
+                int x = index % bmp.Width;
+                int y = index / bmp.Width;
+                if (x < bmp.Width && y < bmp.Height)
+                {
+                    bmp.SetPixel(x, y, color);
                 }
             }
         }
@@ -252,31 +280,23 @@ namespace Nikse.SubtitleEdit.Logic.BluRaySup
             /// </summary>
             public bool IsForced
             {
-                get
-                {
-                    foreach (PcsObject obj in PcsObjects)
-                    {
-                        if (obj.IsForced)
-                            return true;
-                    }
-                    return false;
-                }
+                get { return PcsObjects.Any(obj => obj.IsForced); }
             }
 
             public Bitmap GetBitmap()
             {
                 if (PcsObjects.Count == 1)
+                {
                     return SupDecoder.DecodeImage(PcsObjects[0], BitmapObjects[0], PaletteInfos);
+                }
 
                 var r = Rectangle.Empty;
                 for (int ioIndex = 0; ioIndex < PcsObjects.Count; ioIndex++)
                 {
                     var ioRect = new Rectangle(PcsObjects[ioIndex].Origin, BitmapObjects[ioIndex][0].Size);
-                    if (r.IsEmpty)
-                        r = ioRect;
-                    else
-                        r = Rectangle.Union(r, ioRect);
+                    r = r.IsEmpty ? ioRect : Rectangle.Union(r, ioRect);
                 }
+
                 var mergedBmp = new Bitmap(r.Width, r.Height, PixelFormat.Format32bppArgb);
                 for (var ioIndex = 0; ioIndex < PcsObjects.Count; ioIndex++)
                 {
@@ -287,6 +307,7 @@ namespace Nikse.SubtitleEdit.Logic.BluRaySup
                         gSideBySide.DrawImage(singleBmp, offset.X, offset.Y);
                     }
                 }
+
                 return mergedBmp;
             }
         }
@@ -370,6 +391,7 @@ namespace Nikse.SubtitleEdit.Logic.BluRaySup
             {
                 log.AppendLine("Unable to read segment - PG missing!");
             }
+
             return segment;
         }
 
@@ -433,6 +455,7 @@ namespace Nikse.SubtitleEdit.Logic.BluRaySup
                     offset += 8;
                 }
             }
+
             pcs.Message = sb.ToString();
             return pcs;
         }
@@ -440,23 +463,32 @@ namespace Nikse.SubtitleEdit.Logic.BluRaySup
         private static bool CompletePcs(PcsData pcs, Dictionary<int, List<OdsData>> bitmapObjects, Dictionary<int, List<PaletteInfo>> palettes)
         {
             if (pcs == null || pcs.PcsObjects == null || palettes == null)
+            {
                 return false;
+            }
 
             if (pcs.PcsObjects.Count == 0)
+            {
                 return true;
+            }
 
             if (!palettes.ContainsKey(pcs.PaletteId))
+            {
                 return false;
+            }
 
             pcs.PaletteInfos = new List<PaletteInfo>(palettes[pcs.PaletteId]);
             pcs.BitmapObjects = new List<List<OdsData>>();
-            for (int index = 0; index < pcs.PcsObjects.Count; index++)
+            foreach (int objId in pcs.PcsObjects.Select(t => t.ObjectId))
             {
-                int objId = pcs.PcsObjects[index].ObjectId;
                 if (!bitmapObjects.ContainsKey(objId))
+                {
                     return false;
+                }
+
                 pcs.BitmapObjects.Add(bitmapObjects[objId]);
             }
+
             return true;
         }
 
@@ -476,7 +508,9 @@ namespace Nikse.SubtitleEdit.Logic.BluRaySup
             p.PaletteSize = (segment.Size - 2) / 5;
 
             if (p.PaletteSize <= 0)
+            {
                 return new PdsData { Message = "Empty palette" };
+            }
 
             p.PaletteBuffer = new byte[p.PaletteSize * 5];
             Buffer.BlockCopy(buffer, 2, p.PaletteBuffer, 0, p.PaletteSize * 5); // save palette buffer in palette object
@@ -495,6 +529,7 @@ namespace Nikse.SubtitleEdit.Logic.BluRaySup
         /// </summary>
         /// <param name="buffer">raw byte date, starting right after segment</param>
         /// <param name="segment">object containing info about the current segment</param>
+        /// <param name="forceFirst"></param>
         /// <returns>true if this is a valid new object (neither invalid nor a fragment)</returns>
         private static OdsData ParseOds(byte[] buffer, SupSegment segment, bool forceFirst)
         {
@@ -550,13 +585,16 @@ namespace Nikse.SubtitleEdit.Logic.BluRaySup
             bool forceFirstOds = true;
             var bitmapObjects = new Dictionary<int, List<OdsData>>();
             PcsData latestPcs = null;
-            int latestCompNum = -1;
             var pcsList = new List<PcsData>();
             byte[] headerBuffer;
             if (fromMatroskaFile)
+            {
                 headerBuffer = new byte[3];
+            }
             else
+            {
                 headerBuffer = new byte[HeaderSize];
+            }
 
             while (position < ms.Length)
             {
@@ -566,9 +604,14 @@ namespace Nikse.SubtitleEdit.Logic.BluRaySup
                 ms.Read(headerBuffer, 0, headerBuffer.Length);
                 SupSegment segment;
                 if (fromMatroskaFile)
+                {
                     segment = ParseSegmentHeaderFromMatroska(headerBuffer);
+                }
                 else
+                {
                     segment = ParseSegmentHeader(headerBuffer, log);
+                }
+
                 position += headerBuffer.Length;
 
                 // Read segment data
@@ -601,9 +644,11 @@ namespace Nikse.SubtitleEdit.Logic.BluRaySup
                                         log.AppendLine("Extra Palette");
                                     }
                                 }
+
                                 palettes[pds.PaletteId].Add(pds.PaletteInfo);
                             }
                         }
+
                         break;
 
                     case 0x15: // Image bitmap data
@@ -637,8 +682,10 @@ namespace Nikse.SubtitleEdit.Logic.BluRaySup
                             {
                                 log.AppendLine(string.Format("Bitmap Data Ignore due to PaletteUpdate offset={0}", position));
                             }
+
                             forceFirstOds = false;
                         }
+
                         break;
 
                     case 0x16: // Picture time codes
@@ -648,7 +695,7 @@ namespace Nikse.SubtitleEdit.Logic.BluRaySup
                             {
                                 pcsList.Add(latestPcs);
                             }
-                            latestPcs = null;
+                            //latestPcs = null;
                         }
 
                         log.AppendLine(string.Format("0x16 - Picture codes, offset={0} size={1}", position, segment.Size));
@@ -656,12 +703,12 @@ namespace Nikse.SubtitleEdit.Logic.BluRaySup
                         PcsData nextPcs = ParsePicture(buffer, segment);
                         log.AppendLine(nextPcs.Message);
                         latestPcs = nextPcs;
-                        latestCompNum = nextPcs.CompNum;
                         if (latestPcs.CompositionState == CompositionState.EpochStart)
                         {
                             bitmapObjects.Clear();
                             palettes.Clear();
                         }
+
                         break;
 
                     case 0x17: // Window display
@@ -682,6 +729,7 @@ namespace Nikse.SubtitleEdit.Logic.BluRaySup
                                 offset += 9;
                             }
                         }
+
                         break;
 
                     case 0x80:
@@ -693,14 +741,17 @@ namespace Nikse.SubtitleEdit.Logic.BluRaySup
                             {
                                 pcsList.Add(latestPcs);
                             }
+
                             latestPcs = null;
                         }
+
                         break;
 
                     default:
                         log.AppendLine(string.Format("0x?? - END offset={0} UNKOWN SEGMENT TYPE={1}", position, segment.Type));
                         break;
                 }
+
                 position += segment.Size;
                 segmentCount++;
             }
@@ -708,34 +759,48 @@ namespace Nikse.SubtitleEdit.Logic.BluRaySup
             if (latestPcs != null)
             {
                 if (CompletePcs(latestPcs, bitmapObjects, palettes))
+                {
                     pcsList.Add(latestPcs);
-                latestPcs = null;
+                }
+
+                //latestPcs = null;
             }
 
             for (int pcsIndex = 1; pcsIndex < pcsList.Count; pcsIndex++)
+            {
                 pcsList[pcsIndex - 1].EndTime = pcsList[pcsIndex].StartTime;
+            }
+
             pcsList.RemoveAll(pcs => pcs.PcsObjects.Count == 0);
 
             foreach (PcsData pcs in pcsList)
             {
                 foreach (List<OdsData> odsList in pcs.BitmapObjects)
                 {
-                    if (odsList.Count > 1)
+                    if (odsList.Count <= 1)
                     {
-                        int bufSize = 0;
-                        foreach (OdsData ods in odsList)
-                            bufSize += ods.Fragment.ImagePacketSize;
-                        byte[] buf = new byte[bufSize];
-                        int offset = 0;
-                        foreach (OdsData ods in odsList)
-                        {
-                            Buffer.BlockCopy(ods.Fragment.ImageBuffer, 0, buf, offset, ods.Fragment.ImagePacketSize);
-                            offset += ods.Fragment.ImagePacketSize;
-                        }
-                        odsList[0].Fragment.ImageBuffer = buf;
-                        odsList[0].Fragment.ImagePacketSize = bufSize;
-                        while (odsList.Count > 1)
-                            odsList.RemoveAt(1);
+                        continue;
+                    }
+
+                    int bufSize = 0;
+                    foreach (OdsData ods in odsList)
+                    {
+                        bufSize += ods.Fragment.ImagePacketSize;
+                    }
+
+                    byte[] buf = new byte[bufSize];
+                    int offset = 0;
+                    foreach (OdsData ods in odsList)
+                    {
+                        Buffer.BlockCopy(ods.Fragment.ImageBuffer, 0, buf, offset, ods.Fragment.ImagePacketSize);
+                        offset += ods.Fragment.ImagePacketSize;
+                    }
+
+                    odsList[0].Fragment.ImageBuffer = buf;
+                    odsList[0].Fragment.ImagePacketSize = bufSize;
+                    while (odsList.Count > 1)
+                    {
+                        odsList.RemoveAt(1);
                     }
                 }
             }
@@ -762,18 +827,21 @@ namespace Nikse.SubtitleEdit.Logic.BluRaySup
         private static bool ByteArraysEqual(byte[] b1, byte[] b2)
         {
             if (b1 == b2)
-                return true;
-            if (b1 == null || b2 == null)
-                return false;
-            if (b1.Length != b2.Length)
-                return false;
-
-            for (int i = 0; i < b1.Length; i++)
             {
-                if (b1[i] != b2[i])
-                    return false;
+                return true;
             }
-            return true;
+
+            if (b1 == null || b2 == null)
+            {
+                return false;
+            }
+
+            if (b1.Length != b2.Length)
+            {
+                return false;
+            }
+
+            return !b1.Where((t, i) => t != b2[i]).Any();
         }
 
         private static CompositionState GetCompositionState(byte type)
@@ -796,16 +864,21 @@ namespace Nikse.SubtitleEdit.Logic.BluRaySup
         private static int BigEndianInt16(byte[] buffer, int index)
         {
             if (buffer.Length < 2)
+            {
                 return 0;
+            }
+
             return (buffer[index + 1]) + (buffer[index + 0] << 8);
         }
 
         private static uint BigEndianInt32(byte[] buffer, int index)
         {
             if (buffer.Length < 4)
+            {
                 return 0;
+            }
+
             return (uint)((buffer[index + 3]) + (buffer[index + 2] << 8) + (buffer[index + 1] << 0x10) + (buffer[index + 0] << 0x18));
         }
-
     }
 }

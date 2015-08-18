@@ -1,13 +1,13 @@
-﻿using System;
-using System.IO;
-
-namespace Nikse.SubtitleEdit.Logic.ContainerFormats.Mp4.Boxes
+﻿namespace Nikse.SubtitleEdit.Logic.ContainerFormats.Mp4.Boxes
 {
+    using System;
+    using System.IO;
+
     public class Mdia : Box
     {
         public Mdhd Mdhd;
         public Minf Minf;
-        public readonly string HandlerType = null;
+        public readonly string HandlerType;
         public readonly string HandlerName = string.Empty;
 
         public bool IsTextSubtitle
@@ -41,30 +41,39 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats.Mp4.Boxes
             while (fs.Position < (long)maximumLength)
             {
                 if (!InitializeSizeAndName(fs))
+                {
                     return;
+                }
 
                 if (Name == "minf" && IsTextSubtitle || IsVobSubSubtitle || IsClosedCaption || IsVideo)
                 {
                     UInt32 timeScale = 90000;
                     if (Mdhd != null)
+                    {
                         timeScale = Mdhd.TimeScale;
+                    }
+
                     Minf = new Minf(fs, Position, timeScale, HandlerType, this);
                 }
-                else if (Name == "hdlr")
+                else switch (Name)
                 {
-                    Buffer = new byte[Size - 4];
-                    fs.Read(Buffer, 0, Buffer.Length);
-                    HandlerType = GetString(8, 4);
-                    if (Size > 25)
-                        HandlerName = GetString(24, Buffer.Length - (24 + 5)); // TODO: How to find this?
+                    case "hdlr":
+                        Buffer = new byte[Size - 4];
+                        fs.Read(Buffer, 0, Buffer.Length);
+                        HandlerType = GetString(8, 4);
+                        if (Size > 25)
+                        {
+                            HandlerName = GetString(24, Buffer.Length - (24 + 5)); // TODO: How to find this?
+                        }
+
+                        break;
+                    case "mdhd":
+                        Mdhd = new Mdhd(fs, Size);
+                        break;
                 }
-                else if (Name == "mdhd")
-                {
-                    Mdhd = new Mdhd(fs, Size);
-                }
+
                 fs.Seek((long)Position, SeekOrigin.Begin);
             }
         }
-
     }
 }

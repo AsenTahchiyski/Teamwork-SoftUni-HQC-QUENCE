@@ -1,11 +1,13 @@
-﻿using System;
-
-namespace Nikse.SubtitleEdit.Logic.ContainerFormats.Matroska
+﻿namespace Nikse.SubtitleEdit.Logic.ContainerFormats.Matroska
 {
+    using System;
+
     internal class MatroskaSubtitle
     {
         public byte[] Data { get; set; }
+     
         public long Start { get; set; }
+        
         public long Duration { get; set; }
 
         public MatroskaSubtitle(byte[] data, long start, long duration)
@@ -32,9 +34,7 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats.Matroska
         {
             get
             {
-                if (Data != null)
-                    return System.Text.Encoding.UTF8.GetString(Data).Replace("\\N", Environment.NewLine);
-                return string.Empty;
+                return Data != null ? System.Text.Encoding.UTF8.GetString(Data).Replace("\\N", Environment.NewLine) : string.Empty;
             }
         }
     }

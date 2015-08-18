@@ -33,5 +33,4 @@ namespace Nikse.SubtitleEdit.Logic.BluRaySup
         /// </summary>
         public byte[] ImageBuffer { get; set; }
     }
-
 }

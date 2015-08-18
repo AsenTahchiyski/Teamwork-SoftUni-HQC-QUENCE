@@ -1,8 +1,8 @@
-﻿using System;
-using System.Text;
-
-namespace Nikse.SubtitleEdit.Logic.ContainerFormats.Mp4.Boxes
+﻿namespace Nikse.SubtitleEdit.Logic.ContainerFormats.Mp4.Boxes
 {
+    using System;
+    using System.Text;
+
     public class Box
     {
         internal byte[] Buffer;
@@ -50,7 +50,10 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats.Mp4.Boxes
         public static string GetString(byte[] buffer, int index, int count)
         {
             if (count <= 0)
+            {
                 return string.Empty;
+            }
+
             return Encoding.UTF8.GetString(buffer, index, count);
         }
 
@@ -59,7 +62,10 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats.Mp4.Boxes
             Buffer = new byte[8];
             var bytesRead = fs.Read(Buffer, 0, Buffer.Length);
             if (bytesRead < Buffer.Length)
+            {
                 return false;
+            }
+
             Size = GetUInt(0);
             Name = GetString(4, 4);
 
@@ -67,16 +73,20 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats.Mp4.Boxes
             {
                 Size = (UInt64)(fs.Length - fs.Position);
             }
+
             if (Size == 1)
             {
                 bytesRead = fs.Read(Buffer, 0, Buffer.Length);
                 if (bytesRead < Buffer.Length)
+                {
                     return false;
+                }
+
                 Size = GetUInt64(0) - 8;
             }
+
             Position = ((ulong)(fs.Position)) + Size - 8;
             return true;
         }
-
     }
 }

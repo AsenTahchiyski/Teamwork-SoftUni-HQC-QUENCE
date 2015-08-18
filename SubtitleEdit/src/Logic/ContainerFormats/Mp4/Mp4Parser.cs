@@ -1,63 +1,50 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using Nikse.SubtitleEdit.Logic.ContainerFormats.Mp4.Boxes;
-
-namespace Nikse.SubtitleEdit.Logic.ContainerFormats.Mp4
+﻿namespace Nikse.SubtitleEdit.Logic.ContainerFormats.Mp4
 {
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using Boxes;
+
     /// <summary>
     /// http://wiki.multimedia.cx/index.php?title=QuickTime_container
     /// </summary>
     public class MP4Parser : Box
     {
         public string FileName { get; private set; }
+       
         public Moov Moov { get; private set; }
 
         public List<Trak> GetSubtitleTracks()
         {
             var list = new List<Trak>();
-            if (Moov != null && Moov.Tracks != null)
+            if (Moov == null || Moov.Tracks == null) return list;
             {
-                foreach (var trak in Moov.Tracks)
-                {
-                    if (trak.Mdia != null && (trak.Mdia.IsTextSubtitle || trak.Mdia.IsVobSubSubtitle || trak.Mdia.IsClosedCaption) && trak.Mdia.Minf != null && trak.Mdia.Minf.Stbl != null)
-                    {
-                        list.Add(trak);
-                    }
-                }
+                list.AddRange(Moov.Tracks.Where(trak => trak.Mdia != null && (trak.Mdia.IsTextSubtitle || trak.Mdia.IsVobSubSubtitle || trak.Mdia.IsClosedCaption) && trak.Mdia.Minf != null && trak.Mdia.Minf.Stbl != null));
             }
+
             return list;
         }
 
         public List<Trak> GetAudioTracks()
         {
             var list = new List<Trak>();
-            if (Moov != null && Moov.Tracks != null)
+            if (Moov == null || Moov.Tracks == null) return list;
             {
-                foreach (var trak in Moov.Tracks)
-                {
-                    if (trak.Mdia != null && trak.Mdia.IsAudio)
-                    {
-                        list.Add(trak);
-                    }
-                }
+                list.AddRange(Moov.Tracks.Where(trak => trak.Mdia != null && trak.Mdia.IsAudio));
             }
+
             return list;
         }
 
         public List<Trak> GetVideoTracks()
         {
             var list = new List<Trak>();
-            if (Moov != null && Moov.Tracks != null)
+            if (Moov == null || Moov.Tracks == null) return list;
             {
-                foreach (var trak in Moov.Tracks)
-                {
-                    if (trak.Mdia != null && trak.Mdia.IsVideo)
-                    {
-                        list.Add(trak);
-                    }
-                }
+                list.AddRange(Moov.Tracks.Where(trak => trak.Mdia != null && trak.Mdia.IsVideo));
             }
+
             return list;
         }
 
@@ -66,7 +53,10 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats.Mp4
             get
             {
                 if (Moov != null && Moov.Mvhd != null && Moov.Mvhd.TimeScale > 0)
+                {
                     return TimeSpan.FromSeconds((double)Moov.Mvhd.Duration / Moov.Mvhd.TimeScale);
+                }
+
                 return new TimeSpan();
             }
         }
@@ -76,7 +66,10 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats.Mp4
             get
             {
                 if (Moov != null && Moov.Mvhd != null && Moov.Mvhd.TimeScale > 0)
+                {
                     return new DateTime(1904, 1, 1, 0, 0, 0, DateTimeKind.Utc).Add(TimeSpan.FromSeconds(Moov.Mvhd.CreationTime));
+                }
+
                 return DateTime.Now;
             }
         }
@@ -88,17 +81,20 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats.Mp4
         {
             get
             {
-                if (Moov != null && Moov.Tracks != null)
+                if (Moov == null || Moov.Tracks == null) return new System.Drawing.Point(0, 0);
+                foreach (var trak in Moov.Tracks)
                 {
-                    foreach (var trak in Moov.Tracks)
+                    if (trak == null || trak.Mdia == null || trak.Tkhd == null)
                     {
-                        if (trak != null && trak.Mdia != null && trak.Tkhd != null)
-                        {
-                            if (trak.Mdia.IsVideo)
-                                return new System.Drawing.Point((int)trak.Tkhd.Width, (int)trak.Tkhd.Height);
-                        }
+                        continue;
+                    }
+
+                    if (trak.Mdia.IsVideo)
+                    {
+                        return new System.Drawing.Point((int)trak.Tkhd.Width, (int)trak.Tkhd.Height);
                     }
                 }
+
                 return new System.Drawing.Point(0, 0);
             }
         }
@@ -129,19 +125,29 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats.Mp4
             {
                 moreBytes = InitializeSizeAndName(fs);
                 if (Size < 8)
+                {
                     return;
+                }
 
                 if (Name == "moov" && Moov == null)
+                {
                     Moov = new Moov(fs, Position); // only scan first "moov" element
+                }
 
                 count++;
                 if (count > 100)
+                {
                     break;
+                }
 
                 if (Position > (ulong)fs.Length)
+                {
                     break;
+                }
+
                 fs.Seek((long)Position, SeekOrigin.Begin);
             }
+
             fs.Close();
         }
 
@@ -153,16 +159,22 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats.Mp4
                 if (Moov != null && Moov.Mvhd != null && Moov.Mvhd.TimeScale > 0)
                 {
                     var videoTracks = GetVideoTracks();
-                    if (videoTracks.Count > 0 && videoTracks[0].Tkhd != null && videoTracks[0].Mdia != null && videoTracks[0].Mdia.Minf != null && videoTracks[0].Mdia.Minf.Stbl != null)
+                    if (videoTracks.Count <= 0 || 
+                        videoTracks[0].Tkhd == null || 
+                        videoTracks[0].Mdia == null || 
+                        videoTracks[0].Mdia.Minf == null || 
+                        videoTracks[0].Mdia.Minf.Stbl == null)
                     {
-                        double duration = videoTracks[0].Tkhd.Duration;
-                        double sampleCount = videoTracks[0].Mdia.Minf.Stbl.StszSampleCount;
-                        return sampleCount / (duration / Moov.Mvhd.TimeScale);
+                        return 0;
                     }
+
+                    double duration = videoTracks[0].Tkhd.Duration;
+                    double sampleCount = videoTracks[0].Mdia.Minf.Stbl.StszSampleCount;
+                    return sampleCount / (duration / Moov.Mvhd.TimeScale);
                 }
+
                 return 0;
             }
         }
-
     }
 }

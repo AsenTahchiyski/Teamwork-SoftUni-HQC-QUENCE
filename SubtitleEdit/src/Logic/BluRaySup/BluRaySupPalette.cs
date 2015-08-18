@@ -22,23 +22,23 @@ namespace Nikse.SubtitleEdit.Logic.BluRaySup
     public class BluRaySupPalette
     {
         /** Number of palette entries */
-        private int size;
+        private readonly int size;
         /** Byte buffer for RED info */
-        private byte[] r;
+        private readonly byte[] r;
         /** Byte buffer for GREEN info */
-        private byte[] g;
+        private readonly byte[] g;
         /** Byte buffer for BLUE info */
-        private byte[] b;
+        private readonly byte[] b;
         /** Byte buffer for alpha info */
-        private byte[] a;
+        private readonly byte[] a;
         /** Byte buffer for Y (luminance) info */
-        private byte[] y;
+        private readonly byte[] y;
         /** Byte buffer for Cb (chrominance blue) info */
-        private byte[] cb;
+        private readonly byte[] cb;
         /** Byte buffer for Cr (chrominance red) info */
-        private byte[] cr;
+        private readonly byte[] cr;
         /** Use BT.601 color model instead of BT.709 */
-        private bool useBT601;
+        private readonly bool useBt601;
 
         /**
          * Convert YCBCr color info to RGB
@@ -71,16 +71,23 @@ namespace Nikse.SubtitleEdit.Logic.BluRaySup
                 g = y1 - cr * 0.5329093286 - cb * 0.2132486143;
                 b = y1 + cb * 2.112401786;
             }
+
             rgb[0] = (int)(r + 0.5);
             rgb[1] = (int)(g + 0.5);
             rgb[2] = (int)(b + 0.5);
             for (int i = 0; i < 3; i++)
             {
                 if (rgb[i] < 0)
+                {
                     rgb[i] = 0;
+                }
+
                 else if (rgb[i] > 255)
+                {
                     rgb[i] = 255;
+                }
             }
+
             return rgb;
         }
 
@@ -110,27 +117,35 @@ namespace Nikse.SubtitleEdit.Logic.BluRaySup
                 cb = -r * 0.2126 / 1.8556 * 224 / 255 - g * 0.7152 / 1.8556 * 224 / 255 + b * 0.5 * 224 / 255;
                 cr = r * 0.5 * 224 / 255 - g * 0.7152 / 1.5748 * 224 / 255 - b * 0.0722 / 1.5748 * 224 / 255;
             }
+
             yCbCr[0] = 16 + (int)(y + 0.5);
             yCbCr[1] = 128 + (int)(cb + 0.5);
             yCbCr[2] = 128 + (int)(cr + 0.5);
             for (int i = 0; i < 3; i++)
             {
                 if (yCbCr[i] < 16)
+                {
                     yCbCr[i] = 16;
+                }
                 else
                 {
                     if (i == 0)
                     {
                         if (yCbCr[i] > 235)
+                        {
                             yCbCr[i] = 235;
+                        }
                     }
                     else
                     {
                         if (yCbCr[i] > 240)
+                        {
                             yCbCr[i] = 240;
+                        }
                     }
                 }
             }
+
             return yCbCr;
         }
 
@@ -142,7 +157,7 @@ namespace Nikse.SubtitleEdit.Logic.BluRaySup
         public BluRaySupPalette(int palSize, bool use601)
         {
             size = palSize;
-            useBT601 = use601;
+            useBt601 = use601;
             r = new byte[size];
             g = new byte[size];
             b = new byte[size];
@@ -152,7 +167,7 @@ namespace Nikse.SubtitleEdit.Logic.BluRaySup
             cr = new byte[size];
 
             // set at least all alpha values to invisible
-            int[] yCbCr = Rgb2YCbCr(0, 0, 0, useBT601);
+            int[] yCbCr = Rgb2YCbCr(0, 0, 0, useBt601);
             for (int i = 0; i < palSize; i++)
             {
                 a[i] = 0;
@@ -185,7 +200,7 @@ namespace Nikse.SubtitleEdit.Logic.BluRaySup
         public BluRaySupPalette(byte[] red, byte[] green, byte[] blue, byte[] alpha, bool use601)
         {
             size = red.Length;
-            useBT601 = use601;
+            useBt601 = use601;
             r = new byte[size];
             g = new byte[size];
             b = new byte[size];
@@ -200,7 +215,7 @@ namespace Nikse.SubtitleEdit.Logic.BluRaySup
                 r[i] = red[i];
                 g[i] = green[i];
                 b[i] = blue[i];
-                var yCbCr = Rgb2YCbCr(r[i] & 0xff, g[i] & 0xff, b[i] & 0xff, useBT601);
+                var yCbCr = Rgb2YCbCr(r[i] & 0xff, g[i] & 0xff, b[i] & 0xff, useBt601);
                 y[i] = (byte)yCbCr[0];
                 cb[i] = (byte)yCbCr[1];
                 cr[i] = (byte)yCbCr[2];
@@ -226,7 +241,7 @@ namespace Nikse.SubtitleEdit.Logic.BluRaySup
         public BluRaySupPalette(BluRaySupPalette p)
         {
             size = p.GetSize();
-            useBT601 = p.UsesBt601();
+            useBt601 = p.UsesBt601();
             r = new byte[size];
             g = new byte[size];
             b = new byte[size];
@@ -291,7 +306,7 @@ namespace Nikse.SubtitleEdit.Logic.BluRaySup
             g[index] = (byte)green;
             b[index] = (byte)blue;
             // create yCbCr
-            int[] yCbCr = Rgb2YCbCr(red, green, blue, useBT601);
+            int[] yCbCr = Rgb2YCbCr(red, green, blue, useBt601);
             y[index] = (byte)yCbCr[0];
             cb[index] = (byte)yCbCr[1];
             cr[index] = (byte)yCbCr[2];
@@ -310,7 +325,7 @@ namespace Nikse.SubtitleEdit.Logic.BluRaySup
             cb[index] = (byte)cbn;
             cr[index] = (byte)crn;
             // create RGB
-            int[] rgb = YCbCr2Rgb(yn, cbn, crn, useBT601);
+            int[] rgb = YCbCr2Rgb(yn, cbn, crn, useBt601);
             r[index] = (byte)rgb[0];
             g[index] = (byte)rgb[1];
             b[index] = (byte)rgb[2];
@@ -452,9 +467,12 @@ namespace Nikse.SubtitleEdit.Logic.BluRaySup
                     minAlpha = a[i] & 0xff;
                     transpIdx = i;
                     if (minAlpha == 0)
+                    {
                         break;
+                    }
                 }
             }
+
             return transpIdx;
         }
 
@@ -464,8 +482,7 @@ namespace Nikse.SubtitleEdit.Logic.BluRaySup
          */
         public bool UsesBt601()
         {
-            return useBT601;
+            return useBt601;
         }
-
     }
 }

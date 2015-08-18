@@ -15,13 +15,13 @@
  *
  * NOTE: Converted to C# and modified by Nikse.dk@gmail.com
  */
-using System.Text;
 
 namespace Nikse.SubtitleEdit.Logic.BluRaySup
 {
+    using System.Text;
+
     public static class ToolBox
     {
-
         /// <summary>
         /// Convert bytes to a C-style hex string with leading zeroes
         /// </summary>
@@ -32,9 +32,13 @@ namespace Nikse.SubtitleEdit.Logic.BluRaySup
             {
                 string s = string.Format("{0:X}", buffer[i]);
                 if (s.Length < 2)
+                {
                     sb.Append('0');
+                }
+
                 sb.Append(s);
             }
+
             return "0x" + sb;
         }
 
@@ -45,7 +49,10 @@ namespace Nikse.SubtitleEdit.Logic.BluRaySup
         {
             string s = string.Format("{0:X}", number);
             if (s.Length < digits)
+            {
                 s = s.PadLeft(digits, '0');
+            }
+
             return "0x" + s;
         }
 
@@ -117,6 +124,5 @@ namespace Nikse.SubtitleEdit.Logic.BluRaySup
         {
             buffer[index] = (byte)(val);
         }
-
     }
 }

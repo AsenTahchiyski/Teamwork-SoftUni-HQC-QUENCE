@@ -1,11 +1,11 @@
 ﻿// (c) Giora Tamir (giora@gtamir.com), 2005
-
-using System;
-using System.IO;
-using System.Runtime.Serialization;
-
 namespace Nikse.SubtitleEdit.Logic.ContainerFormats
 {
+
+    using System;
+    using System.IO;
+    using System.Runtime.Serialization;
+
     #region RiffParserException
 
     [Serializable]
@@ -37,32 +37,32 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
     {
         #region CONSTANTS
 
-        public const int DWORDSIZE = 4;
-        public const int TWODWORDSSIZE = 8;
-        public const string RIFF4CC = "RIFF";
-        public const string RIFX4CC = "RIFX";
-        public const string LIST4CC = "LIST";
+        public const int Dwordsize = 4;
+        public const int Twodwordssize = 8;
+        public const string Riff4Cc = "RIFF";
+        public const string Rifx4Cc = "RIFX";
+        public const string List4Cc = "LIST";
 
         // Known file types
-        public static readonly int ckidAVI = ToFourCC("AVI ");
-        public static readonly int ckidWAV = ToFourCC("WAVE");
-        public static readonly int ckidRMID = ToFourCC("RMID");
+        public static readonly int CkidAvi = ToFourCC("AVI ");
+        public static readonly int CkidWav = ToFourCC("WAVE");
+        public static readonly int CkidRmid = ToFourCC("RMID");
 
         #endregion CONSTANTS
 
         #region private members
 
-        private string m_filename;
-        private string m_shortname;
-        private long m_filesize;
-        private int m_datasize;
-        private FileStream m_stream;
-        private int m_fileriff;
-        private int m_filetype;
+        private string mFilename;
+        private string mShortname;
+        private long mFilesize;
+        private int mDatasize;
+        private FileStream mStream;
+        private int mFileriff;
+        private int mFiletype;
 
         // For non-thread-safe memory optimization
-        private byte[] m_eightBytes = new byte[TWODWORDSSIZE];
-        private byte[] m_fourBytes = new byte[DWORDSIZE];
+        private readonly byte[] mEightBytes = new byte[Twodwordssize];
+        private readonly byte[] mFourBytes = new byte[Dwordsize];
 
         #endregion private members
 
@@ -71,17 +71,17 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
         /// <summary>
         /// Method to be called when a list element is found
         /// </summary>
-        /// <param name="FourCCType"></param>
+        /// <param name="fourCcType"></param>
         /// <param name="length"></param>
-        public delegate void ProcessListElement(RiffParser rp, int FourCCType, int length);
+        public delegate void ProcessListElement(RiffParser rp, int fourCcType, int length);
 
         /// <summary>
         /// Method to be called when a chunk element is found
         /// </summary>
-        /// <param name="FourCCType"></param>
+        /// <param name="fourCcType"></param>
         /// <param name="unpaddedLength"></param>
         /// <param name="paddedLength"></param>
-        public delegate void ProcessChunkElement(RiffParser rp, int FourCCType, int unpaddedLength, int paddedLength);
+        public delegate void ProcessChunkElement(RiffParser rp, int fourCcType, int unpaddedLength, int paddedLength);
 
         #endregion Delegates
 
@@ -94,7 +94,7 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
         {
             get
             {
-                return m_datasize;
+                return mDatasize;
             }
         }
 
@@ -105,7 +105,7 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
         {
             get
             {
-                return m_filename;
+                return mFilename;
             }
         }
 
@@ -116,7 +116,7 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
         {
             get
             {
-                return m_shortname;
+                return mShortname;
             }
         }
 
@@ -127,7 +127,7 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
         {
             get
             {
-                return m_fileriff;
+                return mFileriff;
             }
         }
 
@@ -138,7 +138,7 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
         {
             get
             {
-                return m_filetype;
+                return mFiletype;
             }
         }
 
@@ -152,7 +152,7 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
         public void OpenFile(string filename)
         {
             // Sanity check
-            if (null != m_stream)
+            if (null != mStream)
             {
                 throw new RiffParserException("RIFF file already open " + FileName);
             }
@@ -163,52 +163,53 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
             try
             {
                 FileInfo fi = new FileInfo(filename);
-                m_filename = fi.FullName;
-                m_shortname = fi.Name;
-                m_filesize = fi.Length;
-                fi = null;
+                mFilename = fi.FullName;
+                mShortname = fi.Name;
+                mFilesize = fi.Length;
+                //fi = null;
 
                 //Console.WriteLine(ShortName + " is a valid file.");
 
                 // Read the RIFF header
-                m_stream = new FileStream(m_filename, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                int FourCC;
+                mStream = new FileStream(mFilename, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                int fourCc;
                 int datasize;
                 int fileType;
 
-                ReadTwoInts(out FourCC, out datasize);
+                ReadTwoInts(out fourCc, out datasize);
                 ReadOneInt(out fileType);
 
-                m_fileriff = FourCC;
-                m_filetype = fileType;
+                mFileriff = fourCc;
+                mFiletype = fileType;
 
                 // Check for a valid RIFF header
-                string riff = FromFourCC(FourCC);
-                if (riff == RIFF4CC || riff == RIFX4CC)
+                string riff = FromFourCc(fourCc);
+                if (riff == Riff4Cc || riff == Rifx4Cc)
                 {
                     // Good header. Check size
                     //Console.WriteLine(ShortName + " has a valid type \"" + riff + "\"");
                     //Console.WriteLine(ShortName + " has a specific type of \"" + FromFourCC(fileType) + "\"");
 
-                    m_datasize = datasize;
-                    if (m_filesize >= m_datasize + TWODWORDSSIZE)
+                    mDatasize = datasize;
+                    if (mFilesize >= mDatasize + Twodwordssize)
                     {
                         //Console.WriteLine(ShortName + " has a valid size");
                     }
                     else
                     {
-                        m_stream.Close(); m_stream = null;
+                        mStream.Close(); mStream = null;
                         throw new RiffParserException("Error. Truncated file " + FileName);
                     }
                 }
                 else
                 {
-                    m_stream.Close();
-                    m_stream.Dispose();
-                    m_stream = null;
+                    mStream.Close();
+                    mStream.Dispose();
+                    mStream = null;
                     throw new RiffParserException("Error. Not a valid RIFF file " + FileName);
                 }
             }
+
             catch (RiffParserException)
             {
                 errorOccured = true;
@@ -221,11 +222,11 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
             }
             finally
             {
-                if (errorOccured && (null != m_stream))
+                if (errorOccured && (null != mStream))
                 {
-                    m_stream.Close();
-                    m_stream.Dispose();
-                    m_stream = null;
+                    mStream.Close();
+                    mStream.Dispose();
+                    mStream = null;
                 }
             }
         }
@@ -241,7 +242,7 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
         public bool ReadElement(ref int bytesleft, ProcessChunkElement chunk, ProcessListElement list)
         {
             // Are we done?
-            if (TWODWORDSSIZE > bytesleft)
+            if (Twodwordssize > bytesleft)
             {
                 return false;
             }
@@ -249,13 +250,13 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
             //Console.WriteLine(m_stream.Position.ToString() + ", " + bytesleft.ToString());
 
             // We have enough bytes, read
-            int FourCC;
+            int fourCc;
             int size;
 
-            ReadTwoInts(out FourCC, out size);
+            ReadTwoInts(out fourCc, out size);
 
             // Reduce bytes left
-            bytesleft -= TWODWORDSSIZE;
+            bytesleft -= Twodwordssize;
 
             // Do we have enough bytes?
             if (bytesleft < size)
@@ -263,16 +264,16 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
                 // Skip the bad data and throw an exception
                 SkipData(bytesleft);
                 bytesleft = 0;
-                throw new RiffParserException("Element size mismatch for element " + FromFourCC(FourCC)
+                throw new RiffParserException("Element size mismatch for element " + FromFourCc(fourCc)
                 + " need " + size + " but have only " + bytesleft);
             }
 
             // Examine the element, is it a list or a chunk
-            string type = FromFourCC(FourCC);
-            if (type == LIST4CC)
+            string type = FromFourCc(fourCc);
+            if (type == List4Cc)
             {
                 // We have a list
-                ReadOneInt(out FourCC);
+                ReadOneInt(out fourCc);
 
                 if (null == list)
                 {
@@ -281,7 +282,7 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
                 else
                 {
                     // Invoke the list method
-                    list(this, FourCC, size - 4);
+                    list(this, fourCc, size - 4);
                 }
 
                 // Adjust size
@@ -299,7 +300,7 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
                 }
                 else
                 {
-                    chunk(this, FourCC, size, paddedSize);
+                    chunk(this, fourCc, size, paddedSize);
                 }
 
                 // Adjust size
@@ -320,17 +321,17 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
         {
             try
             {
-                int readsize = m_stream.Read(m_eightBytes, 0, TWODWORDSSIZE);
+                int readsize = mStream.Read(mEightBytes, 0, Twodwordssize);
 
-                if (TWODWORDSSIZE != readsize)
+                if (Twodwordssize != readsize)
                 {
                     throw new RiffParserException("Unable to read. Corrupt RIFF file " + FileName);
                 }
 
-                fixed (byte* bp = &m_eightBytes[0])
+                fixed (byte* bp = &mEightBytes[0])
                 {
                     FourCC = *((int*)bp);
-                    size = *((int*)(bp + DWORDSIZE));
+                    size = *((int*)(bp + Dwordsize));
                 }
             }
             catch (Exception ex)
@@ -347,14 +348,14 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
         {
             try
             {
-                int readsize = m_stream.Read(m_fourBytes, 0, DWORDSIZE);
+                int readsize = mStream.Read(mFourBytes, 0, Dwordsize);
 
-                if (DWORDSIZE != readsize)
+                if (Dwordsize != readsize)
                 {
                     throw new RiffParserException("Unable to read. Corrupt RIFF file " + FileName);
                 }
 
-                fixed (byte* bp = &m_fourBytes[0])
+                fixed (byte* bp = &mFourBytes[0])
                 {
                     FourCC = *((int*)bp);
                 }
@@ -373,7 +374,7 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
         {
             try
             {
-                m_stream.Seek(skipBytes, SeekOrigin.Current);
+                mStream.Seek(skipBytes, SeekOrigin.Current);
             }
             catch (Exception ex)
             {
@@ -393,7 +394,7 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
         {
             try
             {
-                return m_stream.Read(data, offset, length);
+                return mStream.Read(data, offset, length);
             }
             catch (Exception ex)
             {
@@ -406,54 +407,56 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
         /// </summary>
         public void CloseFile()
         {
-            if (null != m_stream)
+            if (null == mStream)
             {
-                m_stream.Close();
-                m_stream = null;
+                return;
             }
+
+            mStream.Close();
+            mStream = null;
         }
 
         #endregion Stream access
 
         #region FourCC conversion methods
 
-        public static string FromFourCC(int FourCC)
+        public static string FromFourCc(int fourCc)
         {
             char[] chars = new char[4];
-            chars[0] = (char)(FourCC & 0xFF);
-            chars[1] = (char)((FourCC >> 8) & 0xFF);
-            chars[2] = (char)((FourCC >> 16) & 0xFF);
-            chars[3] = (char)((FourCC >> 24) & 0xFF);
+            chars[0] = (char)(fourCc & 0xFF);
+            chars[1] = (char)((fourCc >> 8) & 0xFF);
+            chars[2] = (char)((fourCc >> 16) & 0xFF);
+            chars[3] = (char)((fourCc >> 24) & 0xFF);
 
             return new string(chars);
         }
 
-        public static int ToFourCC(string FourCC)
+        public static int ToFourCC(string fourCc)
         {
-            if (FourCC.Length != 4)
+            if (fourCc.Length != 4)
             {
-                throw new Exception("FourCC strings must be 4 characters long " + FourCC);
+                throw new Exception("FourCC strings must be 4 characters long " + fourCc);
             }
 
-            int result = ((int)FourCC[3]) << 24
-                        | ((int)FourCC[2]) << 16
-                        | ((int)FourCC[1]) << 8
-                        | ((int)FourCC[0]);
+            int result = ((int)fourCc[3]) << 24
+                        | ((int)fourCc[2]) << 16
+                        | ((int)fourCc[1]) << 8
+                        | ((int)fourCc[0]);
 
             return result;
         }
 
-        public static int ToFourCC(char[] FourCC)
+        public static int ToFourCC(char[] fourCc)
         {
-            if (FourCC.Length != 4)
+            if (fourCc.Length != 4)
             {
-                throw new Exception("FourCC char arrays must be 4 characters long " + new string(FourCC));
+                throw new Exception("FourCC char arrays must be 4 characters long " + new string(fourCc));
             }
 
-            int result = ((int)FourCC[3]) << 24
-                        | ((int)FourCC[2]) << 16
-                        | ((int)FourCC[1]) << 8
-                        | ((int)FourCC[0]);
+            int result = ((int)fourCc[3]) << 24
+                        | ((int)fourCc[2]) << 16
+                        | ((int)fourCc[1]) << 8
+                        | ((int)fourCc[0]);
 
             return result;
         }
@@ -480,13 +483,12 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
         {
             if (disposing)
             {
-                if (m_stream != null)
+                if (mStream != null)
                 {
-                    m_stream.Dispose();
-                    m_stream = null;
+                    mStream.Dispose();
+                    mStream = null;
                 }
             }
         }
-
     }
 }

@@ -1,10 +1,10 @@
-﻿using System;
-using System.IO;
-using System.Text;
-using Nikse.SubtitleEdit.Logic.VobSub;
-
-namespace Nikse.SubtitleEdit.Logic.ContainerFormats.MaterialExchangeFormat
+﻿namespace Nikse.SubtitleEdit.Logic.ContainerFormats.MaterialExchangeFormat
 {
+    using System;
+    using System.IO;
+    using System.Text;
+    using VobSub;
+
     /// <summary>
     /// Key-Length-Value MXF package - http://en.wikipedia.org/wiki/KLV + http://en.wikipedia.org/wiki/Material_Exchange_Format
     /// </summary>
@@ -37,6 +37,7 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats.MaterialExchangeFormat
             {
                 throw new Exception("MXF KLV packet - stream does not have 16 bytes available for key");
             }
+
             int lengthSize;
             DataSize = GetBasicEncodingRuleLength(stream, out lengthSize);
             DataPosition = stream.Position;
@@ -64,14 +65,17 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats.MaterialExchangeFormat
                 {
                     throw new Exception("MXF KLV packet - lenght bytes > 8");
                 }
+
                 DataSize = 0;
                 for (int i = 0; i < bytesInLength; i++)
                 {
                     DataSize = DataSize * 256 + stream.ReadByte();
                 }
+
                 bytesInLength++;
                 return DataSize;
             }
+
             bytesInLength = 1;
             return first;
         }
@@ -84,40 +88,43 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats.MaterialExchangeFormat
                 {
                     return KeyIdentifier.PartitionPack;
                 }
+
                 if (IsKey(Preface))
                 {
                     return KeyIdentifier.Preface;
                 }
+
                 if (IsKey(EssenceElement))
                 {
                     return KeyIdentifier.EssenceElement;
                 }
+
                 if (IsKey(OperationalPattern))
                 {
                     return KeyIdentifier.OperationalPattern;
                 }
+
                 if (IsKey(PartitionMetadata))
                 {
                     return KeyIdentifier.PartitionMetadata;
                 }
+
                 if (IsKey(StructuralMetadata))
                 {
                     return KeyIdentifier.StructuralMetadata;
                 }
+
                 if (IsKey(DataDefinitionVideo))
                 {
                     return KeyIdentifier.DataDefinitionVideo;
                 }
+
                 if (IsKey(DataDefinitionAudio))
                 {
                     return KeyIdentifier.DataDefinitionAudio;
                 }
-                if (IsKey(Primer))
-                {
-                    return KeyIdentifier.DataDefinitionAudio;
-                }
 
-                return KeyIdentifier.Unknown;
+                return IsKey(Primer) ? KeyIdentifier.DataDefinitionAudio : KeyIdentifier.Unknown;
             }
         }
 
@@ -135,6 +142,7 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats.MaterialExchangeFormat
                     return false;
                 }
             }
+
             return true;
         }
 
@@ -147,9 +155,9 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats.MaterialExchangeFormat
                 {
                     sb.Append(Key[i].ToString("X2") + "-");
                 }
+
                 return sb.ToString().TrimEnd('-');
             }
         }
-
     }
 }

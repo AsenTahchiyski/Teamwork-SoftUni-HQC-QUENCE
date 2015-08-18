@@ -15,24 +15,20 @@
 
 #endregion #Disclaimer
 
-#region Using directives
-
-using System;
-
-#endregion Using directives
-
 namespace Nikse.SubtitleEdit.Logic.ColorChooser
 {
+    using System;
+
     public class ColorChangedEventArgs : EventArgs
     {
         public ColorChangedEventArgs(ColorHandler.ARGB argb, ColorHandler.HSV hsv)
         {
-            ARGB = argb;
-            this.HSV = hsv;
+            Argb = argb;
+            this.Hsv = hsv;
         }
 
-        public ColorHandler.ARGB ARGB { get; private set; }
+        public ColorHandler.ARGB Argb { get; private set; }
 
-        public ColorHandler.HSV HSV { get; private set; }
+        public ColorHandler.HSV Hsv { get; private set; }
     }
 }

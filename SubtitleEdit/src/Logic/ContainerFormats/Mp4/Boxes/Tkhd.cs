@@ -1,25 +1,32 @@
-﻿using System.IO;
-
-namespace Nikse.SubtitleEdit.Logic.ContainerFormats.Mp4.Boxes
+﻿namespace Nikse.SubtitleEdit.Logic.ContainerFormats.Mp4.Boxes
 {
+    using System.IO;
+
     public class Tkhd : Box
     {
-        public readonly uint TrackId;
-        public readonly ulong Duration;
-        public readonly uint Width;
-        public readonly uint Height;
+        public uint TrackId { get; set; }
+     
+        public ulong Duration { get; set; }
+        
+        public uint Width { get; set; }
+        
+        public uint Height { get; set; }
 
         public Tkhd(FileStream fs)
         {
             Buffer = new byte[84];
             int bytesRead = fs.Read(Buffer, 0, Buffer.Length);
             if (bytesRead < Buffer.Length)
+            {
                 return;
+            }
 
             int version = Buffer[0];
             int addToIndex64Bit = 0;
             if (version == 1)
+            {
                 addToIndex64Bit = 8;
+            }
 
             TrackId = GetUInt(12 + addToIndex64Bit);
             if (version == 1)

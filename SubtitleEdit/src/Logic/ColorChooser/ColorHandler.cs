@@ -15,15 +15,11 @@
 
 #endregion #Disclaimer
 
-#region Using directives
-
-using System;
-using System.Drawing;
-
-#endregion Using directives
-
 namespace Nikse.SubtitleEdit.Logic.ColorChooser
 {
+    using System;
+    using System.Drawing;
+
     public class ColorHandler
     {
         // Handle conversions between RGB and HSV
@@ -242,8 +238,11 @@ namespace Nikse.SubtitleEdit.Logic.ColorChooser
             }
 
             public int Alpha { get; set; }
+           
             public int Hue { get; set; }
+            
             public int Saturation { get; set; }
+            
             public int Value { get; set; }
 
             public override string ToString()

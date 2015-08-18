@@ -1,35 +1,32 @@
 ﻿// (c) Giora Tamir (giora@gtamir.com), 2005
-
-using System;
-using System.Text;
-
 namespace Nikse.SubtitleEdit.Logic.ContainerFormats
 {
+    using System;
+    using System.Text;
+
     public class RiffDecodeHeader
     {
 
         #region private members
 
-        private RiffParser m_parser;
+        private readonly RiffParser mParser;
 
-        private double m_frameRate;
-        private int m_maxBitRate;
-        private int m_totalFrames;
-        private int m_numStreams;
-        private int m_width;
-        private int m_height;
+        private double mFrameRate;
+        private int mMaxBitRate;
+        private int mTotalFrames;
+        private int mNumStreams;
+        private int mWidth;
+        private int mHeight;
 
-        private string m_isft;
+        private double mVidDataRate;
+        private string mVidHandler;
+        private double mAudDataRate;
+        private string mAudHandler;
 
-        private double m_vidDataRate;
-        private string m_vidHandler;
-        private double m_audDataRate;
-        private string m_audHandler;
-
-        private int m_numChannels;
-        private int m_samplesPerSec;
-        private int m_bitsPerSec;
-        private int m_bitsPerSample;
+        private int mNumChannels;
+        private int mSamplesPerSec;
+        private int mBitsPerSec;
+        private int mBitsPerSample;
 
         #endregion private members
 
@@ -42,7 +39,7 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
         {
             get
             {
-                return m_parser;
+                return mParser;
             }
         }
 
@@ -51,8 +48,11 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
             get
             {
                 double rate = 0.0;
-                if (m_frameRate > 0.0)
-                    rate = 1000000.0 / m_frameRate;
+                if (mFrameRate > 0.0)
+                {
+                    rate = 1000000.0 / mFrameRate;
+                }
+
                 return rate;
             }
         }
@@ -61,7 +61,7 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
         {
             get
             {
-                return String.Format("{0:N} Kb/Sec", m_maxBitRate / 128);
+                return String.Format("{0:N} Kb/Sec", mMaxBitRate / 128);
             }
         }
 
@@ -69,7 +69,7 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
         {
             get
             {
-                return m_totalFrames;
+                return mTotalFrames;
             }
         }
 
@@ -78,10 +78,11 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
             get
             {
                 double totalTime = 0.0;
-                if (m_frameRate > 0.0)
+                if (mFrameRate > 0.0)
                 {
-                    totalTime = m_totalFrames * m_frameRate / TimeCode.BaseUnit;
+                    totalTime = mTotalFrames * mFrameRate / TimeCode.BaseUnit;
                 }
+
                 return totalTime;
             }
         }
@@ -90,7 +91,7 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
         {
             get
             {
-                return String.Format("Streams in file: {0:G}", m_numStreams);
+                return String.Format("Streams in file: {0:G}", mNumStreams);
             }
         }
 
@@ -98,7 +99,7 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
         {
             get
             {
-                return String.Format("{0:G} x {1:G} pixels per frame", m_width, m_height);
+                return String.Format("{0:G} x {1:G} pixels per frame", mWidth, mHeight);
             }
         }
 
@@ -106,7 +107,7 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
         {
             get
             {
-                return m_width;
+                return mWidth;
             }
         }
 
@@ -114,7 +115,7 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
         {
             get
             {
-                return m_height;
+                return mHeight;
             }
         }
 
@@ -122,7 +123,7 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
         {
             get
             {
-                return String.Format("Video rate {0:N2} frames/Sec", m_vidDataRate);
+                return String.Format("Video rate {0:N2} frames/Sec", mVidDataRate);
             }
         }
 
@@ -130,7 +131,7 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
         {
             get
             {
-                return String.Format("Audio rate {0:N2} Kb/Sec", m_audDataRate / TimeCode.BaseUnit);
+                return String.Format("Audio rate {0:N2} Kb/Sec", mAudDataRate / TimeCode.BaseUnit);
             }
         }
 
@@ -138,7 +139,7 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
         {
             get
             {
-                return m_vidHandler;
+                return mVidHandler;
             }
         }
 
@@ -146,23 +147,17 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
         {
             get
             {
-                return String.Format("Audio handler 4CC code: {0}", m_audHandler);
+                return String.Format("Audio handler 4CC code: {0}", mAudHandler);
             }
         }
 
-        public string ISFT
-        {
-            get
-            {
-                return m_isft;
-            }
-        }
+        public string Isft { get; private set; }
 
         public string NumChannels
         {
             get
             {
-                return String.Format("Audio channels: {0}", m_numChannels);
+                return String.Format("Audio channels: {0}", mNumChannels);
             }
         }
 
@@ -170,7 +165,7 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
         {
             get
             {
-                return String.Format("Audio rate: {0:N0} Samples/Sec", m_samplesPerSec);
+                return String.Format("Audio rate: {0:N0} Samples/Sec", mSamplesPerSec);
             }
         }
 
@@ -178,7 +173,7 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
         {
             get
             {
-                return String.Format("Audio rate: {0:N0} Bytes/Sec", m_bitsPerSec);
+                return String.Format("Audio rate: {0:N0} Bytes/Sec", mBitsPerSec);
             }
         }
 
@@ -186,7 +181,7 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
         {
             get
             {
-                return String.Format("Audio data: {0:N0} bits/Sample", m_bitsPerSample);
+                return String.Format("Audio data: {0:N0} bits/Sample", mBitsPerSample);
             }
         }
 
@@ -196,29 +191,29 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
 
         public RiffDecodeHeader(RiffParser rp)
         {
-            m_parser = rp;
+            mParser = rp;
         }
 
         private void Clear()
         {
-            m_frameRate = 0;
-            m_height = 0;
-            m_maxBitRate = 0;
-            m_numStreams = 0;
-            m_totalFrames = 0;
-            m_width = 0;
+            mFrameRate = 0;
+            mHeight = 0;
+            mMaxBitRate = 0;
+            mNumStreams = 0;
+            mTotalFrames = 0;
+            mWidth = 0;
 
-            m_isft = String.Empty;
+            Isft = String.Empty;
 
-            m_vidDataRate = 0;
-            m_audDataRate = 0;
-            m_vidHandler = String.Empty;
-            m_audHandler = String.Empty;
+            mVidDataRate = 0;
+            mAudDataRate = 0;
+            mVidHandler = String.Empty;
+            mAudHandler = String.Empty;
 
-            m_numChannels = 0;
-            m_samplesPerSec = 0;
-            m_bitsPerSample = 0;
-            m_bitsPerSec = 0;
+            mNumChannels = 0;
+            mSamplesPerSec = 0;
+            mBitsPerSample = 0;
+            mBitsPerSec = 0;
         }
 
         #endregion Constructor
@@ -229,9 +224,9 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
         /// Default list element handler - skip the entire list
         /// </summary>
         /// <param name="rp"></param>
-        /// <param name="FourCC"></param>
+        /// <param name="fourCc"></param>
         /// <param name="length"></param>
-        private void ProcessList(RiffParser rp, int FourCC, int length)
+        private void ProcessList(RiffParser rp, int fourCc, int length)
         {
             rp.SkipData(length);
         }
@@ -244,22 +239,22 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
         /// Handle chunk elements found in the AVI file. Ignores unknown chunks and
         /// </summary>
         /// <param name="rp"></param>
-        /// <param name="FourCC"></param>
+        /// <param name="fourCc"></param>
         /// <param name="unpaddedLength"></param>
         /// <param name="paddedLength"></param>
-        private void ProcessAVIChunk(RiffParser rp, int FourCC, int unpaddedLength, int paddedLength)
+        private void ProcessAviChunk(RiffParser rp, int fourCc, int unpaddedLength, int paddedLength)
         {
-            if (AviRiffData.ckidMainAVIHeader == FourCC)
+            if (AviRiffData.CkidMainAviHeader == fourCc)
             {
                 // Main AVI header
-                DecodeAVIHeader(rp, paddedLength);
+                DecodeAviHeader(rp, paddedLength);
             }
-            else if (AviRiffData.ckidAVIStreamHeader == FourCC)
+            else if (AviRiffData.CkidAviStreamHeader == fourCc)
             {
                 // Stream header
-                DecodeAVIStream(rp, paddedLength);
+                DecodeAviStream(rp, paddedLength);
             }
-            else if (AviRiffData.ckidAVIISFT == FourCC)
+            else if (AviRiffData.CkidAviisft == fourCc)
             {
                 Byte[] ba = new byte[paddedLength];
                 rp.ReadData(ba, 0, paddedLength);
@@ -269,7 +264,7 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
                     if (0 != ba[i]) sb.Append((char)ba[i]);
                 }
 
-                m_isft = sb.ToString();
+                Isft = sb.ToString();
             }
             else
             {
@@ -283,21 +278,24 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
         /// at the content of known lists.
         /// </summary>
         /// <param name="rp"></param>
-        /// <param name="FourCC"></param>
+        /// <param name="fourCc"></param>
         /// <param name="length"></param>
-        private void ProcessAVIList(RiffParser rp, int FourCC, int length)
+        private void ProcessAviList(RiffParser rp, int fourCc, int length)
         {
-            RiffParser.ProcessChunkElement pac = ProcessAVIChunk;
-            RiffParser.ProcessListElement pal = ProcessAVIList;
+            RiffParser.ProcessChunkElement pac = ProcessAviChunk;
+            RiffParser.ProcessListElement pal = ProcessAviList;
 
             // Is this the header?
-            if ((AviRiffData.ckidAVIHeaderList == FourCC)
-                || (AviRiffData.ckidAVIStreamList == FourCC)
-                || (AviRiffData.ckidINFOList == FourCC))
+            if ((AviRiffData.CkidAviHeaderList == fourCc)
+                || (AviRiffData.CkidAviStreamList == fourCc)
+                || (AviRiffData.CkidInfoList == fourCc))
             {
                 while (length > 0)
                 {
-                    if (false == rp.ReadElement(ref length, pac, pal)) break;
+                    if (false == rp.ReadElement(ref length, pac, pal))
+                    {
+                        break;
+                    }
                 }
             }
             else
@@ -307,21 +305,24 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
             }
         }
 
-        public void ProcessMainAVI()
+        public void ProcessMainAvi()
         {
             Clear();
             int length = Parser.DataSize;
 
-            RiffParser.ProcessChunkElement pdc = ProcessAVIChunk;
-            RiffParser.ProcessListElement pal = ProcessAVIList;
+            RiffParser.ProcessChunkElement pdc = ProcessAviChunk;
+            RiffParser.ProcessListElement pal = ProcessAviList;
 
             while (length > 0)
             {
-                if (false == Parser.ReadElement(ref length, pdc, pal)) break;
+                if (false == Parser.ReadElement(ref length, pdc, pal))
+                {
+                    break;
+                }
             }
         }
 
-        private unsafe void DecodeAVIHeader(RiffParser rp, int length)
+        private unsafe void DecodeAviHeader(RiffParser rp, int length)
         {
             //if (length < sizeof(AVIMAINHEADER))
             //{
@@ -338,17 +339,17 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
 
             fixed (Byte* bp = &ba[0])
             {
-                AVIMAINHEADER* avi = (AVIMAINHEADER*)bp;
-                m_frameRate = avi->dwMicroSecPerFrame;
-                m_height = avi->dwHeight;
-                m_maxBitRate = avi->dwMaxBytesPerSec;
-                m_numStreams = avi->dwStreams;
-                m_totalFrames = avi->dwTotalFrames;
-                m_width = avi->dwWidth;
+                Avimainheader* avi = (Avimainheader*)bp;
+                mFrameRate = avi->dwMicroSecPerFrame;
+                mHeight = avi->dwHeight;
+                mMaxBitRate = avi->dwMaxBytesPerSec;
+                mNumStreams = avi->dwStreams;
+                mTotalFrames = avi->dwTotalFrames;
+                mWidth = avi->dwWidth;
             }
         }
 
-        private unsafe void DecodeAVIStream(RiffParser rp, int length)
+        private unsafe void DecodeAviStream(RiffParser rp, int length)
         {
             byte[] ba = new byte[length];
 
@@ -359,41 +360,34 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
 
             fixed (Byte* bp = &ba[0])
             {
-                AVISTREAMHEADER* avi = (AVISTREAMHEADER*)bp;
+                Avistreamheader* avi = (Avistreamheader*)bp;
 
-                if (AviRiffData.streamtypeVIDEO == avi->fccType)
+                if (AviRiffData.StreamtypeVideo == avi->fccType)
                 {
-                    m_vidHandler = RiffParser.FromFourCC(avi->fccHandler);
+                    mVidHandler = RiffParser.FromFourCc(avi->fccHandler);
                     if (avi->dwScale > 0)
                     {
-                        m_vidDataRate = (double)avi->dwRate / (double)avi->dwScale;
+                        mVidDataRate = (double)avi->dwRate / (double)avi->dwScale;
                     }
                     else
                     {
-                        m_vidDataRate = 0.0;
+                        mVidDataRate = 0.0;
                     }
                 }
-                else if (AviRiffData.streamtypeAUDIO == avi->fccType)
+                else if (AviRiffData.StreamtypeAudio == avi->fccType)
                 {
-                    if (AviRiffData.ckidMP3 == avi->fccHandler)
-                    {
-                        m_audHandler = "MP3";
-                    }
-                    else
-                    {
-                        m_audHandler = RiffParser.FromFourCC(avi->fccHandler);
-                    }
+                    mAudHandler = AviRiffData.CkidMp3 == avi->fccHandler ? "MP3" : RiffParser.FromFourCc(avi->fccHandler);
                     if (avi->dwScale > 0)
                     {
-                        m_audDataRate = 8.0 * (double)avi->dwRate / (double)avi->dwScale;
+                        mAudDataRate = 8.0 * avi->dwRate / avi->dwScale;
                         if (avi->dwSampleSize > 0)
                         {
-                            m_audDataRate /= (double)avi->dwSampleSize;
+                            mAudDataRate /= avi->dwSampleSize;
                         }
                     }
                     else
                     {
-                        m_audDataRate = 0.0;
+                        mAudDataRate = 0.0;
                     }
                 }
             }
@@ -403,10 +397,10 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
 
         #region WAVE processing
 
-        private void ProcessWaveChunk(RiffParser rp, int FourCC, int unpaddedLength, int length)
+        private void ProcessWaveChunk(RiffParser rp, int fourCc, int unpaddedLength, int length)
         {
             // Is this a 'fmt' chunk?
-            if (AviRiffData.ckidWaveFMT == FourCC)
+            if (AviRiffData.CkidWaveFmt == fourCc)
             {
                 DecodeWave(rp, length);
             }
@@ -423,15 +417,15 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
 
             fixed (byte* bp = &ba[0])
             {
-                WAVEFORMATEX* wave = (WAVEFORMATEX*)bp;
-                m_numChannels = wave->nChannels;
-                m_bitsPerSec = wave->nAvgBytesPerSec;
-                m_bitsPerSample = wave->wBitsPerSample;
-                m_samplesPerSec = wave->nSamplesPerSec;
+                Waveformatex* wave = (Waveformatex*)bp;
+                mNumChannels = wave->nChannels;
+                mBitsPerSec = wave->nAvgBytesPerSec;
+                mBitsPerSample = wave->wBitsPerSample;
+                mSamplesPerSec = wave->nSamplesPerSec;
             }
         }
 
-        public void ProcessMainWAVE()
+        public void ProcessMainWave()
         {
             Clear();
             int length = Parser.DataSize;

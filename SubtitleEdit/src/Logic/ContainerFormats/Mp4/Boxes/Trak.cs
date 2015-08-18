@@ -1,12 +1,12 @@
-﻿using System.IO;
-
-namespace Nikse.SubtitleEdit.Logic.ContainerFormats.Mp4.Boxes
+﻿namespace Nikse.SubtitleEdit.Logic.ContainerFormats.Mp4.Boxes
 {
+    using System.IO;
+
     public class Trak : Box
     {
-
-        public Mdia Mdia;
-        public Tkhd Tkhd;
+        public Mdia Mdia { get; set; }
+      
+        public Tkhd Tkhd { get; set; }
 
         public Trak(FileStream fs, ulong maximumLength)
         {
@@ -14,16 +14,22 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats.Mp4.Boxes
             while (fs.Position < (long)maximumLength)
             {
                 if (!InitializeSizeAndName(fs))
+                {
                     return;
+                }
 
-                if (Name == "mdia")
-                    Mdia = new Mdia(fs, Position);
-                else if (Name == "tkhd")
-                    Tkhd = new Tkhd(fs);
+                switch (Name)
+                {
+                    case "mdia":
+                        Mdia = new Mdia(fs, Position);
+                        break;
+                    case "tkhd":
+                        Tkhd = new Tkhd(fs);
+                        break;
+                }
 
                 fs.Seek((long)Position, SeekOrigin.Begin);
             }
         }
-
     }
 }

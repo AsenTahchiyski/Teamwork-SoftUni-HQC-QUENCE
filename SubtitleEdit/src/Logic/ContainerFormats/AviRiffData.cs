@@ -1,11 +1,59 @@
 ﻿// (c) Giora Tamir (giora@gtamir.com), 2005
-
-using System.Runtime.InteropServices;
-
 namespace Nikse.SubtitleEdit.Logic.ContainerFormats
 {
+    using System.Runtime.InteropServices;
+
+    internal static class AviRiffData
+    {
+        #region AVI constants
+
+        // AVIMAINHEADER flags
+        public const int AvifHasindex = 0x00000010; // Index at end of file?
+        public const int AvifMustuseindex = 0x00000020;
+        public const int AvifIsinterleaved = 0x00000100;
+        public const int AvifTrustcktype = 0x00000800; // Use CKType to find key frames
+        public const int AvifWascapturefile = 0x00010000;
+        public const int AvifCopyrighted = 0x00020000;
+
+        // AVISTREAMINFO flags
+        public const int AvisfDisabled = 0x00000001;
+        public const int AvisfVideoPalchanges = 0x00010000;
+
+        // AVIOLDINDEXENTRY flags
+        public const int AviifList = 0x00000001;
+        public const int AviifKeyframe = 0x00000010;
+        public const int AviifNoTime = 0x00000100;
+        public const int AviifCompressor = 0x0FFF0000;  // unused?
+
+        // TIMECODEDATA flags
+        public const int TimecodeSmpteBinaryGroup = 0x07;
+        public const int TimecodeSmpteColorFrame = 0x08;
+
+        // AVI stream FourCC codes
+        public static readonly int StreamtypeVideo = RiffParser.ToFourCC("vids");
+        public static readonly int StreamtypeAudio = RiffParser.ToFourCC("auds");
+        //public static readonly int streamtypeMIDI = RiffParser.ToFourCC("mids");
+        //public static readonly int streamtypeTEXT = RiffParser.ToFourCC("txts");
+
+        // AVI section FourCC codes
+        public static readonly int CkidAviHeaderList = RiffParser.ToFourCC("hdrl");
+        public static readonly int CkidMainAviHeader = RiffParser.ToFourCC("avih");
+        //public static readonly int ckidODML = RiffParser.ToFourCC("odml");
+        //public static readonly int ckidAVIExtHeader = RiffParser.ToFourCC("dmlh");
+        public static readonly int CkidAviStreamList = RiffParser.ToFourCC("strl");
+        public static readonly int CkidAviStreamHeader = RiffParser.ToFourCC("strh");
+        //public static readonly int ckidStreamFormat = RiffParser.ToFourCC("strf");
+        //public static readonly int ckidAVIOldIndex = RiffParser.ToFourCC("idx1");
+        public static readonly int CkidInfoList = RiffParser.ToFourCC("INFO");
+        public static readonly int CkidAviisft = RiffParser.ToFourCC("ISFT");
+        public const int CkidMp3 = 0x0055;
+        public static readonly int CkidWaveFmt = RiffParser.ToFourCC("fmt ");
+
+        #endregion AVI constants
+    }
+
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal struct AVIMAINHEADER
+    internal struct Avimainheader
     {    // 'avih'
         public int dwMicroSecPerFrame;
         public int dwMaxBytesPerSec;
@@ -24,7 +72,7 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal struct AVIEXTHEADER
+    internal struct Aviextheader
     {          // 'dmlh'
         public int dwGrandFrames;          // total number of frames in the file
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 244)]
@@ -32,7 +80,7 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal struct RECT
+    internal struct Rect
     {
         public short left;
         public short top;
@@ -41,7 +89,7 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal struct AVISTREAMHEADER
+    internal struct Avistreamheader
     { // 'strh'
         public int fccType;      // stream type codes
         public int fccHandler;
@@ -56,11 +104,11 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
         public int dwSuggestedBufferSize;
         public int dwQuality;
         public int dwSampleSize;
-        public RECT rcFrame;
+        public Rect rcFrame;
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal struct AVIOLDINDEXENTRY
+    internal struct Avioldindexentry
     {
         public int dwChunkId;
         public int dwFlags;
@@ -69,7 +117,7 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal struct TIMECODE
+    internal struct Timecode
     {
         public short wFrameRate;
         public short wFrameFract;
@@ -77,15 +125,15 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal struct TIMECODEDATA
+    internal struct Timecodedata
     {
-        private TIMECODE time;
+        private readonly Timecode time;
         public int dwSMPTEflags;
         public int dwUser;
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal struct WAVEFORMATEX
+    internal struct Waveformatex
     {
         public short wFormatTag;
         public short nChannels;
@@ -94,54 +142,5 @@ namespace Nikse.SubtitleEdit.Logic.ContainerFormats
         public short nBlockAlign;
         public short wBitsPerSample;
         public short cbSize;
-    }
-
-    internal static class AviRiffData
-    {
-        #region AVI constants
-
-        // AVIMAINHEADER flags
-        public const int AVIF_HASINDEX = 0x00000010; // Index at end of file?
-        public const int AVIF_MUSTUSEINDEX = 0x00000020;
-        public const int AVIF_ISINTERLEAVED = 0x00000100;
-        public const int AVIF_TRUSTCKTYPE = 0x00000800; // Use CKType to find key frames
-        public const int AVIF_WASCAPTUREFILE = 0x00010000;
-        public const int AVIF_COPYRIGHTED = 0x00020000;
-
-        // AVISTREAMINFO flags
-        public const int AVISF_DISABLED = 0x00000001;
-        public const int AVISF_VIDEO_PALCHANGES = 0x00010000;
-
-        // AVIOLDINDEXENTRY flags
-        public const int AVIIF_LIST = 0x00000001;
-        public const int AVIIF_KEYFRAME = 0x00000010;
-        public const int AVIIF_NO_TIME = 0x00000100;
-        public const int AVIIF_COMPRESSOR = 0x0FFF0000;  // unused?
-
-        // TIMECODEDATA flags
-        public const int TIMECODE_SMPTE_BINARY_GROUP = 0x07;
-        public const int TIMECODE_SMPTE_COLOR_FRAME = 0x08;
-
-        // AVI stream FourCC codes
-        public static readonly int streamtypeVIDEO = RiffParser.ToFourCC("vids");
-        public static readonly int streamtypeAUDIO = RiffParser.ToFourCC("auds");
-        //public static readonly int streamtypeMIDI = RiffParser.ToFourCC("mids");
-        //public static readonly int streamtypeTEXT = RiffParser.ToFourCC("txts");
-
-        // AVI section FourCC codes
-        public static readonly int ckidAVIHeaderList = RiffParser.ToFourCC("hdrl");
-        public static readonly int ckidMainAVIHeader = RiffParser.ToFourCC("avih");
-        //public static readonly int ckidODML = RiffParser.ToFourCC("odml");
-        //public static readonly int ckidAVIExtHeader = RiffParser.ToFourCC("dmlh");
-        public static readonly int ckidAVIStreamList = RiffParser.ToFourCC("strl");
-        public static readonly int ckidAVIStreamHeader = RiffParser.ToFourCC("strh");
-        //public static readonly int ckidStreamFormat = RiffParser.ToFourCC("strf");
-        //public static readonly int ckidAVIOldIndex = RiffParser.ToFourCC("idx1");
-        public static readonly int ckidINFOList = RiffParser.ToFourCC("INFO");
-        public static readonly int ckidAVIISFT = RiffParser.ToFourCC("ISFT");
-        public const int ckidMP3 = 0x0055;
-        public static readonly int ckidWaveFMT = RiffParser.ToFourCC("fmt ");
-
-        #endregion AVI constants
     }
 }

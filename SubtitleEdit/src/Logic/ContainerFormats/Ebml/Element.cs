@@ -2,22 +2,22 @@
 {
     internal class Element
     {
-        private readonly ElementId _id;
-        private readonly long _dataPosition;
-        private readonly long _dataSize;
+        private readonly ElementId id;
+        private readonly long dataPosition;
+        private readonly long dataSize;
 
         public Element(ElementId id, long dataPosition, long dataSize)
         {
-            _id = id;
-            _dataPosition = dataPosition;
-            _dataSize = dataSize;
+            this.id = id;
+            this.dataPosition = dataPosition;
+            this.dataSize = dataSize;
         }
 
         public ElementId Id
         {
             get
             {
-                return _id;
+                return id;
             }
         }
 
@@ -25,7 +25,7 @@
         {
             get
             {
-                return _dataPosition;
+                return dataPosition;
             }
         }
 
@@ -33,7 +33,7 @@
         {
             get
             {
-                return _dataSize;
+                return dataSize;
             }
         }
 
@@ -41,13 +41,13 @@
         {
             get
             {
-                return _dataPosition + _dataSize;
+                return dataPosition + dataSize;
             }
         }
 
         public override string ToString()
         {
-            return string.Format(@"{0} ({1})", _id, _dataSize);
+            return string.Format(@"{0} ({1})", id, dataSize);
         }
     }
 }

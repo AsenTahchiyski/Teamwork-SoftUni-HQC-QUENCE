@@ -19,6 +19,7 @@ namespace Nikse.SubtitleEdit.Logic.BluRaySup
 {
     public static class Core
     {
+        public const double FpsTrg = FpsPal;
 
         /** Use BT.601 color model instead of BT.709 */
         private const bool UseBt601 = false;
@@ -84,7 +85,5 @@ namespace Nikse.SubtitleEdit.Logic.BluRaySup
         }
 
         public static int CropOfsY { get; set; }
-
-        public const double FpsTrg = FpsPal;
     }
 }

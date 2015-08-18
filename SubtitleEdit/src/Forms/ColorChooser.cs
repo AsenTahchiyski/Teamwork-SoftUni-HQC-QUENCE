@@ -229,8 +229,8 @@ namespace Nikse.SubtitleEdit.Forms
 
         private void MyColorWheelColorChanged(object sender, ColorChangedEventArgs e)
         {
-            SetRGB(e.ARGB);
-            SetHSV(e.HSV);
+            SetRGB(e.Argb);
+            SetHSV(e.Hsv);
         }
 
         private void HandleHSVScroll(object sender, EventArgs e)
