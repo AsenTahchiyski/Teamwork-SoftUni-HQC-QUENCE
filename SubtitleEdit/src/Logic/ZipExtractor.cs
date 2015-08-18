@@ -12,7 +12,7 @@ namespace Nikse.SubtitleEdit.Logic
     using System.IO.Compression;
     using System.Text;
 
-    using Nikse.SubtitleEdit.Logic.Enums;
+    using Enums;
 
     /// <summary>
     /// Zip archive decompression. Represents a Zip file.
@@ -22,7 +22,7 @@ namespace Nikse.SubtitleEdit.Logic
         #region Public fields
 
         /// <summary>True if UTF8 encoding for filename and comments, false if default (CP 437)</summary>
-        public bool EncodeUTF8 = false;
+        public bool EncodeUtf8 = false;
         /// <summary>Force deflate algorithm even if it inflates the stored file. Off by default.</summary>
         public bool ForceDeflating = false;
 
@@ -31,13 +31,13 @@ namespace Nikse.SubtitleEdit.Logic
         #region Private fields
 
         // Stream object of storage file
-        private Stream ZipFileStream;
+        private Stream zipFileStream;
         // Central dir image
-        private byte[] CentralDirImage = null;
+        private byte[] centralDirImage = null;
         // Static CRC32 Table
-        private static UInt32[] CrcTable = null;
+        private static readonly UInt32[] CrcTable = null;
         // Default filename encoder
-        private static Encoding DefaultEncoding = Encoding.GetEncoding(437);
+        private static readonly Encoding DefaultEncoding = Encoding.GetEncoding(437);
 
         #endregion Private fields
 
@@ -54,10 +54,15 @@ namespace Nikse.SubtitleEdit.Logic
                 for (int j = 0; j < 8; j++)
                 {
                     if ((c & 1) != 0)
+                    {
                         c = 3988292384 ^ (c >> 1);
+                    }
                     else
+                    {
                         c >>= 1;
+                    }
                 }
+
                 CrcTable[i] = c;
             }
         }
@@ -82,12 +87,14 @@ namespace Nikse.SubtitleEdit.Logic
         public static ZipExtractor Open(Stream stream)
         {
             ZipExtractor zip = new ZipExtractor();
-            zip.ZipFileStream = stream;
+            zip.zipFileStream = stream;
 
             if (zip.ReadFileInfo())
+            {
                 return zip;
+            }
 
-            throw new System.IO.InvalidDataException();
+            throw new InvalidDataException();
         }
 
         /// <summary>
@@ -96,12 +103,14 @@ namespace Nikse.SubtitleEdit.Logic
         /// <remarks>This is a required step, unless automatic dispose is used</remarks>
         public void Close()
         {
-            if (this.ZipFileStream != null)
+            if (this.zipFileStream == null)
             {
-                this.ZipFileStream.Flush();
-                this.ZipFileStream.Dispose();
-                this.ZipFileStream = null;
+                return;
             }
+
+            this.zipFileStream.Flush();
+            this.zipFileStream.Dispose();
+            this.zipFileStream = null;
         }
 
         /// <summary>
@@ -110,34 +119,38 @@ namespace Nikse.SubtitleEdit.Logic
         /// <returns>List of all entries in directory</returns>
         public List<ZipFileEntry> ReadCentralDir()
         {
-            if (this.CentralDirImage == null)
+            if (this.centralDirImage == null)
+            {
                 throw new InvalidOperationException("Central directory currently does not exist");
+            }
 
             List<ZipFileEntry> result = new List<ZipFileEntry>();
 
-            for (int pointer = 0; pointer < this.CentralDirImage.Length; )
+            for (int pointer = 0; pointer < this.centralDirImage.Length; )
             {
-                uint signature = BitConverter.ToUInt32(this.CentralDirImage, pointer);
+                uint signature = BitConverter.ToUInt32(this.centralDirImage, pointer);
                 if (signature != 0x02014b50)
+                {
                     break;
+                }
 
-                bool encodeUTF8 = (BitConverter.ToUInt16(this.CentralDirImage, pointer + 8) & 0x0800) != 0;
-                ushort method = BitConverter.ToUInt16(this.CentralDirImage, pointer + 10);
-                uint modifyTime = BitConverter.ToUInt32(this.CentralDirImage, pointer + 12);
-                uint crc32 = BitConverter.ToUInt32(this.CentralDirImage, pointer + 16);
-                uint comprSize = BitConverter.ToUInt32(this.CentralDirImage, pointer + 20);
-                uint fileSize = BitConverter.ToUInt32(this.CentralDirImage, pointer + 24);
-                ushort filenameSize = BitConverter.ToUInt16(this.CentralDirImage, pointer + 28);
-                ushort extraSize = BitConverter.ToUInt16(this.CentralDirImage, pointer + 30);
-                ushort commentSize = BitConverter.ToUInt16(this.CentralDirImage, pointer + 32);
-                uint headerOffset = BitConverter.ToUInt32(this.CentralDirImage, pointer + 42);
+                bool encodeUtf8 = (BitConverter.ToUInt16(this.centralDirImage, pointer + 8) & 0x0800) != 0;
+                ushort method = BitConverter.ToUInt16(this.centralDirImage, pointer + 10);
+                uint modifyTime = BitConverter.ToUInt32(this.centralDirImage, pointer + 12);
+                uint crc32 = BitConverter.ToUInt32(this.centralDirImage, pointer + 16);
+                uint comprSize = BitConverter.ToUInt32(this.centralDirImage, pointer + 20);
+                uint fileSize = BitConverter.ToUInt32(this.centralDirImage, pointer + 24);
+                ushort filenameSize = BitConverter.ToUInt16(this.centralDirImage, pointer + 28);
+                ushort extraSize = BitConverter.ToUInt16(this.centralDirImage, pointer + 30);
+                ushort commentSize = BitConverter.ToUInt16(this.centralDirImage, pointer + 32);
+                uint headerOffset = BitConverter.ToUInt32(this.centralDirImage, pointer + 42);
                 uint headerSize = (uint)(46 + filenameSize + extraSize + commentSize);
 
-                Encoding encoder = encodeUTF8 ? Encoding.UTF8 : DefaultEncoding;
+                Encoding encoder = encodeUtf8 ? Encoding.UTF8 : DefaultEncoding;
 
                 ZipFileEntry zfe = new ZipFileEntry();
                 zfe.Method = (Compression)method;
-                zfe.FilenameInZip = encoder.GetString(this.CentralDirImage, pointer + 46, filenameSize);
+                zfe.FilenameInZip = encoder.GetString(this.centralDirImage, pointer + 46, filenameSize);
                 zfe.FileOffset = this.GetFileOffset(headerOffset);
                 zfe.FileSize = fileSize;
                 zfe.CompressedSize = comprSize;
@@ -146,7 +159,9 @@ namespace Nikse.SubtitleEdit.Logic
                 zfe.Crc32 = crc32;
                 zfe.ModifyTime = DosTimeToDateTime(modifyTime);
                 if (commentSize > 0)
-                    zfe.Comment = encoder.GetString(this.CentralDirImage, pointer + 46 + filenameSize + extraSize, commentSize);
+                {
+                    zfe.Comment = encoder.GetString(this.centralDirImage, pointer + 46 + filenameSize + extraSize, commentSize);
+                }
 
                 result.Add(zfe);
                 pointer += (46 + filenameSize + extraSize + commentSize);
@@ -165,19 +180,27 @@ namespace Nikse.SubtitleEdit.Logic
         public bool ExtractFile(ZipFileEntry zfe, string filename)
         {
             // Make sure the parent directory exist
-            string path = System.IO.Path.GetDirectoryName(filename);
+            string path = Path.GetDirectoryName(filename);
             if (!Directory.Exists(path))
-                Directory.CreateDirectory(path);
+            {
+                if (path != null)
+                {
+                    Directory.CreateDirectory(path);
+                }
+            }
 
             // Check it is directory. If so, do nothing
             if (Directory.Exists(filename))
+            {
                 return true;
+            }
 
             bool result = false;
             using (Stream output = new FileStream(filename, FileMode.Create, FileAccess.Write))
             {
                 result = this.ExtractFile(zfe, output);
             }
+
             File.SetCreationTime(filename, zfe.ModifyTime);
             File.SetLastWriteTime(filename, zfe.ModifyTime);
             return result;
@@ -193,27 +216,37 @@ namespace Nikse.SubtitleEdit.Logic
         public bool ExtractFile(ZipFileEntry zfe, Stream stream)
         {
             if (!stream.CanWrite)
+            {
                 throw new InvalidOperationException("Stream cannot be written");
+            }
 
             // check signature
             byte[] signature = new byte[4];
-            this.ZipFileStream.Seek(zfe.HeaderOffset, SeekOrigin.Begin);
-            this.ZipFileStream.Read(signature, 0, 4);
+            this.zipFileStream.Seek(zfe.HeaderOffset, SeekOrigin.Begin);
+            this.zipFileStream.Read(signature, 0, 4);
             if (BitConverter.ToUInt32(signature, 0) != 0x04034b50)
+            {
                 return false;
+            }
 
             // Select input stream for inflating or just reading
             Stream inStream;
             if (zfe.Method == Compression.Store)
-                inStream = this.ZipFileStream;
+            {
+                inStream = this.zipFileStream;
+            }
             else if (zfe.Method == Compression.Deflate)
-                inStream = new DeflateStream(this.ZipFileStream, CompressionMode.Decompress, true);
+            {
+                inStream = new DeflateStream(this.zipFileStream, CompressionMode.Decompress, true);
+            }
             else
+            {
                 return false;
+            }
 
             // Buffered copy
             byte[] buffer = new byte[16384];
-            this.ZipFileStream.Seek(zfe.FileOffset, SeekOrigin.Begin);
+            this.zipFileStream.Seek(zfe.FileOffset, SeekOrigin.Begin);
             uint bytesPending = zfe.FileSize;
             while (bytesPending > 0)
             {
@@ -221,10 +254,14 @@ namespace Nikse.SubtitleEdit.Logic
                 stream.Write(buffer, 0, bytesRead);
                 bytesPending -= (uint)bytesRead;
             }
+
             stream.Flush();
 
             if (zfe.Method == Compression.Deflate)
+            {
                 inStream.Dispose();
+            }
+
             return true;
         }
 
@@ -239,10 +276,10 @@ namespace Nikse.SubtitleEdit.Logic
         {
             byte[] buffer = new byte[2];
 
-            this.ZipFileStream.Seek(headerOffset + 26, SeekOrigin.Begin);
-            this.ZipFileStream.Read(buffer, 0, 2);
+            this.zipFileStream.Seek(headerOffset + 26, SeekOrigin.Begin);
+            this.zipFileStream.Read(buffer, 0, 2);
             ushort filenameSize = BitConverter.ToUInt16(buffer, 0);
-            this.ZipFileStream.Read(buffer, 0, 2);
+            this.zipFileStream.Read(buffer, 0, 2);
             ushort extraSize = BitConverter.ToUInt16(buffer, 0);
 
             return (uint)(30 + filenameSize + extraSize + headerOffset);
@@ -330,40 +367,44 @@ namespace Nikse.SubtitleEdit.Logic
         // Reads the end-of-central-directory record
         private bool ReadFileInfo()
         {
-            if (this.ZipFileStream.Length < 22)
+            if (this.zipFileStream.Length < 22)
+            {
                 return false;
+            }
 
             try
             {
-                this.ZipFileStream.Seek(-17, SeekOrigin.End);
-                BinaryReader br = new BinaryReader(this.ZipFileStream);
+                this.zipFileStream.Seek(-17, SeekOrigin.End);
+                BinaryReader br = new BinaryReader(this.zipFileStream);
                 do
                 {
-                    this.ZipFileStream.Seek(-5, SeekOrigin.Current);
+                    this.zipFileStream.Seek(-5, SeekOrigin.Current);
                     UInt32 sig = br.ReadUInt32();
                     if (sig == 0x06054b50)
                     {
-                        this.ZipFileStream.Seek(6, SeekOrigin.Current);
+                        this.zipFileStream.Seek(6, SeekOrigin.Current);
 
-                        UInt16 entries = br.ReadUInt16();
+                        //UInt16 entries = br.ReadUInt16();
                         Int32 centralSize = br.ReadInt32();
                         UInt32 centralDirOffset = br.ReadUInt32();
                         UInt16 commentSize = br.ReadUInt16();
 
                         // check if comment field is the very last data in file
-                        if (this.ZipFileStream.Position + commentSize != this.ZipFileStream.Length)
+                        if (this.zipFileStream.Position + commentSize != this.zipFileStream.Length)
+                        {
                             return false;
+                        }
 
                         // Copy entire central directory to a memory buffer
-                        this.CentralDirImage = new byte[centralSize];
-                        this.ZipFileStream.Seek(centralDirOffset, SeekOrigin.Begin);
-                        this.ZipFileStream.Read(this.CentralDirImage, 0, centralSize);
+                        this.centralDirImage = new byte[centralSize];
+                        this.zipFileStream.Seek(centralDirOffset, SeekOrigin.Begin);
+                        this.zipFileStream.Read(this.centralDirImage, 0, centralSize);
 
                         // Leave the pointer at the begining of central dir, to append new files
-                        this.ZipFileStream.Seek(centralDirOffset, SeekOrigin.Begin);
+                        this.zipFileStream.Seek(centralDirOffset, SeekOrigin.Begin);
                         return true;
                     }
-                } while (this.ZipFileStream.Position > 0);
+                } while (this.zipFileStream.Position > 0);
             }
             catch
             {

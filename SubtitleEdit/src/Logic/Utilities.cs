@@ -6,6 +6,7 @@
     using System.Drawing;
     using System.Globalization;
     using System.IO;
+    using System.Linq;
     using System.Net;
     using System.Reflection;
     using System.Text;
@@ -14,16 +15,16 @@
     using System.Windows.Forms;
     using System.Xml;
 
-    using Nikse.SubtitleEdit.Controls;
-    using Nikse.SubtitleEdit.Core;
-    using Nikse.SubtitleEdit.Forms;
-    using Nikse.SubtitleEdit.Logic.ContainerFormats;
-    using Nikse.SubtitleEdit.Logic.ContainerFormats.Matroska;
-    using Nikse.SubtitleEdit.Logic.ContainerFormats.Mp4;
-    using Nikse.SubtitleEdit.Logic.DetectEncoding;
-    using Nikse.SubtitleEdit.Logic.SubtitleFormats;
-    using Nikse.SubtitleEdit.Logic.VideoPlayers;
-    using Nikse.SubtitleEdit.Logic.VideoPlayers.MpcHC;
+    using Controls;
+    using Core;
+    using SubtitleEdit.Forms;
+    using ContainerFormats;
+    using ContainerFormats.Matroska;
+    using ContainerFormats.Mp4;
+    using DetectEncoding;
+    using SubtitleFormats;
+    using VideoPlayers;
+    using VideoPlayers.MpcHC;
 
     using Timer = System.Threading.Timer;
 
@@ -34,7 +35,6 @@
         /// <summary>
         /// Cached environment new line characters for faster lookup.
         /// </summary>
-        internal static readonly char[] NewLineChars = Environment.NewLine.ToCharArray();
 
         private static string lastNoBreakAfterListLanguage;
 
@@ -53,6 +53,8 @@
         public static readonly string AllLettersAndNumbers = GetLetters(true, true, true);
 
         private static readonly Dictionary<string, Keys> AllKeys = new Dictionary<string, Keys>();
+
+        internal static readonly char[] NewLineChars = Environment.NewLine.ToCharArray();
 
         public static string DictionaryFolder
         {
@@ -345,15 +347,7 @@
 
         public static SubtitleFormat GetSubtitleFormatByFriendlyName(string friendlyName)
         {
-            foreach (SubtitleFormat format in SubtitleFormat.AllSubtitleFormats)
-            {
-                if (format.FriendlyName == friendlyName || format.Name == friendlyName)
-                {
-                    return format;
-                }
-            }
-
-            return null;
+            return SubtitleFormat.AllSubtitleFormats.FirstOrDefault(format => format.FriendlyName == friendlyName || format.Name == friendlyName);
         }
 
         public static string FormatBytesToDisplayFileSize(long fileSize)
@@ -384,9 +378,13 @@
                 for (int i = 0; i < paragraphs.Count; i++)
                 {
                     var p = paragraphs[i];
-                    if (p.StartTime.TotalMilliseconds <= positionInMilliseconds && p.EndTime.TotalMilliseconds > positionInMilliseconds)
+                    if (p.StartTime.TotalMilliseconds <= positionInMilliseconds && 
+                        p.EndTime.TotalMilliseconds > positionInMilliseconds)
                     {
-                        bool isInfo = p == paragraphs[0] && (p.StartTime.TotalMilliseconds == 0 && p.Duration.TotalMilliseconds == 0 || p.StartTime.TotalMilliseconds == Pac.PacNullTime.TotalMilliseconds);
+                        bool isInfo = p == paragraphs[0] && 
+                            (p.StartTime.TotalMilliseconds == 0 && 
+                            p.Duration.TotalMilliseconds == 0 || 
+                            p.StartTime.TotalMilliseconds == Pac.PacNullTime.TotalMilliseconds);
                         if (!isInfo)
                         {
                             return i;
@@ -592,12 +590,9 @@
             string s2 = s.Substring(0, index);
             if (Configuration.Settings.Tools.UseNoLineBreakAfter)
             {
-                foreach (NoBreakAfterItem ending in NoBreakAfterList(language))
+                if (NoBreakAfterList(language).Any(ending => ending.IsMatch(s2)))
                 {
-                    if (ending.IsMatch(s2))
-                    {
-                        return false;
-                    }
+                    return false;
                 }
             }
 
@@ -2050,17 +2045,9 @@
 
         public static int GetMaxLineLength(string text)
         {
-            int maxLength = 0;
             text = HtmlUtil.RemoveHtmlTags(text, true);
-            foreach (string line in text.SplitToLines())
-            {
-                if (line.Length > maxLength)
-                {
-                    maxLength = line.Length;
-                }
-            }
 
-            return maxLength;
+            return text.SplitToLines().Select(line => line.Length).Concat(new[] { 0 }).Max();
         }
 
         public static double GetCharactersPerSecond(Paragraph paragraph)
@@ -2073,7 +2060,12 @@
             const string zeroWidthSpace = "\u200B";
             const string zeroWidthNoBreakSpace = "\uFEFF";
 
-            string s = HtmlUtil.RemoveHtmlTags(paragraph.Text, true).Replace(Environment.NewLine, string.Empty).Replace(zeroWidthSpace, string.Empty).Replace(zeroWidthNoBreakSpace, string.Empty);
+            string s = HtmlUtil
+                .RemoveHtmlTags(paragraph.Text, true)
+                .Replace(Environment.NewLine, string.Empty)
+                .Replace(zeroWidthSpace, string.Empty)
+                .Replace(zeroWidthNoBreakSpace, string.Empty);
+
             return s.Length / paragraph.Duration.TotalSeconds;
         }
 
@@ -2174,7 +2166,7 @@
 
         public static VideoPlayer GetVideoPlayer()
         {
-            GeneralSettings gs = Configuration.Settings.General;
+            GeneralSettings generalSettings = Configuration.Settings.General;
 
             if (Configuration.IsRunningOnLinux() || Configuration.IsRunningOnMac())
             {
@@ -2183,7 +2175,7 @@
 
             // if (Utilities.IsRunningOnMac())
             // return new LibVlcMono();
-            if (gs.VideoPlayer == "VLC" && LibVlcDynamic.IsInstalled)
+            if (generalSettings.VideoPlayer == "VLC" && LibVlcDynamic.IsInstalled)
             {
                 return new LibVlcDynamic();
             }
@@ -2192,12 +2184,12 @@
             // return new WmpPlayer();
             // if (gs.VideoPlayer == "ManagedDirectX" && IsManagedDirectXInstalled)
             // return new ManagedDirectXPlayer();
-            if (gs.VideoPlayer == "MPlayer" && MPlayer.IsInstalled)
+            if (generalSettings.VideoPlayer == "MPlayer" && MPlayer.IsInstalled)
             {
                 return new MPlayer();
             }
 
-            if (gs.VideoPlayer == "MPC-HC" && MpcHc.IsInstalled)
+            if (generalSettings.VideoPlayer == "MPC-HC" && MpcHc.IsInstalled)
             {
                 return new MpcHc();
             }
@@ -2790,16 +2782,8 @@
             }
 
             string[] parts = keysInString.ToLower().Split(new[] { '+' }, StringSplitOptions.RemoveEmptyEntries);
-            var resultKeys = Keys.None;
-            foreach (string k in parts)
-            {
-                if (AllKeys.ContainsKey(k))
-                {
-                    resultKeys = resultKeys | AllKeys[k];
-                }
-            }
 
-            return resultKeys;
+            return parts.Where(k => AllKeys.ContainsKey(k)).Aggregate(Keys.None, (current, k) => current | AllKeys[k]);
         }
 
         public static string FixEnglishTextInRightToLeftLanguage(string text, string reverseChars)
@@ -3653,11 +3637,7 @@
         internal static Subtitle LoadMatroskaSSA(MatroskaTrackInfo matroskaSubtitleInfo, string fileName, SubtitleFormat format, List<MatroskaSubtitle> sub)
         {
             var subtitle = new Subtitle { Header = matroskaSubtitleInfo.CodecPrivate };
-            var lines = new List<string>();
-            foreach (string l in subtitle.Header.Trim().SplitToLines())
-            {
-                lines.Add(l);
-            }
+            var lines = subtitle.Header.Trim().SplitToLines().ToList();
 
             var footer = new StringBuilder();
             var comments = new Subtitle();
@@ -3713,11 +3693,7 @@
                 subtitle.Header = subtitle.Header.Trim() + Environment.NewLine + Environment.NewLine + "[Events]" + Environment.NewLine + headerFormat + Environment.NewLine;
             }
 
-            lines = new List<string>();
-            foreach (string l in subtitle.Header.Trim().SplitToLines())
-            {
-                lines.Add(l);
-            }
+            lines = subtitle.Header.Trim().SplitToLines().ToList();
 
             const string timeCodeFormat = "{0}:{1:00}:{2:00}.{3:00}"; // h:mm:ss.cc
             foreach (var mp in sub)
@@ -3727,14 +3703,7 @@
                 string end = string.Format(timeCodeFormat, p.EndTime.Hours, p.EndTime.Minutes, p.EndTime.Seconds, p.EndTime.Milliseconds / 10);
 
                 // MKS contains this: ReadOrder, Layer, Style, Name, MarginL, MarginR, MarginV, Effect, Text
-                for (int commentIndex = 0; commentIndex < comments.Paragraphs.Count; commentIndex++)
-                {
-                    var cp = comments.Paragraphs[commentIndex];
-                    if (cp.StartTime.TotalMilliseconds <= p.StartTime.TotalMilliseconds)
-                    {
-                        lines.Add(cp.Text);
-                    }
-                }
+                lines.AddRange(from cp in comments.Paragraphs where cp.StartTime.TotalMilliseconds <= p.StartTime.TotalMilliseconds select cp.Text);
 
                 for (int commentIndex = comments.Paragraphs.Count - 1; commentIndex >= 0; commentIndex--)
                 {
@@ -3756,16 +3725,9 @@
                 }
             }
 
-            for (int commentIndex = 0; commentIndex < comments.Paragraphs.Count; commentIndex++)
-            {
-                var cp = comments.Paragraphs[commentIndex];
-                lines.Add(cp.Text);
-            }
+            lines.AddRange(comments.Paragraphs.Select(cp => cp.Text));
 
-            foreach (string l in footer.ToString().SplitToLines())
-            {
-                lines.Add(l);
-            }
+            lines.AddRange(footer.ToString().SplitToLines());
 
             format.LoadSubtitle(subtitle, lines, fileName);
             return subtitle;

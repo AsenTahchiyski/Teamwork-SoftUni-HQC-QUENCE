@@ -1,8 +1,7 @@
 ﻿namespace Nikse.SubtitleEdit.Logic
 {
     using System;
-
-    using Nikse.SubtitleEdit.Logic.Enums;
+    using Enums;
 
     /// <summary>
     /// Represents an entry in Zip file directory

@@ -133,8 +133,15 @@
 
         public double TotalSeconds
         {
-            get { return TotalMilliseconds / BaseUnit; }
-            set { TotalMilliseconds = value * BaseUnit; }
+            get
+            {
+                return TotalMilliseconds / BaseUnit;
+            }
+
+            set
+            {
+                TotalMilliseconds = value * BaseUnit;
+            }
         }
 
         public TimeSpan TimeSpan
@@ -143,6 +150,7 @@
             {
                 return TimeSpan.FromMilliseconds(TotalMilliseconds);
             }
+
             set
             {
                 TotalMilliseconds = value.TotalMilliseconds;

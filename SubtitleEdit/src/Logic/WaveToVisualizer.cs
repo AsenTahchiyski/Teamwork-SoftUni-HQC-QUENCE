@@ -1,25 +1,29 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Globalization;
-using System.IO;
-using System.Text;
-using System.Xml;
-
-namespace Nikse.SubtitleEdit.Logic
+﻿namespace Nikse.SubtitleEdit.Logic
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Drawing;
+    using System.Globalization;
+    using System.IO;
+    using System.Text;
+    using System.Xml;
+
     /// <summary>
     /// http://www-mmsp.ece.mcgill.ca/Documents/AudioFormats/WAVE/WAVE.html
     /// </summary>
     public class WaveHeader
     {
         private const int ConstantHeaderSize = 20;
-        private readonly byte[] _headerData;
+        private readonly byte[] headerData;
 
         public string ChunkId { get; private set; }
+      
         public uint ChunkSize { get; private set; }
+        
         public string Format { get; private set; }
+        
         public string FmtId { get; private set; }
+        
         public int FmtChunkSize { get; private set; }
 
         /// <summary>
@@ -64,7 +68,9 @@ namespace Nikse.SubtitleEdit.Logic
             var buffer = new byte[ConstantHeaderSize];
             int bytesRead = stream.Read(buffer, 0, buffer.Length);
             if (bytesRead < buffer.Length)
+            {
                 throw new ArgumentException("Stream is too small");
+            }
 
             // constant header
             ChunkId = Encoding.UTF8.GetString(buffer, 0, 4); // Chunk ID: "RIFF" (Resource Interchange File Format), RF64 = new 64-bit format - see http://tech.ebu.ch/docs/tech/tech3306-2009.pdf
@@ -103,9 +109,9 @@ namespace Nikse.SubtitleEdit.Logic
                 DataStartPosition = (int)oldPos + 8;
             }
 
-            _headerData = new byte[DataStartPosition];
+            headerData = new byte[DataStartPosition];
             stream.Position = 0;
-            stream.Read(_headerData, 0, _headerData.Length);
+            stream.Read(headerData, 0, headerData.Length);
         }
 
         public long BytesPerSecond
@@ -129,39 +135,43 @@ namespace Nikse.SubtitleEdit.Logic
             const int fmtChunckSize = 16;
             const int headerSize = 44;
             int byteRate = sampleRate * (bitsPerSample / 8) * numberOfChannels;
-            WriteInt32ToByteArray(_headerData, 4, dataSize + headerSize - 8);
-            WriteInt16ToByteArray(_headerData, 16, fmtChunckSize); //
-            WriteInt16ToByteArray(_headerData, ConstantHeaderSize + 2, numberOfChannels);
-            WriteInt32ToByteArray(_headerData, ConstantHeaderSize + 4, sampleRate);
-            WriteInt32ToByteArray(_headerData, ConstantHeaderSize + 8, byteRate);
-            WriteInt16ToByteArray(_headerData, ConstantHeaderSize + 14, bitsPerSample);
-            _headerData[ConstantHeaderSize + fmtChunckSize + 0] = Convert.ToByte('d');
-            _headerData[ConstantHeaderSize + fmtChunckSize + 1] = Convert.ToByte('a');
-            _headerData[ConstantHeaderSize + fmtChunckSize + 2] = Convert.ToByte('t');
-            _headerData[ConstantHeaderSize + fmtChunckSize + 3] = Convert.ToByte('a');
-            WriteInt32ToByteArray(_headerData, ConstantHeaderSize + fmtChunckSize + 4, dataSize);
-            toStream.Write(_headerData, 0, headerSize);
+            WriteInt32ToByteArray(headerData, 4, dataSize + headerSize - 8);
+            WriteInt16ToByteArray(headerData, 16, fmtChunckSize); //
+            WriteInt16ToByteArray(headerData, ConstantHeaderSize + 2, numberOfChannels);
+            WriteInt32ToByteArray(headerData, ConstantHeaderSize + 4, sampleRate);
+            WriteInt32ToByteArray(headerData, ConstantHeaderSize + 8, byteRate);
+            WriteInt16ToByteArray(headerData, ConstantHeaderSize + 14, bitsPerSample);
+            headerData[ConstantHeaderSize + fmtChunckSize + 0] = Convert.ToByte('d');
+            headerData[ConstantHeaderSize + fmtChunckSize + 1] = Convert.ToByte('a');
+            headerData[ConstantHeaderSize + fmtChunckSize + 2] = Convert.ToByte('t');
+            headerData[ConstantHeaderSize + fmtChunckSize + 3] = Convert.ToByte('a');
+            WriteInt32ToByteArray(headerData, ConstantHeaderSize + fmtChunckSize + 4, dataSize);
+            toStream.Write(headerData, 0, headerSize);
         }
 
         private static void WriteInt16ToByteArray(byte[] headerData, int index, int value)
         {
             byte[] buffer = BitConverter.GetBytes((short)value);
             for (int i = 0; i < buffer.Length; i++)
+            {
                 headerData[index + i] = buffer[i];
+            }
         }
 
         private static void WriteInt32ToByteArray(byte[] headerData, int index, int value)
         {
             byte[] buffer = BitConverter.GetBytes(value);
             for (int i = 0; i < buffer.Length; i++)
+            {
                 headerData[index + i] = buffer[i];
+            }
         }
     }
 
     public class WavePeakGenerator
     {
-        private Stream _stream;
-        private byte[] _data;
+        private Stream stream;
+        private byte[] data;
 
         private delegate int ReadSampleDataValueDelegate(ref int index);
 
@@ -226,14 +236,16 @@ namespace Nikse.SubtitleEdit.Logic
 
             if (delayInMilliseconds > 0)
             {
-                for (int i = 0; i < peaksPerSecond * delayInMilliseconds / 1000; i++)
+                for (int i = 0; i < peaksPerSecond*delayInMilliseconds/1000; i++)
+                {
                     PeakSamples.Add(0);
+                }
             }
 
             int bytesInterval = (int)Header.BytesPerSecond / PeaksPerSecond;
-            _data = new byte[Header.BytesPerSecond];
-            _stream.Position = Header.DataStartPosition;
-            int bytesRead = _stream.Read(_data, 0, _data.Length);
+            data = new byte[Header.BytesPerSecond];
+            stream.Position = Header.DataStartPosition;
+            int bytesRead = stream.Read(data, 0, data.Length);
             while (bytesRead == Header.BytesPerSecond)
             {
                 for (int i = 0; i < Header.BytesPerSecond; i += bytesInterval)
@@ -244,14 +256,22 @@ namespace Nikse.SubtitleEdit.Logic
                     {
                         value += readSampleDataValue.Invoke(ref index);
                     }
+
                     value = value / Header.NumberOfChannels;
                     if (value < DataMinValue)
+                    {
                         DataMinValue = value;
+                    }
+
                     if (value > DataMaxValue)
+                    {
                         DataMaxValue = value;
+                    }
+
                     PeakSamples.Add(value);
                 }
-                bytesRead = _stream.Read(_data, 0, _data.Length);
+
+                bytesRead = stream.Read(data, 0, data.Length);
             }
         }
 
@@ -261,9 +281,9 @@ namespace Nikse.SubtitleEdit.Logic
             ReadSampleDataValueDelegate readSampleDataValue = GetSampleDataRerader();
 
             // load data
-            _data = new byte[Header.DataChunkSize];
-            _stream.Position = Header.DataStartPosition;
-            _stream.Read(_data, 0, _data.Length);
+            data = new byte[Header.DataChunkSize];
+            stream.Position = Header.DataStartPosition;
+            stream.Read(data, 0, data.Length);
 
             // read sample values
             DataMinValue = int.MaxValue;
@@ -277,11 +297,18 @@ namespace Nikse.SubtitleEdit.Logic
                 {
                     value += readSampleDataValue.Invoke(ref index);
                 }
+
                 value = value / Header.NumberOfChannels;
                 if (value < DataMinValue)
+                {
                     DataMinValue = value;
+                }
+
                 if (value > DataMaxValue)
+                {
                     DataMaxValue = value;
+                }
+
                 AllSamples.Add(value);
             }
         }
@@ -312,20 +339,20 @@ namespace Nikse.SubtitleEdit.Logic
 
         private void Initialize(Stream stream)
         {
-            _stream = stream;
-            Header = new WaveHeader(_stream);
+            this.stream = stream;
+            Header = new WaveHeader(this.stream);
         }
 
         private int ReadValue8Bit(ref int index)
         {
-            int result = _data[index];
+            int result = data[index];
             index += 2;
             return result;
         }
 
         private int ReadValue16Bit(ref int index)
         {
-            int result = BitConverter.ToInt16(_data, index);
+            int result = BitConverter.ToInt16(data, index);
             index += 2;
             return result;
         }
@@ -334,9 +361,9 @@ namespace Nikse.SubtitleEdit.Logic
         {
             var buffer = new byte[4];
             buffer[0] = 0;
-            buffer[1] = _data[index];
-            buffer[2] = _data[index + 1];
-            buffer[3] = _data[index + 2];
+            buffer[1] = data[index];
+            buffer[2] = data[index + 1];
+            buffer[3] = data[index + 2];
             int result = BitConverter.ToInt32(buffer, 0);
             index += 3;
             return result;
@@ -344,7 +371,7 @@ namespace Nikse.SubtitleEdit.Logic
 
         private int ReadValue32Bit(ref int index)
         {
-            int result = BitConverter.ToInt32(_data, index);
+            int result = BitConverter.ToInt32(data, index);
             index += 4;
             return result;
         }
@@ -373,6 +400,7 @@ namespace Nikse.SubtitleEdit.Logic
                 default:
                     throw new InvalidDataException("Cannot read bits per sample of " + Header.BitsPerSample);
             }
+
             return readSampleDataValue;
         }
 
@@ -383,8 +411,10 @@ namespace Nikse.SubtitleEdit.Logic
 
         public void Close()
         {
-            if (_stream != null)
-                _stream.Close();
+            if (stream != null)
+            {
+                stream.Close();
+            }
         }
 
         //////////////////////////////////////// SPECTRUM ///////////////////////////////////////////////////////////
@@ -398,7 +428,9 @@ namespace Nikse.SubtitleEdit.Logic
             var f = new Fourier(nfft, true);
             double divider = 2.0;
             for (int k = 0; k < Header.BitsPerSample - 2; k++)
+            {
                 divider *= 2;
+            }
 
             // determine how to read sample values
             ReadSampleDataValueDelegate readSampleDataValue = GetSampleDataRerader();
@@ -408,7 +440,9 @@ namespace Nikse.SubtitleEdit.Logic
             if (Configuration.Settings.VideoControls.SpectrogramAppearance == "Classic")
             {
                 for (int colorIndex = 0; colorIndex < nfft; colorIndex++)
+                {
                     palette[colorIndex] = PaletteValue(colorIndex, nfft);
+                }
             }
             else
             {
@@ -416,7 +450,9 @@ namespace Nikse.SubtitleEdit.Logic
                                                  Configuration.Settings.VideoControls.WaveformColor.G,
                                                  Configuration.Settings.VideoControls.WaveformColor.B, nfft);
                 for (int i = 0; i < nfft; i++)
+                {
                     palette[i] = list[i];
+                }
             }
 
             // read sample values
@@ -437,7 +473,10 @@ namespace Nikse.SubtitleEdit.Logic
                 {
                     var samplesAsReal = new double[sampleSize];
                     for (int k = 0; k < sampleSize; k++)
+                    {
                         samplesAsReal[k] = 0;
+                    }
+
                     var bmp = DrawSpectrogram(nfft, samplesAsReal, f, palette);
                     bmp.Save(Path.Combine(spectrogramDirectory, count + ".gif"), System.Drawing.Imaging.ImageFormat.Gif);
                     bitmaps.Add(bmp);
@@ -447,9 +486,9 @@ namespace Nikse.SubtitleEdit.Logic
             }
 
             // load data in smaller parts
-            _data = new byte[Header.BytesPerSecond];
-            _stream.Position = Header.DataStartPosition;
-            int bytesRead = _stream.Read(_data, 0, _data.Length);
+            data = new byte[Header.BytesPerSecond];
+            stream.Position = Header.DataStartPosition;
+            int bytesRead = stream.Read(data, 0, data.Length);
             while (bytesRead == Header.BytesPerSecond)
             {
                 while (index < Header.BytesPerSecond)
@@ -459,27 +498,40 @@ namespace Nikse.SubtitleEdit.Logic
                     {
                         value += readSampleDataValue.Invoke(ref index);
                     }
+
                     value = value / Header.NumberOfChannels;
                     if (value < DataMinValue)
+                    {
                         DataMinValue = value;
+                    }
+
                     if (value > DataMaxValue)
+                    {
                         DataMaxValue = value;
+                    }
+
                     samples.Add(value);
                     totalSamples++;
 
-                    if (samples.Count == sampleSize)
+                    if (samples.Count != sampleSize)
                     {
-                        var samplesAsReal = new double[sampleSize];
-                        for (int k = 0; k < sampleSize; k++)
-                            samplesAsReal[k] = samples[k] / divider;
-                        var bmp = DrawSpectrogram(nfft, samplesAsReal, f, palette);
-                        bmp.Save(Path.Combine(spectrogramDirectory, count + ".gif"), System.Drawing.Imaging.ImageFormat.Gif);
-                        bitmaps.Add(bmp);
-                        samples = new List<int>();
-                        count++;
+                        continue;
                     }
+
+                    var samplesAsReal = new double[sampleSize];
+                    for (int k = 0; k < sampleSize; k++)
+                    {
+                        samplesAsReal[k] = samples[k] / divider;
+                    }
+
+                    var bmp = DrawSpectrogram(nfft, samplesAsReal, f, palette);
+                    bmp.Save(Path.Combine(spectrogramDirectory, count + ".gif"), System.Drawing.Imaging.ImageFormat.Gif);
+                    bitmaps.Add(bmp);
+                    samples = new List<int>();
+                    count++;
                 }
-                bytesRead = _stream.Read(_data, 0, _data.Length);
+
+                bytesRead = stream.Read(data, 0, data.Length);
                 index = 0;
             }
 
@@ -487,7 +539,10 @@ namespace Nikse.SubtitleEdit.Logic
             {
                 var samplesAsReal = new double[sampleSize];
                 for (int k = 0; k < sampleSize && k < samples.Count; k++)
+                {
                     samplesAsReal[k] = samples[k] / divider;
+                }
+
                 var bmp = DrawSpectrogram(nfft, samplesAsReal, f, palette);
                 bmp.Save(Path.Combine(spectrogramDirectory, count + ".gif"), System.Drawing.Imaging.ImageFormat.Gif);
                 bitmaps.Add(bmp);
@@ -516,8 +571,10 @@ namespace Nikse.SubtitleEdit.Logic
 
             int numcols = numSamples / colIncrement;
             // make sure we don't step beyond the end of the recording
-            while ((numcols - 1) * colIncrement + nfft > numSamples)
+            while ((numcols - 1)*colIncrement + nfft > numSamples)
+            {
                 numcols--;
+            }
 
             double[] real = new double[nfft];
             double[] imag = new double[nfft];
@@ -545,6 +602,7 @@ namespace Nikse.SubtitleEdit.Logic
                     bmp.SetPixel(col, (nfft / 2 - 1) - newY, palette[colorIndex]);
                 }
             }
+
             return bmp;
         }
 
@@ -598,11 +656,15 @@ namespace Nikse.SubtitleEdit.Logic
             const double log10 = 2.30258509299405;
 
             if (magnitude == 0)
+            {
                 return 0;
+            }
 
             double levelIndB = 20 * Math.Log(magnitude) / log10;
             if (levelIndB < -rangedB)
+            {
                 return 0;
+            }
 
             return (int)(rangeIndex * (levelIndB + rangedB) / rangedB);
         }
@@ -631,8 +693,8 @@ namespace Nikse.SubtitleEdit.Logic
                 g += diffG;
                 b += diffB;
             }
+
             return list;
         }
-
     }
 }

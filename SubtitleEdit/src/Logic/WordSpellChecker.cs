@@ -1,47 +1,47 @@
-﻿using System;
-using System.Reflection;
-using System.Windows.Forms;
-using Nikse.SubtitleEdit.Forms;
-using System.Runtime.InteropServices;
-
-namespace Nikse.SubtitleEdit.Logic
+﻿namespace Nikse.SubtitleEdit.Logic
 {
+    using System;
+    using System.Reflection;
+    using System.Windows.Forms;
+    using SubtitleEdit.Forms;
+    using System.Runtime.InteropServices;
+
     /// <summary>
     /// Microsoft Word methods (late bound) for spell checking by Nikse
     /// Mostly a bunch of hacks...
     /// </summary>
     internal class WordSpellChecker
     {
-        private const int HWND_BOTTOM = 1;
+        private const int HwndBottom = 1;
 
-        private const int SWP_NOACTIVATE = 0x0010;
-        private const short SWP_NOMOVE = 0X2;
-        private const short SWP_NOSIZE = 1;
-        private const short SWP_NOZORDER = 0X4;
-        private const int SWP_SHOWWINDOW = 0x0040;
+        private const int SwpNoactivate = 0x0010;
+        private const short SwpNomove = 0X2;
+        private const short SwpNosize = 1;
+        //private const short SwpNozorder = 0X4;
+        private const int SwpShowwindow = 0x0040;
 
-        private const int wdWindowStateNormal = 0;
-        private const int wdWindowStateMaximize = 1;
-        private const int wdWindowStateMinimize = 2;
+        private const int WdWindowStateNormal = 0;
+        //private const int WdWindowStateMaximize = 1;
+        //private const int WdWindowStateMinimize = 2;
 
-        private object _wordApplication;
-        private object _wordDocument;
-        private Type _wordApplicationType;
-        private Type _wordDocumentType;
-        private IntPtr _mainHandle;
-        private int _languageId = 1033; // English
+        private object wordApplication;
+        private object wordDocument;
+        private readonly Type wordApplicationType;
+        private Type wordDocumentType;
+        private readonly IntPtr mainHandle;
+        private int languageId = 1033; // English
 
         public WordSpellChecker(Main main, string languageId)
         {
-            _mainHandle = main.Handle;
+            mainHandle = main.Handle;
             SetLanguageId(languageId);
 
-            _wordApplicationType = Type.GetTypeFromProgID("Word.Application");
-            _wordApplication = Activator.CreateInstance(_wordApplicationType);
+            wordApplicationType = Type.GetTypeFromProgID("Word.Application");
+            wordApplication = Activator.CreateInstance(wordApplicationType);
 
             Application.DoEvents();
-            _wordApplicationType.InvokeMember("WindowState", BindingFlags.SetProperty, null, _wordApplication, new object[] { wdWindowStateNormal });
-            _wordApplicationType.InvokeMember("Top", BindingFlags.SetProperty, null, _wordApplication, new object[] { -5000 }); // hide window - it's a hack
+            wordApplicationType.InvokeMember("WindowState", BindingFlags.SetProperty, null, wordApplication, new object[] { WdWindowStateNormal });
+            wordApplicationType.InvokeMember("Top", BindingFlags.SetProperty, null, wordApplication, new object[] { -5000 }); // hide window - it's a hack
             Application.DoEvents();
         }
 
@@ -50,32 +50,32 @@ namespace Nikse.SubtitleEdit.Logic
             try
             {
                 var ci = new System.Globalization.CultureInfo(languageId);
-                _languageId = ci.LCID;
+                this.languageId = ci.LCID;
             }
             catch
             {
-                _languageId = System.Globalization.CultureInfo.CurrentUICulture.LCID;
+                this.languageId = System.Globalization.CultureInfo.CurrentUICulture.LCID;
             }
         }
 
         public void NewDocument()
         {
-            _wordDocumentType = Type.GetTypeFromProgID("Word.Document");
-            _wordDocument = Activator.CreateInstance(_wordDocumentType);
+            wordDocumentType = Type.GetTypeFromProgID("Word.Document");
+            wordDocument = Activator.CreateInstance(wordDocumentType);
         }
 
         public void CloseDocument()
         {
             object saveChanges = false;
             object p = Missing.Value;
-            _wordDocumentType.InvokeMember("Close", BindingFlags.InvokeMethod, null, _wordDocument, new object[] { saveChanges, p, p });
+            wordDocumentType.InvokeMember("Close", BindingFlags.InvokeMethod, null, wordDocument, new object[] { saveChanges, p, p });
         }
 
         public string Version
         {
             get
             {
-                object wordVersion = _wordApplicationType.InvokeMember("Version", BindingFlags.GetProperty, null, _wordApplication, null);
+                object wordVersion = wordApplicationType.InvokeMember("Version", BindingFlags.GetProperty, null, wordApplication, null);
                 return wordVersion.ToString();
             }
         }
@@ -85,31 +85,31 @@ namespace Nikse.SubtitleEdit.Logic
             object saveChanges = false;
             object originalFormat = Missing.Value;
             object routeDocument = Missing.Value;
-            _wordApplicationType.InvokeMember("Quit", BindingFlags.InvokeMethod, null, _wordApplication, new object[] { saveChanges, originalFormat, routeDocument });
+            wordApplicationType.InvokeMember("Quit", BindingFlags.InvokeMethod, null, wordApplication, new object[] { saveChanges, originalFormat, routeDocument });
             try
             {
-                Marshal.ReleaseComObject(_wordDocument);
-                Marshal.ReleaseComObject(_wordApplication);
+                Marshal.ReleaseComObject(wordDocument);
+                Marshal.ReleaseComObject(wordApplication);
             }
             finally
             {
-                _wordDocument = null;
-                _wordApplication = null;
+                wordDocument = null;
+                wordApplication = null;
             }
         }
 
         public string CheckSpelling(string text, out int errorsBefore, out int errorsAfter)
         {
             // insert text
-            object words = _wordDocumentType.InvokeMember("Words", BindingFlags.GetProperty, null, _wordDocument, null);
+            object words = wordDocumentType.InvokeMember("Words", BindingFlags.GetProperty, null, wordDocument, null);
             object range = words.GetType().InvokeMember("First", BindingFlags.GetProperty, null, words, null);
             range.GetType().InvokeMember("InsertBefore", BindingFlags.InvokeMethod, null, range, new Object[] { text });
 
             // set language...
-            range.GetType().InvokeMember("LanguageId", BindingFlags.SetProperty, null, range, new object[] { _languageId });
+            range.GetType().InvokeMember("LanguageId", BindingFlags.SetProperty, null, range, new object[] { languageId });
 
             // spell check error count
-            object spellingErrors = _wordDocumentType.InvokeMember("SpellingErrors", BindingFlags.GetProperty, null, _wordDocument, null);
+            object spellingErrors = wordDocumentType.InvokeMember("SpellingErrors", BindingFlags.GetProperty, null, wordDocument, null);
             object spellingErrorsCount = spellingErrors.GetType().InvokeMember("Count", BindingFlags.GetProperty, null, spellingErrors, null);
             errorsBefore = int.Parse(spellingErrorsCount.ToString());
             Marshal.ReleaseComObject(spellingErrors);
@@ -118,16 +118,16 @@ namespace Nikse.SubtitleEdit.Logic
             object p = Missing.Value;
             if (errorsBefore > 0)
             {
-                _wordApplicationType.InvokeMember("WindowState", BindingFlags.SetProperty, null, _wordApplication, new object[] { wdWindowStateNormal });
-                _wordApplicationType.InvokeMember("Top", BindingFlags.SetProperty, null, _wordApplication, new object[] { -10000 }); // hide window - it's a hack
-                NativeMethods.SetWindowPos(_mainHandle, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE); // make sure c# form is behind spell check dialog
-                _wordDocumentType.InvokeMember("CheckSpelling", BindingFlags.InvokeMethod, null, _wordDocument, new Object[] { p, p, p, p, p, p, p, p, p, p, p, p }); // 12 parameters
-                NativeMethods.SetWindowPos(_mainHandle, 0, 0, 0, 0, 0, SWP_SHOWWINDOW | SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE); // bring c# form to front again
-                _wordApplicationType.InvokeMember("Top", BindingFlags.SetProperty, null, _wordApplication, new object[] { -10000 }); // hide window - it's a hack
+                wordApplicationType.InvokeMember("WindowState", BindingFlags.SetProperty, null, wordApplication, new object[] { WdWindowStateNormal });
+                wordApplicationType.InvokeMember("Top", BindingFlags.SetProperty, null, wordApplication, new object[] { -10000 }); // hide window - it's a hack
+                NativeMethods.SetWindowPos(mainHandle, HwndBottom, 0, 0, 0, 0, SwpNomove | SwpNosize | SwpNoactivate); // make sure c# form is behind spell check dialog
+                wordDocumentType.InvokeMember("CheckSpelling", BindingFlags.InvokeMethod, null, wordDocument, new Object[] { p, p, p, p, p, p, p, p, p, p, p, p }); // 12 parameters
+                NativeMethods.SetWindowPos(mainHandle, 0, 0, 0, 0, 0, SwpShowwindow | SwpNomove | SwpNosize | SwpNoactivate); // bring c# form to front again
+                wordApplicationType.InvokeMember("Top", BindingFlags.SetProperty, null, wordApplication, new object[] { -10000 }); // hide window - it's a hack
             }
 
             // spell check error count
-            spellingErrors = _wordDocumentType.InvokeMember("SpellingErrors", BindingFlags.GetProperty, null, _wordDocument, null);
+            spellingErrors = wordDocumentType.InvokeMember("SpellingErrors", BindingFlags.GetProperty, null, wordDocument, null);
             spellingErrorsCount = spellingErrors.GetType().InvokeMember("Count", BindingFlags.GetProperty, null, spellingErrors, null);
             errorsAfter = int.Parse(spellingErrorsCount.ToString());
             Marshal.ReleaseComObject(spellingErrors);
@@ -141,6 +141,5 @@ namespace Nikse.SubtitleEdit.Logic
 
             return resultText.ToString().TrimEnd(); // result needs a trimming at the end
         }
-
     }
 }

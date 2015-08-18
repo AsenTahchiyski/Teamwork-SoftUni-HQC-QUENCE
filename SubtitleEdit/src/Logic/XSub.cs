@@ -1,18 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-
-namespace Nikse.SubtitleEdit.Logic
+﻿namespace Nikse.SubtitleEdit.Logic
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Drawing;
+
     public class XSub
     {
+        private readonly byte[] colorBuffer;
+        private readonly byte[] rleBuffer;
+        
         public TimeCode Start { get; set; }
+     
         public TimeCode End { get; set; }
+        
         public int Width { get; private set; }
+        
         public int Height { get; private set; }
-
-        private byte[] colorBuffer;
-        private byte[] rleBuffer;
 
         public XSub(string timeCode, int width, int height, byte[] colors, byte[] rle)
         {
@@ -35,13 +38,16 @@ namespace Nikse.SubtitleEdit.Logic
             int w = bmp.Width;
             int h = bmp.Height;
             int nibbleOffset = 0;
-            var nibble_end = buf.Length * 2;
+            var nibbleEnd = buf.Length * 2;
             var x = 0;
             var y = 0;
             for (; ; )
             {
-                if (nibbleOffset >= nibble_end)
+                if (nibbleOffset >= nibbleEnd)
+                {
                     return -1;
+                }
+
                 var v = GetNibble(buf, nibbleOffset++);
                 if (v < 0x4)
                 {
@@ -62,7 +68,9 @@ namespace Nikse.SubtitleEdit.Logic
 
                 var len = v >> 2;
                 if (len > (w - x))
+                {
                     len = (w - x);
+                }
 
                 var color = v & 0x03;
                 if (color > 0)
@@ -76,17 +84,21 @@ namespace Nikse.SubtitleEdit.Logic
                 {
                     y++;
                     if (y >= h)
+                    {
                         break;
+                    }
+
                     x = 0;
                     nibbleOffset += (nibbleOffset & 1);
                 }
             }
+
             return 0;
         }
 
-        private static int GetNibble(byte[] buf, int nibble_offset)
+        private static int GetNibble(byte[] buf, int nibbleOffset)
         {
-            return (buf[nibble_offset >> 1] >> ((1 - (nibble_offset & 1)) << 2)) & 0xf;
+            return (buf[nibbleOffset >> 1] >> ((1 - (nibbleOffset & 1)) << 2)) & 0xf;
         }
 
         public Bitmap GetImage(Color background, Color pattern, Color emphasis1, Color emphasis2)
@@ -100,6 +112,7 @@ namespace Nikse.SubtitleEdit.Logic
                     gr.FillRectangle(new SolidBrush(fourColors[0]), new Rectangle(0, 0, bmp.Width, bmp.Height));
                 }
             }
+
             var fastBmp = new FastBitmap(bmp);
             fastBmp.LockImage();
             GenerateBitmap(fastBmp, rleBuffer, fourColors);
@@ -116,6 +129,5 @@ namespace Nikse.SubtitleEdit.Logic
         {
             return GetImage(Color.Transparent, GetColor(3), GetColor(6), GetColor(9));
         }
-
     }
 }
