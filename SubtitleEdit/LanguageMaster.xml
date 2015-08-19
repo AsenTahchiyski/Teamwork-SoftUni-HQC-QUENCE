@@ -165,7 +165,7 @@ Note: Do check free disk space.</WaveFileMalformed>
     <Style>Style...</Style>
     <ConvertOptions>Convert options</ConvertOptions>
     <RemoveFormatting>Remove formatting tags</RemoveFormatting>
-    <RemoveTextForHI>Remove text for HI</RemoveTextForHI>
+    <RemoveTextForHi>Remove text for HI</RemoveTextForHi>
     <OverwriteOriginalFiles>Overwrite original files (new extension if format is changed)</OverwriteOriginalFiles>
     <RedoCasing>Redo casing</RedoCasing>
     <Convert>Convert</Convert>
