@@ -1,13 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Text;
-using System.Xml;
-using Nikse.SubtitleEdit.Core;
-
-namespace Nikse.SubtitleEdit.Logic.SubtitleFormats
+﻿namespace Nikse.SubtitleEdit.Logic.SubtitleFormats
 {
-    public class AdobeAfterEffectsFTME : SubtitleFormat
+    using System;
+    using System.Collections.Generic;
+    using System.Globalization;
+    using System.Text;
+    using System.Xml;
+    using Core;
+
+    public class AdobeAfterEffectsFtme : SubtitleFormat
     {
         public override string Extension
         {
@@ -44,8 +44,7 @@ namespace Nikse.SubtitleEdit.Logic.SubtitleFormats
   </layers>
 </xml>".Replace("'", "\"");
 
-            var xml = new XmlDocument();
-            xml.XmlResolver = null;
+            var xml = new XmlDocument { XmlResolver = null };
             xml.LoadXml(xmlStructure);
             const string innerXml = "<comment value=\"\"/><time value=\"{0}\"/><duration value=\"{1}\"/>";
             XmlNode root = xml.DocumentElement.SelectSingleNode("layers/layer");
@@ -53,8 +52,11 @@ namespace Nikse.SubtitleEdit.Logic.SubtitleFormats
             {
                 XmlNode paragraph = xml.CreateElement("marker");
                 paragraph.InnerXml = string.Format(CultureInfo.InvariantCulture, innerXml, p.StartTime.TotalSeconds, p.Duration.TotalSeconds);
-                paragraph.SelectSingleNode("comment").Attributes["value"].InnerText = HtmlUtil.RemoveHtmlTags(p.Text, true).Replace(Environment.NewLine, "||");
-                root.AppendChild(paragraph);
+                var selectSingleNode = paragraph.SelectSingleNode("comment");
+                if (selectSingleNode != null) selectSingleNode.Attributes["value"].InnerText = HtmlUtil.RemoveHtmlTags(p.Text, true).Replace(Environment.NewLine, "||");
+                {
+                    if (root != null) root.AppendChild(paragraph);
+                }
             }
 
             return ToUtf8XmlString(xml);
@@ -69,14 +71,16 @@ namespace Nikse.SubtitleEdit.Logic.SubtitleFormats
 
             string allText = sb.ToString();
             if (!allText.Contains("<layers") && !allText.Contains("<marker>"))
+            {
                 return;
+            }
 
-            var xml = new XmlDocument();
-            xml.XmlResolver = null;
+            var xml = new XmlDocument { XmlResolver = null };
             try
             {
                 xml.LoadXml(allText);
             }
+
             catch (Exception exception)
             {
                 System.Diagnostics.Debug.WriteLine(exception.Message);
@@ -99,8 +103,8 @@ namespace Nikse.SubtitleEdit.Logic.SubtitleFormats
                     _errorCount++;
                 }
             }
+
             subtitle.Renumber();
         }
-
     }
 }

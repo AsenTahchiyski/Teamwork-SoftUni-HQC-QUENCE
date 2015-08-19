@@ -1,19 +1,29 @@
-﻿using System.Collections.Generic;
-
-namespace Nikse.SubtitleEdit.Logic.TransportStream
+﻿namespace Nikse.SubtitleEdit.Logic.TransportStream
 {
+    using System.Collections.Generic;
+
     public class RegionCompositionSegment
     {
         public int RegionId { get; set; }
+
         public int RegionVersionNumber { get; set; }
+        
         public bool RegionFillFlag { get; set; }
+        
         public int RegionWidth { get; set; }
+        
         public int RegionHeight { get; set; }
+        
         public int RegionLevelOfCompatibility { get; set; }
+        
         public int RegionDepth { get; set; }
+        
         public int RegionClutId { get; set; }
+        
         public int Region8BitPixelCode { get; set; }
+        
         public int Region4BitPixelCode { get; set; }
+        
         public int Region2BitPixelCode { get; set; }
 
         public List<RegionCompositionSegmentObject> Objects = new List<RegionCompositionSegmentObject>();
@@ -34,8 +44,7 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
             int i = 0;
             while (i < regionLength && i + index < buffer.Length)
             {
-                var rcso = new RegionCompositionSegmentObject();
-                rcso.ObjectId = Helper.GetEndianWord(buffer, i + index + 10);
+                var rcso = new RegionCompositionSegmentObject { ObjectId = Helper.GetEndianWord(buffer, i + index + 10) };
                 i += 2;
                 rcso.ObjectType = buffer[i + index + 10] >> 6;
                 rcso.ObjectProviderFlag = (buffer[index + i + 10] & Helper.B00110000) >> 4;
@@ -44,7 +53,10 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
                 rcso.ObjectVerticalPosition = ((buffer[index + i + 10] & Helper.B00001111) << 8) + buffer[index + i + 11];
                 i += 2;
                 if (rcso.ObjectType == 1 || rcso.ObjectType == 2)
+                {
                     i += 2;
+                }
+
                 Objects.Add(rcso);
             }
         }

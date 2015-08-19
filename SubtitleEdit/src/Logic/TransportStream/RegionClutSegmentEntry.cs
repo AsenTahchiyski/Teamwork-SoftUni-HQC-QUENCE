@@ -1,26 +1,35 @@
-﻿using System.Drawing;
-
-namespace Nikse.SubtitleEdit.Logic.TransportStream
+﻿namespace Nikse.SubtitleEdit.Logic.TransportStream
 {
+    using System.Drawing;
+
     public class RegionClutSegmentEntry
     {
         public int ClutEntryId { get; set; }
+
         public bool ClutEntry2BitClutEntryFlag { get; set; }
+        
         public bool ClutEntry4BitClutEntryFlag { get; set; }
+        
         public bool ClutEntry8BitClutEntryFlag { get; set; }
+        
         public bool FullRangeFlag { get; set; }
+        
         public int ClutEntryY { get; set; }
+        
         public int ClutEntryCr { get; set; }
+        
         public int ClutEntryCb { get; set; }
+        
         public int ClutEntryT { get; set; }
 
         private static int BoundByteRange(int i)
         {
             if (i < byte.MinValue)
+            {
                 return byte.MinValue;
-            if (i > byte.MaxValue)
-                return byte.MaxValue;
-            return i;
+            }
+
+            return i > byte.MaxValue ? byte.MaxValue : i;
         }
 
         public Color GetColor()
@@ -50,10 +59,11 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
             b = BoundByteRange(b);
 
             if (y < 0.1) // full transparency
+            {
                 t = 0;
+            }
 
             return Color.FromArgb(t, r, g, b);
         }
     }
-
 }

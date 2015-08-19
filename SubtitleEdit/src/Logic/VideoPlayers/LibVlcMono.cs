@@ -1,18 +1,18 @@
-﻿using System;
-using System.Text;
-using System.Windows.Forms;
-
-namespace Nikse.SubtitleEdit.Logic.VideoPlayers
+﻿namespace Nikse.SubtitleEdit.Logic.VideoPlayers
 {
+    using System;
+    using System.Text;
+    using System.Windows.Forms;
+
     internal class LibVlcMono : VideoPlayer, IDisposable
     {
-        private Timer _videoLoadedTimer;
-        private Timer _videoEndTimer;
-        private IntPtr _libVlcDLL;
-        private IntPtr _libVlc;
-        private IntPtr _mediaPlayer;
-        private Control _ownerControl;
-        private Form _parentForm;
+        private Timer videoLoadedTimer;
+        private Timer videoEndTimer;
+        private IntPtr libVlcDll;
+        private IntPtr libVlc;
+        private IntPtr mediaPlayer;
+        private Control ownerControl;
+        private Form parentForm;
 
         public override string PlayerName
         {
@@ -23,11 +23,12 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers
         {
             get
             {
-                return NativeMethods.libvlc_audio_get_volume(_mediaPlayer);
+                return NativeMethods.libvlc_audio_get_volume(mediaPlayer);
             }
+
             set
             {
-                NativeMethods.libvlc_audio_set_volume(_mediaPlayer, value);
+                NativeMethods.libvlc_audio_set_volume(mediaPlayer, value);
             }
         }
 
@@ -35,7 +36,7 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers
         {
             get
             {
-                return NativeMethods.libvlc_media_player_get_length(_mediaPlayer) / TimeCode.BaseUnit;
+                return NativeMethods.libvlc_media_player_get_length(mediaPlayer) / TimeCode.BaseUnit;
             }
         }
 
@@ -43,11 +44,12 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers
         {
             get
             {
-                return NativeMethods.libvlc_media_player_get_time(_mediaPlayer) / TimeCode.BaseUnit;
+                return NativeMethods.libvlc_media_player_get_time(mediaPlayer) / TimeCode.BaseUnit;
             }
+
             set
             {
-                NativeMethods.libvlc_media_player_set_time(_mediaPlayer, (long)(value * TimeCode.BaseUnit));
+                NativeMethods.libvlc_media_player_set_time(mediaPlayer, (long)(value * TimeCode.BaseUnit));
             }
         }
 
@@ -55,29 +57,34 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers
         {
             get
             {
-                return NativeMethods.libvlc_media_player_get_rate(_mediaPlayer);
+                return NativeMethods.libvlc_media_player_get_rate(mediaPlayer);
             }
+
             set
             {
                 if (value >= 0 && value <= 2.0)
-                    NativeMethods.libvlc_media_player_set_rate(_mediaPlayer, (float)value);
+                {
+                    NativeMethods.libvlc_media_player_set_rate(mediaPlayer, (float)value);
+                }
             }
         }
 
         public override void Play()
         {
-            NativeMethods.libvlc_media_player_play(_mediaPlayer);
+            NativeMethods.libvlc_media_player_play(mediaPlayer);
         }
 
         public override void Pause()
         {
             if (!IsPaused)
-                NativeMethods.libvlc_media_player_pause(_mediaPlayer);
+            {
+                NativeMethods.libvlc_media_player_pause(mediaPlayer);
+            }
         }
 
         public override void Stop()
         {
-            NativeMethods.libvlc_media_player_stop(_mediaPlayer);
+            NativeMethods.libvlc_media_player_stop(mediaPlayer);
         }
 
         public override bool IsPaused
@@ -85,7 +92,7 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers
             get
             {
                 const int Paused = 4;
-                int state = NativeMethods.libvlc_media_player_get_state(_mediaPlayer);
+                int state = NativeMethods.libvlc_media_player_get_state(mediaPlayer);
                 return state == Paused;
             }
         }
@@ -95,7 +102,7 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers
             get
             {
                 const int Playing = 3;
-                int state = NativeMethods.libvlc_media_player_get_state(_mediaPlayer);
+                int state = NativeMethods.libvlc_media_player_get_state(mediaPlayer);
                 return state == Playing;
             }
         }
@@ -104,7 +111,7 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers
         {
             get
             {
-                return NativeMethods.libvlc_audio_get_track_count(_mediaPlayer) - 1;
+                return NativeMethods.libvlc_audio_get_track_count(mediaPlayer) - 1;
             }
         }
 
@@ -112,49 +119,57 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers
         {
             get
             {
-                return NativeMethods.libvlc_audio_get_track(_mediaPlayer) - 1;
+                return NativeMethods.libvlc_audio_get_track(mediaPlayer) - 1;
             }
+
             set
             {
-                NativeMethods.libvlc_audio_set_track(_mediaPlayer, value + 1);
+                NativeMethods.libvlc_audio_set_track(mediaPlayer, value + 1);
             }
         }
 
-        public LibVlcMono MakeSecondMediaPlayer(Control ownerControl, string videoFileName, EventHandler onVideoLoaded, EventHandler onVideoEnded)
+        public LibVlcMono MakeSecondMediaPlayer(Control ownerControlSecond, string videoFileName, EventHandler onVideoLoaded, EventHandler onVideoEnded)
         {
-            LibVlcMono newVlc = new LibVlcMono();
-            newVlc._libVlc = this._libVlc;
-            newVlc._libVlcDLL = this._libVlcDLL;
-            newVlc._ownerControl = ownerControl;
-            if (ownerControl != null)
-                newVlc._parentForm = ownerControl.FindForm();
+            LibVlcMono newVlc = new LibVlcMono
+            {
+                libVlc = this.libVlc,
+                libVlcDll = this.libVlcDll,
+                ownerControl = ownerControlSecond
+            };
+
+            if (ownerControlSecond != null)
+            {
+                newVlc.parentForm = ownerControlSecond.FindForm();
+            }
 
             newVlc.OnVideoLoaded = onVideoLoaded;
             newVlc.OnVideoEnded = onVideoEnded;
 
-            if (!string.IsNullOrEmpty(videoFileName))
+            if (string.IsNullOrEmpty(videoFileName))
             {
-                IntPtr media = NativeMethods.libvlc_media_new_path(_libVlc, Encoding.UTF8.GetBytes(videoFileName + "\0"));
-                newVlc._mediaPlayer = NativeMethods.libvlc_media_player_new_from_media(media);
-                NativeMethods.libvlc_media_release(media);
-
-                //  Linux: libvlc_media_player_set_xdrawable (_mediaPlayer, xdrawable);
-                //  Mac: libvlc_media_player_set_nsobject (_mediaPlayer, view);
-                var ownerHandle = ownerControl == null ? IntPtr.Zero : ownerControl.Handle;
-                NativeMethods.libvlc_media_player_set_hwnd(newVlc._mediaPlayer, ownerHandle); // windows
-
-                if (onVideoEnded != null)
-                {
-                    newVlc._videoEndTimer = new Timer { Interval = 500 };
-                    newVlc._videoEndTimer.Tick += VideoEndTimerTick;
-                    newVlc._videoEndTimer.Start();
-                }
-
-                NativeMethods.libvlc_media_player_play(newVlc._mediaPlayer);
-                newVlc._videoLoadedTimer = new Timer { Interval = 500 };
-                newVlc._videoLoadedTimer.Tick += newVlc.VideoLoadedTimer_Tick;
-                newVlc._videoLoadedTimer.Start();
+                return newVlc;
             }
+
+            IntPtr media = NativeMethods.libvlc_media_new_path(libVlc, Encoding.UTF8.GetBytes(videoFileName + "\0"));
+            newVlc.mediaPlayer = NativeMethods.libvlc_media_player_new_from_media(media);
+            NativeMethods.libvlc_media_release(media);
+
+            //  Linux: libvlc_media_player_set_xdrawable (_mediaPlayer, xdrawable);
+            //  Mac: libvlc_media_player_set_nsobject (_mediaPlayer, view);
+            var ownerHandle = ownerControlSecond == null ? IntPtr.Zero : ownerControlSecond.Handle;
+            NativeMethods.libvlc_media_player_set_hwnd(newVlc.mediaPlayer, ownerHandle); // windows
+
+            if (onVideoEnded != null)
+            {
+                newVlc.videoEndTimer = new Timer { Interval = 500 };
+                newVlc.videoEndTimer.Tick += VideoEndTimerTick;
+                newVlc.videoEndTimer.Start();
+            }
+
+            NativeMethods.libvlc_media_player_play(newVlc.mediaPlayer);
+            newVlc.videoLoadedTimer = new Timer { Interval = 500 };
+            newVlc.videoLoadedTimer.Tick += newVlc.VideoLoadedTimer_Tick;
+            newVlc.videoLoadedTimer.Start();
             return newVlc;
         }
 
@@ -166,75 +181,90 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers
                 System.Threading.Thread.Sleep(100);
                 i++;
             }
-            NativeMethods.libvlc_media_player_pause(_mediaPlayer);
-            _videoLoadedTimer.Stop();
+
+            NativeMethods.libvlc_media_player_pause(mediaPlayer);
+            videoLoadedTimer.Stop();
 
             if (OnVideoLoaded != null)
-                OnVideoLoaded.Invoke(_mediaPlayer, new EventArgs());
+            {
+                OnVideoLoaded.Invoke(mediaPlayer, new EventArgs());
+            }
         }
 
         public override void Initialize(Control ownerControl, string videoFileName, EventHandler onVideoLoaded, EventHandler onVideoEnded)
         {
-            _ownerControl = ownerControl;
+            this.ownerControl = ownerControl;
             if (ownerControl != null)
-                _parentForm = ownerControl.FindForm();
+            {
+                parentForm = ownerControl.FindForm();
+            }
 
             OnVideoLoaded = onVideoLoaded;
             OnVideoEnded = onVideoEnded;
 
-            if (!string.IsNullOrEmpty(videoFileName))
+            if (string.IsNullOrEmpty(videoFileName))
             {
-                string[] initParameters = { "--no-sub-autodetect-file" }; //, "--no-video-title-show" }; // TODO: Put in options/config file
-                _libVlc = NativeMethods.libvlc_new(initParameters.Length, initParameters);
-                IntPtr media = NativeMethods.libvlc_media_new_path(_libVlc, Encoding.UTF8.GetBytes(videoFileName + "\0"));
-                _mediaPlayer = NativeMethods.libvlc_media_player_new_from_media(media);
-                NativeMethods.libvlc_media_release(media);
-
-                //  Linux: libvlc_media_player_set_xdrawable (_mediaPlayer, xdrawable);
-                //  Mac: libvlc_media_player_set_nsobject (_mediaPlayer, view);
-                var ownerHandle = ownerControl == null ? IntPtr.Zero : ownerControl.Handle;
-                NativeMethods.libvlc_media_player_set_hwnd(_mediaPlayer, ownerHandle); // windows
-
-                if (onVideoEnded != null)
-                {
-                    _videoEndTimer = new Timer { Interval = 500 };
-                    _videoEndTimer.Tick += VideoEndTimerTick;
-                    _videoEndTimer.Start();
-                }
-
-                NativeMethods.libvlc_media_player_play(_mediaPlayer);
-                _videoLoadedTimer = new Timer { Interval = 500 };
-                _videoLoadedTimer.Tick += VideoLoadedTimer_Tick;
-                _videoLoadedTimer.Start();
+                return;
             }
+
+            string[] initParameters = { "--no-sub-autodetect-file" }; //, "--no-video-title-show" }; // TODO: Put in options/config file
+            libVlc = NativeMethods.libvlc_new(initParameters.Length, initParameters);
+            IntPtr media = NativeMethods.libvlc_media_new_path(libVlc, Encoding.UTF8.GetBytes(videoFileName + "\0"));
+            mediaPlayer = NativeMethods.libvlc_media_player_new_from_media(media);
+            NativeMethods.libvlc_media_release(media);
+
+            //  Linux: libvlc_media_player_set_xdrawable (_mediaPlayer, xdrawable);
+            //  Mac: libvlc_media_player_set_nsobject (_mediaPlayer, view);
+            var ownerHandle = ownerControl == null ? IntPtr.Zero : ownerControl.Handle;
+            NativeMethods.libvlc_media_player_set_hwnd(mediaPlayer, ownerHandle); // windows
+
+            if (onVideoEnded != null)
+            {
+                videoEndTimer = new Timer { Interval = 500 };
+                videoEndTimer.Tick += VideoEndTimerTick;
+                videoEndTimer.Start();
+            }
+
+            NativeMethods.libvlc_media_player_play(mediaPlayer);
+            videoLoadedTimer = new Timer { Interval = 500 };
+            videoLoadedTimer.Tick += VideoLoadedTimer_Tick;
+            videoLoadedTimer.Start();
         }
 
         private void VideoEndTimerTick(object sender, EventArgs e)
         {
-            const int Ended = 6;
-            int state = NativeMethods.libvlc_media_player_get_state(_mediaPlayer);
-            if (state == Ended)
+            const int ended = 6;
+            int state = NativeMethods.libvlc_media_player_get_state(mediaPlayer);
+            if (state != ended)
             {
-                // hack to make sure VLC is in ready state
-                Stop();
-                Play();
-                Pause();
-                OnVideoEnded.Invoke(_mediaPlayer, new EventArgs());
+                return;
+            }
+            // hack to make sure VLC is in ready state
+            Stop();
+            Play();
+            Pause();
+            if (OnVideoEnded != null)
+            {
+                OnVideoEnded.Invoke(mediaPlayer, new EventArgs());
             }
         }
 
         public override void DisposeVideoPlayer()
         {
-            if (_videoLoadedTimer != null)
-                _videoLoadedTimer.Stop();
+            if (videoLoadedTimer != null)
+            {
+                videoLoadedTimer.Stop();
+            }
 
-            if (_videoEndTimer != null)
-                _videoEndTimer.Stop();
+            if (videoEndTimer != null)
+            {
+                videoEndTimer.Stop();
+            }
 
-            System.Threading.ThreadPool.QueueUserWorkItem(DisposeVLC, this);
+            System.Threading.ThreadPool.QueueUserWorkItem(DisposeVlc, this);
         }
 
-        private void DisposeVLC(object player)
+        private void DisposeVlc(object player)
         {
             ReleaseUnmangedResources();
         }
@@ -252,18 +282,20 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers
         {
             try
             {
-                if (_mediaPlayer != IntPtr.Zero)
+                if (mediaPlayer != IntPtr.Zero)
                 {
-                    NativeMethods.libvlc_media_player_stop(_mediaPlayer);
-                    NativeMethods.libvlc_media_list_player_release(_mediaPlayer);
-                    _mediaPlayer = IntPtr.Zero;
+                    NativeMethods.libvlc_media_player_stop(mediaPlayer);
+                    NativeMethods.libvlc_media_list_player_release(mediaPlayer);
+                    mediaPlayer = IntPtr.Zero;
                 }
 
-                if (_libVlc != IntPtr.Zero)
+                if (libVlc == IntPtr.Zero)
                 {
-                    NativeMethods.libvlc_release(_libVlc);
-                    _libVlc = IntPtr.Zero;
+                    return;
                 }
+
+                NativeMethods.libvlc_release(libVlc);
+                libVlc = IntPtr.Zero;
             }
             catch
             {
@@ -280,19 +312,20 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers
         {
             if (disposing)
             {
-                if (_videoLoadedTimer != null)
+                if (videoLoadedTimer != null)
                 {
-                    _videoLoadedTimer.Dispose();
-                    _videoLoadedTimer = null;
+                    videoLoadedTimer.Dispose();
+                    videoLoadedTimer = null;
                 }
-                if (_videoEndTimer != null)
+
+                if (videoEndTimer != null)
                 {
-                    _videoEndTimer.Dispose();
-                    _videoEndTimer = null;
+                    videoEndTimer.Dispose();
+                    videoEndTimer = null;
                 }
             }
+
             ReleaseUnmangedResources();
         }
-
     }
 }

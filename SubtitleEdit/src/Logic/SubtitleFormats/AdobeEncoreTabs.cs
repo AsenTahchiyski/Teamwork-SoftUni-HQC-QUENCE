@@ -1,14 +1,14 @@
-﻿using Nikse.SubtitleEdit.Core;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Text.RegularExpressions;
-
-namespace Nikse.SubtitleEdit.Logic.SubtitleFormats
+﻿namespace Nikse.SubtitleEdit.Logic.SubtitleFormats
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Text;
+    using System.Text.RegularExpressions;
+    using Core;
+
     public class AdobeEncoreTabs : SubtitleFormat
     {
-        private static readonly Regex regexTimeCodes = new Regex(@"^\d\d:\d\d:\d\d:\d\d\t\d\d:\d\d:\d\d:\d\d\t", RegexOptions.Compiled);
+        private static readonly Regex RegexTimeCodes = new Regex(@"^\d\d:\d\d:\d\d:\d\d\t\d\d:\d\d:\d\d:\d\d\t", RegexOptions.Compiled);
 
         public override string Extension
         {
@@ -31,7 +31,9 @@ namespace Nikse.SubtitleEdit.Logic.SubtitleFormats
 
             var sb = new StringBuilder();
             foreach (string line in lines)
+            {
                 sb.AppendLine(line);
+            }
 
             LoadSubtitle(subtitle, lines, fileName);
             return subtitle.Paragraphs.Count > _errorCount;
@@ -47,6 +49,7 @@ namespace Nikse.SubtitleEdit.Logic.SubtitleFormats
                 sb.AppendLine(string.Format("{0}\t{1}\t{2}", EncodeTimeCode(p.StartTime), EncodeTimeCode(p.EndTime), HtmlUtil.RemoveHtmlTags(p.Text, true).Replace(Environment.NewLine, "\r")));
                 index++;
             }
+
             return sb.ToString();
         }
 
@@ -65,9 +68,9 @@ namespace Nikse.SubtitleEdit.Logic.SubtitleFormats
             _errorCount = 0;
             foreach (string line in lines)
             {
-                if (regexTimeCodes.IsMatch(line))
+                if (RegexTimeCodes.IsMatch(line))
                 {
-                    string temp = line.Substring(0, regexTimeCodes.Match(line).Length);
+                    string temp = line.Substring(0, RegexTimeCodes.Match(line).Length);
                     string start = temp.Substring(0, 11);
                     string end = temp.Substring(12, 11);
 
@@ -75,9 +78,12 @@ namespace Nikse.SubtitleEdit.Logic.SubtitleFormats
                     string[] endParts = end.Split(new[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
                     if (startParts.Length == 4 && endParts.Length == 4)
                     {
-                        string text = line.Remove(0, regexTimeCodes.Match(line).Length - 1).Trim();
+                        string text = line.Remove(0, RegexTimeCodes.Match(line).Length - 1).Trim();
                         if (!text.Contains(Environment.NewLine))
+                        {
                             text = text.Replace("\r", Environment.NewLine);
+                        }
+
                         p = new Paragraph(DecodeTimeCode(startParts), DecodeTimeCode(endParts), text);
                         subtitle.Paragraphs.Add(p);
                     }
@@ -88,7 +94,9 @@ namespace Nikse.SubtitleEdit.Logic.SubtitleFormats
                 else if (p != null)
                 {
                     if (p.Text.Length < 200)
+                    {
                         p.Text = (p.Text + Environment.NewLine + line).Trim();
+                    }
                 }
             }
 
@@ -105,6 +113,5 @@ namespace Nikse.SubtitleEdit.Logic.SubtitleFormats
 
             return new TimeCode(hour, minutes, seconds, FramesToMillisecondsMax999(frames));
         }
-
     }
 }

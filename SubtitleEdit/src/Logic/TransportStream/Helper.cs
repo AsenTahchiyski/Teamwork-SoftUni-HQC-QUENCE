@@ -1,8 +1,8 @@
-﻿using System;
-using System.Text;
-
-namespace Nikse.SubtitleEdit.Logic.TransportStream
+﻿namespace Nikse.SubtitleEdit.Logic.TransportStream
 {
+    using System;
+    using System.Text;
+
     public static class Helper
     {
 
@@ -267,7 +267,7 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
 
         #endregion Binary constants
 
-        public static string IntToHex(UInt64 value, int digits)
+        public static string IntToHex(ulong value, int digits)
         {
             return value.ToString("X").PadLeft(digits, '0');
         }
@@ -282,11 +282,14 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
             return Convert.ToString(value, 2).PadLeft(digits, '0');
         }
 
-        public static UInt32 GetEndian(byte[] buffer, int index, int count)
+        public static uint GetEndian(byte[] buffer, int index, int count)
         {
-            UInt32 result = 0;
+            uint result = 0;
             for (int i = 0; i < count; i++)
+            {
                 result = (result << 8) + buffer[index + i];
+            }
+
             return result;
         }
 
@@ -309,7 +312,10 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
         public static int GetEndianWord(byte[] buffer, int index)
         {
             if (index + 1 < buffer.Length)
+            {
                 return (buffer[index] << 8) + buffer[index + 1];
+            }
+
             return 0;
         }
 
@@ -317,7 +323,10 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
         {
             var sb = new StringBuilder();
             for (int i = 0; i < count; i++)
+            {
                 sb.Append(Convert.ToString(buffer[index + i], 2).PadLeft(8, '0'));
+            }
+
             return sb.ToString();
         }
 
@@ -325,6 +334,5 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
         {
             return Convert.ToUInt32(binaryValue, 2);
         }
-
     }
 }

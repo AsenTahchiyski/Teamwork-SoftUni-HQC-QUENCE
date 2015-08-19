@@ -1,28 +1,28 @@
-﻿using System;
-using System.Runtime.InteropServices;
-using System.Windows.Forms;
-using QuartzTypeLib;
-using System.ComponentModel;
-
-//http://msdn.microsoft.com/en-us/library/dd375454%28VS.85%29.aspx
+﻿//http://msdn.microsoft.com/en-us/library/dd375454%28VS.85%29.aspx
 //http://msdn.microsoft.com/en-us/library/dd387928%28v=vs.85%29.aspx
 
 namespace Nikse.SubtitleEdit.Logic.VideoPlayers
 {
+    using System;
+    using System.Runtime.InteropServices;
+    using System.Windows.Forms;
+    using QuartzTypeLib;
+    using System.ComponentModel;
+
     public class QuartsPlayer : VideoPlayer, IDisposable
     {
         public override event EventHandler OnVideoLoaded;
         public override event EventHandler OnVideoEnded;
 
-        private QuartzTypeLib.IVideoWindow _quartzVideo;
-        private QuartzTypeLib.FilgraphManager _quartzFilgraphManager;
-        private IMediaPosition _mediaPosition;
-        private bool _isPaused;
-        private Control _owner;
-        private Timer _videoEndTimer;
-        private BackgroundWorker _videoLoader;
-        private int _sourceWidth;
-        private int _sourceHeight;
+        private IVideoWindow quartzVideo;
+        private FilgraphManager quartzFilgraphManager;
+        private IMediaPosition mediaPosition;
+        private bool isPaused;
+        private Control owner;
+        private Timer videoEndTimer;
+        private BackgroundWorker videoLoader;
+        private int sourceWidth;
+        private int sourceHeight;
 
         public override string PlayerName { get { return "DirectShow"; } }
 
@@ -36,7 +36,7 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers
             {
                 try
                 {
-                    return ((_quartzFilgraphManager as IBasicAudio).Volume / 35) + 100;
+                    return ((quartzFilgraphManager as IBasicAudio).Volume / 35) + 100;
                 }
                 catch
                 {
@@ -48,9 +48,15 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers
                 try
                 {
                     if (value == 0)
-                        (_quartzFilgraphManager as IBasicAudio).Volume = -10000;
+                    {
+                        var basicAudio = quartzFilgraphManager as IBasicAudio;
+                        if (basicAudio != null) basicAudio.Volume = -10000;
+                    }
                     else
-                        (_quartzFilgraphManager as IBasicAudio).Volume = (value - 100) * 35;
+                    {
+                        var basicAudio = quartzFilgraphManager as IBasicAudio;
+                        if (basicAudio != null) basicAudio.Volume = (value - 100) * 35;
+                    }
                 }
                 catch
                 {
@@ -64,7 +70,7 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers
             {
                 try
                 {
-                    return _mediaPosition.Duration;
+                    return mediaPosition.Duration;
                 }
                 catch
                 {
@@ -79,53 +85,58 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers
             {
                 try
                 {
-                    return _mediaPosition.CurrentPosition;
+                    return mediaPosition.CurrentPosition;
                 }
                 catch
                 {
                     return 0;
                 }
             }
+
             set
             {
                 if (value >= 0 && value <= Duration)
-                    _mediaPosition.CurrentPosition = value;
+                {
+                    mediaPosition.CurrentPosition = value;
+                }
             }
         }
 
         public override double PlayRate
         {
-            get { return _mediaPosition.Rate; }
+            get { return mediaPosition.Rate; }
             set
             {
                 if (value >= 0 && value <= 2.0)
-                    _mediaPosition.Rate = value;
+                {
+                    mediaPosition.Rate = value;
+                }
             }
         }
 
         public override void Play()
         {
-            _quartzFilgraphManager.Run();
-            _isPaused = false;
+            quartzFilgraphManager.Run();
+            isPaused = false;
         }
 
         public override void Pause()
         {
-            _quartzFilgraphManager.Pause();
-            _isPaused = true;
+            quartzFilgraphManager.Pause();
+            isPaused = true;
         }
 
         public override void Stop()
         {
-            _quartzFilgraphManager.Stop();
-            _isPaused = true;
+            quartzFilgraphManager.Stop();
+            isPaused = true;
         }
 
         public override bool IsPaused
         {
             get
             {
-                return _isPaused;
+                return isPaused;
             }
         }
 
@@ -141,46 +152,68 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers
         {
             const int wsChild = 0x40000000;
 
-            string ext = System.IO.Path.GetExtension(videoFileName).ToLower();
+            var extension = System.IO.Path.GetExtension(videoFileName);
+            if (extension == null)
+            {
+                return;
+            }
+
+            string ext = extension.ToLower();
             bool isAudio = ext == ".mp3" || ext == ".wav" || ext == ".wma" || ext == ".m4a";
 
             OnVideoLoaded = onVideoLoaded;
             OnVideoEnded = onVideoEnded;
 
             VideoFileName = videoFileName;
-            _owner = ownerControl;
-            _quartzFilgraphManager = new FilgraphManager();
-            _quartzFilgraphManager.RenderFile(VideoFileName);
+            owner = ownerControl;
+            quartzFilgraphManager = new FilgraphManager();
+            quartzFilgraphManager.RenderFile(VideoFileName);
 
             if (!isAudio)
             {
-                _quartzVideo = _quartzFilgraphManager as IVideoWindow;
-                _quartzVideo.Owner = (int)ownerControl.Handle;
-                _quartzVideo.SetWindowPosition(0, 0, ownerControl.Width, ownerControl.Height);
-                _quartzVideo.WindowStyle = wsChild;
+                quartzVideo = quartzFilgraphManager as IVideoWindow;
+                if (quartzVideo != null)
+                {
+                    quartzVideo.Owner = (int)ownerControl.Handle;
+                    quartzVideo.SetWindowPosition(0, 0, ownerControl.Width, ownerControl.Height);
+                    quartzVideo.WindowStyle = wsChild;
+                }
             }
             //Play();
 
             if (!isAudio)
-                (_quartzFilgraphManager as IBasicVideo).GetVideoSize(out _sourceWidth, out _sourceHeight);
+            {
+                var basicVideo = quartzFilgraphManager as IBasicVideo;
+                if (basicVideo != null)
+                {
+                    basicVideo.GetVideoSize(out sourceWidth, out sourceHeight);
+                }
+            }
 
-            _owner.Resize += OwnerControlResize;
-            _mediaPosition = (IMediaPosition)_quartzFilgraphManager;
+            owner.Resize += OwnerControlResize;
+            mediaPosition = (IMediaPosition)quartzFilgraphManager;
             if (OnVideoLoaded != null)
             {
-                _videoLoader = new BackgroundWorker();
-                _videoLoader.RunWorkerCompleted += VideoLoaderRunWorkerCompleted;
-                _videoLoader.DoWork += VideoLoaderDoWork;
-                _videoLoader.RunWorkerAsync();
+                videoLoader = new BackgroundWorker();
+                videoLoader.RunWorkerCompleted += VideoLoaderRunWorkerCompleted;
+                videoLoader.DoWork += VideoLoaderDoWork;
+                videoLoader.RunWorkerAsync();
             }
 
             OwnerControlResize(this, null);
-            _videoEndTimer = new Timer { Interval = 500 };
-            _videoEndTimer.Tick += VideoEndTimerTick;
-            _videoEndTimer.Start();
+            videoEndTimer = new Timer { Interval = 500 };
+            videoEndTimer.Tick += VideoEndTimerTick;
+            videoEndTimer.Start();
 
-            if (!isAudio)
-                _quartzVideo.MessageDrain = (int)ownerControl.Handle;
+            if (isAudio)
+            {
+                return;
+            }
+
+            if (quartzVideo != null)
+            {
+                quartzVideo.MessageDrain = (int)ownerControl.Handle;
+            }
         }
 
         public static VideoInfo GetVideoInfo(string videoFileName)
@@ -198,12 +231,19 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers
                 info.Width = width;
                 info.Height = height;
                 var basicVideo2 = (quartzFilgraphManager as IBasicVideo2);
-                if (basicVideo2.AvgTimePerFrame > 0)
+                if (basicVideo2 != null && basicVideo2.AvgTimePerFrame > 0)
+                {
                     info.FramesPerSecond = 1 / basicVideo2.AvgTimePerFrame;
+                }
+
                 info.Success = true;
                 var iMediaPosition = (quartzFilgraphManager as IMediaPosition);
-                info.TotalMilliseconds = iMediaPosition.Duration * 1000;
-                info.TotalSeconds = iMediaPosition.Duration;
+                if (iMediaPosition != null)
+                {
+                    info.TotalMilliseconds = iMediaPosition.Duration * 1000;
+                    info.TotalSeconds = iMediaPosition.Duration;
+                }
+
                 info.TotalFrames = info.TotalSeconds * info.FramesPerSecond;
                 info.VideoCodec = string.Empty; // TODO: Get real codec names from quartzFilgraphManager.FilterCollection;
 
@@ -212,10 +252,11 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers
             catch
             {
             }
+
             return info;
         }
 
-        private void VideoLoaderDoWork(object sender, DoWorkEventArgs e)
+        private static void VideoLoaderDoWork(object sender, DoWorkEventArgs e)
         {
             //int i = 0;
             //while (CurrentPosition < 1 && i < 100)
@@ -232,52 +273,58 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers
             {
                 try
                 {
-                    OnVideoLoaded.Invoke(_quartzFilgraphManager, new EventArgs());
+                    OnVideoLoaded.Invoke(quartzFilgraphManager, new EventArgs());
                 }
                 catch
                 {
                 }
             }
-            _videoEndTimer = null;
+            videoEndTimer = null;
         }
 
         private void VideoEndTimerTick(object sender, EventArgs e)
         {
-            if (_isPaused == false && _quartzFilgraphManager != null && CurrentPosition >= Duration)
+            if (quartzFilgraphManager == null || !(CurrentPosition >= Duration) || isPaused != false)
             {
-                _isPaused = true;
-                if (OnVideoEnded != null && _quartzFilgraphManager != null)
-                    OnVideoEnded.Invoke(_quartzFilgraphManager, new EventArgs());
+                return;
+            }
+
+            isPaused = true;
+            if (OnVideoEnded != null && quartzFilgraphManager != null)
+            {
+                OnVideoEnded.Invoke(quartzFilgraphManager, new EventArgs());
             }
         }
 
         private void OwnerControlResize(object sender, EventArgs e)
         {
-            if (_quartzVideo == null)
+            if (quartzVideo == null)
+            {
                 return;
+            }
 
             // calc new scaled size with correct aspect ratio
-            float factorX = _owner.Width / (float)_sourceWidth;
-            float factorY = _owner.Height / (float)_sourceHeight;
+            float factorX = owner.Width / (float)sourceWidth;
+            float factorY = owner.Height / (float)sourceHeight;
 
             if (factorX > factorY)
             {
-                _quartzVideo.Width = (int)(_sourceWidth * factorY);
-                _quartzVideo.Height = (int)(_sourceHeight * factorY);
+                quartzVideo.Width = (int)(sourceWidth * factorY);
+                quartzVideo.Height = (int)(sourceHeight * factorY);
             }
             else
             {
-                _quartzVideo.Width = (int)(_sourceWidth * factorX);
-                _quartzVideo.Height = (int)(_sourceHeight * factorX);
+                quartzVideo.Width = (int)(sourceWidth * factorX);
+                quartzVideo.Height = (int)(sourceHeight * factorX);
             }
 
-            _quartzVideo.Left = (_owner.Width - _quartzVideo.Width) / 2;
-            _quartzVideo.Top = (_owner.Height - _quartzVideo.Height) / 2;
+            quartzVideo.Left = (owner.Width - quartzVideo.Width) / 2;
+            quartzVideo.Top = (owner.Height - quartzVideo.Height) / 2;
         }
 
         public override void DisposeVideoPlayer()
         {
-            System.Threading.ThreadPool.QueueUserWorkItem(DisposeQuarts, _quartzFilgraphManager);
+            System.Threading.ThreadPool.QueueUserWorkItem(DisposeQuarts, quartzFilgraphManager);
         }
 
         private void DisposeQuarts(object player)
@@ -289,26 +336,29 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers
         {
             try
             {
-                if (_quartzVideo != null)
-                    _quartzVideo.Owner = -1;
+                if (quartzVideo != null)
+                {
+                    quartzVideo.Owner = -1;
+                }
             }
             catch
             {
             }
 
-            if (_quartzFilgraphManager != null)
+            if (quartzFilgraphManager != null)
             {
                 try
                 {
-                    _quartzFilgraphManager.Stop();
-                    Marshal.ReleaseComObject(_quartzFilgraphManager);
-                    _quartzFilgraphManager = null;
+                    quartzFilgraphManager.Stop();
+                    Marshal.ReleaseComObject(quartzFilgraphManager);
+                    quartzFilgraphManager = null;
                 }
                 catch
                 {
                 }
             }
-            _quartzVideo = null;
+
+            quartzVideo = null;
         }
 
         public void Dispose()
@@ -321,19 +371,20 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers
         {
             if (disposing)
             {
-                if (_videoEndTimer != null)
+                if (videoEndTimer != null)
                 {
-                    _videoEndTimer.Dispose();
-                    _videoEndTimer = null;
+                    videoEndTimer.Dispose();
+                    videoEndTimer = null;
                 }
-                if (_videoLoader != null)
+
+                if (videoLoader != null)
                 {
-                    _videoLoader.Dispose();
-                    _videoLoader = null;
+                    videoLoader.Dispose();
+                    videoLoader = null;
                 }
             }
+
             ReleaseUnmangedResources();
         }
-
     }
 }

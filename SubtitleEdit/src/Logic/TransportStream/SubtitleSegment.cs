@@ -1,6 +1,5 @@
 ﻿namespace Nikse.SubtitleEdit.Logic.TransportStream
 {
-
     public class SubtitleSegment
     {
         public const int PageCompositionSegment = 0x10;
@@ -11,21 +10,31 @@
         public const int EndOfDisplaySetSegment = 0x80;
 
         public int SyncByte { get; set; }
+    
         public int SegmentType { get; set; }
+        
         public int PageId { get; set; }
+        
         public int SegmentLength { get; set; }
+        
         public bool IsValid { get; set; }
 
-        public ClutDefinitionSegment ClutDefinition;
-        public ObjectDataSegment ObjectData;
-        public DisplayDefinitionSegment DisplayDefinition;
-        public PageCompositionSegment PageComposition;
-        public RegionCompositionSegment RegionComposition;
+        public ClutDefinitionSegment ClutDefinition { get; set; }
+       
+        public ObjectDataSegment ObjectData { get; set; }
+        
+        public DisplayDefinitionSegment DisplayDefinition { get; set; }
+        
+        public PageCompositionSegment PageComposition { get; set; }
+        
+        public RegionCompositionSegment RegionComposition { get; set; }
 
         public SubtitleSegment(byte[] buffer, int index)
         {
             if (buffer == null || buffer.Length < 7)
+            {
                 return;
+            }
 
             SyncByte = buffer[index];
             SegmentType = buffer[index + 1];
@@ -33,10 +42,14 @@
             SegmentLength = Helper.GetEndianWord(buffer, index + 4);
 
             if (buffer.Length - 6 < SegmentLength)
+            {
                 return;
+            }
 
             if (index + 6 + SegmentLength > buffer.Length)
+            {
                 return;
+            }
 
             IsValid = true;
 
@@ -79,5 +92,4 @@
             }
         }
     }
-
 }

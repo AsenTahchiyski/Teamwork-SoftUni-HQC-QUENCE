@@ -1,11 +1,22 @@
-﻿using System.Collections.Generic;
-using System.Drawing;
-
-namespace Nikse.SubtitleEdit.Logic.TransportStream
+﻿namespace Nikse.SubtitleEdit.Logic.TransportStream
 {
+    using System.Collections.Generic;
+    using System.Drawing;
+
     public class ObjectDataSegment
     {
+        private FastBitmap fastImage;
+        
+        public const int PixelDecoding2Bit = 0x10;
+        public const int PixelDecoding4Bit = 0x11;
+        public const int PixelDecoding8Bit = 0x12;
+        public const int MapTable2To4Bit = 0x20;
+        public const int MapTable2To8Bit = 0x21;
+        public const int MapTable4To8Bit = 0x22;
+        public const int EndOfObjectLineCode = 0xf0;
+       
         public int ObjectId { get; set; }
+       
         public int ObjectVersionNumber { get; set; }
 
         /// <summary>
@@ -16,21 +27,14 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
         public bool NonModifyingColorFlag { get; set; }
 
         public int TopFieldDataBlockLength { get; set; }
+       
         public int BottomFieldDataBlockLength { get; set; }
 
         public int NumberOfCodes { get; set; }
 
         public List<string> FirstDataTypes = new List<string>();
+       
         public Bitmap Image { get; set; }
-        private FastBitmap _fastImage;
-
-        public const int PixelDecoding2Bit = 0x10;
-        public const int PixelDecoding4Bit = 0x11;
-        public const int PixelDecoding8Bit = 0x12;
-        public const int MapTable2To4Bit = 0x20;
-        public const int MapTable2To8Bit = 0x21;
-        public const int MapTable4To8Bit = 0x22;
-        public const int EndOfObjectLineCode = 0xf0;
 
         public int BufferIndex { get; private set; }
 
@@ -47,67 +51,77 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
 
         public void DecodeImage(byte[] buffer, int index, ClutDefinitionSegment cds)
         {
-            if (ObjectCodingMethod == 0)
+            switch (ObjectCodingMethod)
             {
-                var twoToFourBitColorLookup = new List<int> { 0, 1, 2, 3 };
-                var twoToEightBitColorLookup = new List<int> { 0, 1, 2, 3 };
-                var fourToEightBitColorLookup = new List<int> { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
+                case 0:
+                    var twoToFourBitColorLookup = new List<int> { 0, 1, 2, 3 };
+                    var twoToEightBitColorLookup = new List<int> { 0, 1, 2, 3 };
+                    var fourToEightBitColorLookup = new List<int> { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
 
-                int pixelCode = 0;
-                int runLength = 0;
-                int dataType = buffer[index + 7];
-                int length = TopFieldDataBlockLength;
+                    int pixelCode = 0;
+                    int runLength = 0;
+                    int dataType = buffer[index + 7];
+                    int length = TopFieldDataBlockLength;
 
-                index += 8;
-                int start = index;
-                int x = 0;
-                int y = 0;
+                    index += 8;
+                    int start = index;
+                    int x = 0;
+                    int y = 0;
 
-                // Pre-decoding to determine image size
-                int width = 0;
-                while (index < start + TopFieldDataBlockLength)
-                {
-                    index = CalculateSize(buffer, index, ref dataType, start, ref x, ref y, length, ref runLength, ref width);
-                }
-                if (width > 2000)
-                    width = 2000;
-                if (y > 500)
-                    y = 500;
-                Image = new Bitmap(width, y + 1);
-                _fastImage = new FastBitmap(Image);
-                _fastImage.LockImage();
+                    // Pre-decoding to determine image size
+                    int width = 0;
+                    while (index < start + TopFieldDataBlockLength)
+                    {
+                        index = CalculateSize(buffer, index, ref dataType, start, ref x, ref y, length, ref runLength, ref width);
+                    }
 
-                x = 0;
-                y = 0;
-                index = start;
-                while (index < start + TopFieldDataBlockLength)
-                {
-                    index = ProcessDataType(buffer, index, cds, ref dataType, start, twoToFourBitColorLookup, fourToEightBitColorLookup, twoToEightBitColorLookup, ref x, ref y, length, ref pixelCode, ref runLength);
-                }
+                    if (width > 2000)
+                    {
+                        width = 2000;
+                    }
 
-                x = 0;
-                y = 1;
-                if (BottomFieldDataBlockLength == 0)
-                {
+                    if (y > 500)
+                    {
+                        y = 500;
+                    }
+
+                    Image = new Bitmap(width, y + 1);
+                    fastImage = new FastBitmap(Image);
+                    fastImage.LockImage();
+
+                    x = 0;
+                    y = 0;
                     index = start;
-                }
-                else
-                {
-                    length = BottomFieldDataBlockLength;
-                    index = start + TopFieldDataBlockLength;
-                    start = index;
-                }
-                dataType = buffer[index - 1];
-                while (index < start + BottomFieldDataBlockLength - 1)
-                {
-                    index = ProcessDataType(buffer, index, cds, ref dataType, start, twoToFourBitColorLookup, fourToEightBitColorLookup, twoToEightBitColorLookup, ref x, ref y, length, ref pixelCode, ref runLength);
-                }
-                _fastImage.UnlockImage();
-            }
-            else if (ObjectCodingMethod == 1)
-            {
-                Image = new Bitmap(1, 1);
-                NumberOfCodes = buffer[index + 3];
+                    while (index < start + TopFieldDataBlockLength)
+                    {
+                        index = ProcessDataType(buffer, index, cds, ref dataType, start, twoToFourBitColorLookup, fourToEightBitColorLookup, twoToEightBitColorLookup, ref x, ref y, length, ref pixelCode, ref runLength);
+                    }
+
+                    x = 0;
+                    y = 1;
+                    if (BottomFieldDataBlockLength == 0)
+                    {
+                        index = start;
+                    }
+                    else
+                    {
+                        length = BottomFieldDataBlockLength;
+                        index = start + TopFieldDataBlockLength;
+                        start = index;
+                    }
+
+                    dataType = buffer[index - 1];
+                    while (index < start + BottomFieldDataBlockLength - 1)
+                    {
+                        index = ProcessDataType(buffer, index, cds, ref dataType, start, twoToFourBitColorLookup, fourToEightBitColorLookup, twoToEightBitColorLookup, ref x, ref y, length, ref pixelCode, ref runLength);
+                    }
+
+                    fastImage.UnlockImage();
+                    break;
+                case 1:
+                    Image = new Bitmap(1, 1);
+                    NumberOfCodes = buffer[index + 3];
+                    break;
             }
         }
 
@@ -115,71 +129,73 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
                                     List<int> twoToFourBitColorLookup, List<int> fourToEightBitColorLookup, List<int> twoToEightBitColorLookup,
                                     ref int x, ref int y, int length, ref int pixelCode, ref int runLength)
         {
-            if (dataType == PixelDecoding2Bit)
+            switch (dataType)
             {
-                int bitIndex = 0;
-                while (index < start + length - 1 && TwoBitPixelDecoding(buffer, ref index, ref bitIndex, out pixelCode, out runLength))
-                {
-                    DrawPixels(cds, twoToFourBitColorLookup[pixelCode], runLength, ref x, ref y);
-                }
-            }
-            else if (dataType == PixelDecoding4Bit)
-            {
-                bool startHalf = false;
-                while (index < start + length - 1 && FourBitPixelDecoding(buffer, ref index, ref startHalf, out pixelCode, out runLength))
-                {
-                    DrawPixels(cds, fourToEightBitColorLookup[pixelCode], runLength, ref x, ref y);
-                }
-            }
-            else if (dataType == PixelDecoding8Bit)
-            {
-                while (index < start + length - 1 && EightBitPixelDecoding(buffer, ref index, out pixelCode, out runLength))
-                {
-                    DrawPixels(cds, pixelCode, runLength, ref x, ref y);
-                }
-            }
-            else if (dataType == MapTable2To4Bit)
-            {
-                //4 entry numbers of 4-bits each; entry number 0 first, entry number 3 last
-                twoToFourBitColorLookup[0] = buffer[index] >> 4;
-                twoToFourBitColorLookup[1] = buffer[index] & Helper.B00001111;
-                index++;
-                twoToFourBitColorLookup[2] = buffer[index] >> 4;
-                twoToFourBitColorLookup[3] = buffer[index] & Helper.B00001111;
-                index++;
-            }
-            else if (dataType == MapTable2To8Bit)
-            {
-                //4 entry numbers of 8-bits each; entry number 0 first, entry number 3 last
-                twoToEightBitColorLookup[0] = buffer[index];
-                index++;
-                twoToEightBitColorLookup[1] = buffer[index];
-                index++;
-                twoToEightBitColorLookup[2] = buffer[index];
-                index++;
-                twoToEightBitColorLookup[3] = buffer[index];
-                index++;
-            }
-            else if (dataType == MapTable4To8Bit)
-            {
-                // 16 entry numbers of 8-bits each
-                for (int k = 0; k < 16; k++)
-                {
-                    fourToEightBitColorLookup[k] = buffer[index];
+                case PixelDecoding2Bit:
+                    int bitIndex = 0;
+                    while (index < start + length - 1 && TwoBitPixelDecoding(buffer, ref index, ref bitIndex, out pixelCode, out runLength))
+                    {
+                        DrawPixels(cds, twoToFourBitColorLookup[pixelCode], runLength, ref x, ref y);
+                    }
+
+                    break;
+                case PixelDecoding4Bit:
+                    bool startHalf = false;
+                    while (index < start + length - 1 && FourBitPixelDecoding(buffer, ref index, ref startHalf, out pixelCode, out runLength))
+                    {
+                        DrawPixels(cds, fourToEightBitColorLookup[pixelCode], runLength, ref x, ref y);
+                    }
+
+                    break;
+                case PixelDecoding8Bit:
+                    while (index < start + length - 1 && EightBitPixelDecoding(buffer, ref index, out pixelCode, out runLength))
+                    {
+                        DrawPixels(cds, pixelCode, runLength, ref x, ref y);
+                    }
+
+                    break;
+                case MapTable2To4Bit:
+                    //4 entry numbers of 4-bits each; entry number 0 first, entry number 3 last
+                    twoToFourBitColorLookup[0] = buffer[index] >> 4;
+                    twoToFourBitColorLookup[1] = buffer[index] & Helper.B00001111;
                     index++;
-                }
-            }
-            else if (dataType == EndOfObjectLineCode)
-            {
-                x = 0;
-                y += 2; // interlaced - skip one line
+                    twoToFourBitColorLookup[2] = buffer[index] >> 4;
+                    twoToFourBitColorLookup[3] = buffer[index] & Helper.B00001111;
+                    index++;
+                    break;
+                case MapTable2To8Bit:
+                    //4 entry numbers of 8-bits each; entry number 0 first, entry number 3 last
+                    twoToEightBitColorLookup[0] = buffer[index];
+                    index++;
+                    twoToEightBitColorLookup[1] = buffer[index];
+                    index++;
+                    twoToEightBitColorLookup[2] = buffer[index];
+                    index++;
+                    twoToEightBitColorLookup[3] = buffer[index];
+                    index++;
+                    break;
+                case MapTable4To8Bit:
+                    // 16 entry numbers of 8-bits each
+                    for (int k = 0; k < 16; k++)
+                    {
+                        fourToEightBitColorLookup[k] = buffer[index];
+                        index++;
+                    }
+
+                    break;
+                case EndOfObjectLineCode:
+                    x = 0;
+                    y += 2; // interlaced - skip one line
+                    break;
             }
 
-            if (index < start + length)
+            if (index >= start + length)
             {
-                dataType = buffer[index];
-                index++;
+                return index;
             }
+
+            dataType = buffer[index];
+            index++;
 
             return index;
         }
@@ -187,45 +203,44 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
         private static int CalculateSize(byte[] buffer, int index, ref int dataType, int start, ref int x, ref int y, int length, ref int runLength, ref int width)
         {
             int pixelCode;
-            if (dataType == PixelDecoding2Bit)
+            switch (dataType)
             {
-                int bitIndex = 0;
-                while (index < start + length - 1 && TwoBitPixelDecoding(buffer, ref index, ref bitIndex, out pixelCode, out runLength))
-                {
-                    x += runLength;
-                }
-            }
-            else if (dataType == PixelDecoding4Bit)
-            {
-                bool startHalf = false;
-                while (index < start + length - 1 && FourBitPixelDecoding(buffer, ref index, ref startHalf, out pixelCode, out runLength))
-                {
-                    x += runLength;
-                }
-            }
-            else if (dataType == PixelDecoding8Bit)
-            {
-                while (index < start + length - 1 && EightBitPixelDecoding(buffer, ref index, out pixelCode, out runLength))
-                {
-                    x += runLength;
-                }
-            }
-            else if (dataType == MapTable2To4Bit)
-            {
-                index += 2;
-            }
-            else if (dataType == MapTable2To8Bit)
-            {
-                index += 4;
-            }
-            else if (dataType == MapTable4To8Bit)
-            {
-                index += 16;
-            }
-            else if (dataType == EndOfObjectLineCode)
-            {
-                x = 0;
-                y += 2; // interlaced - skip one line
+                case PixelDecoding2Bit:
+                    int bitIndex = 0;
+                    while (index < start + length - 1 && TwoBitPixelDecoding(buffer, ref index, ref bitIndex, out pixelCode, out runLength))
+                    {
+                        x += runLength;
+                    }
+
+                    break;
+                case PixelDecoding4Bit:
+                    bool startHalf = false;
+                    while (index < start + length - 1 && FourBitPixelDecoding(buffer, ref index, ref startHalf, out pixelCode, out runLength))
+                    {
+                        x += runLength;
+                    }
+
+                    break;
+                case PixelDecoding8Bit:
+                    while (index < start + length - 1 && EightBitPixelDecoding(buffer, ref index, out pixelCode, out runLength))
+                    {
+                        x += runLength;
+                    }
+
+                    break;
+                case MapTable2To4Bit:
+                    index += 2;
+                    break;
+                case MapTable2To8Bit:
+                    index += 4;
+                    break;
+                case MapTable4To8Bit:
+                    index += 16;
+                    break;
+                case EndOfObjectLineCode:
+                    x = 0;
+                    y += 2; // interlaced - skip one line
+                    break;
             }
 
             if (index < start + length)
@@ -233,8 +248,12 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
                 dataType = buffer[index];
                 index++;
             }
+
             if (x > width)
+            {
                 width = x;
+            }
+
             return index;
         }
 
@@ -245,18 +264,23 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
             {
                 foreach (var item in cds.Entries)
                 {
-                    if (item.ClutEntryId == pixelCode)
+                    if (item.ClutEntryId != pixelCode)
                     {
-                        c = item.GetColor();
-                        break;
+                        continue;
                     }
+
+                    c = item.GetColor();
+                    break;
                 }
             }
 
             for (int k = 0; k < runLength; k++)
             {
-                if (y < _fastImage.Height && x < _fastImage.Width)
-                    _fastImage.SetPixel(x, y, c);
+                if (y < fastImage.Height && x < fastImage.Width)
+                {
+                    fastImage.SetPixel(x, y, c);
+                }
+
                 x++;
             }
         }
@@ -284,9 +308,13 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
                 if (nextByte >> 7 == 0)
                 {
                     if (nextByte != 0)
+                    {
                         runLength = nextByte & Helper.B01111111; // 1-127
+                    }
                     else
+                    {
                         return false;
+                    }
                 }
                 else
                 {
@@ -294,6 +322,7 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
                     pixelCode = Next8Bits(buffer, ref index);
                 }
             }
+
             return true;
         }
 
@@ -311,6 +340,7 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
                 startHalf = true;
                 result = buffer[index] >> 4;
             }
+
             return result;
         }
 
@@ -335,75 +365,79 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
                     }
                     else
                     {
-                        if (startHalf)
+                        if (!startHalf)
                         {
-                            startHalf = false;
-                            index++;
+                            return false;
                         }
+
+                        startHalf = false;
+                        index++;
                         return false;
                     }
                 }
-                else if (next1 == Helper.B00001100)
+                else switch (next1)
                 {
-                    runLength = 1;
-                    pixelCode = 0;
-                }
-                else if (next1 == Helper.B00001101)
-                {
-                    runLength = 2;
-                    pixelCode = 0;
-                }
-                else
-                {
-                    int next2 = Next4Bits(buffer, ref index, ref startHalf);
-                    if ((next1 & Helper.B00000100) == 0)
-                    {
-                        runLength = (next1 & Helper.B00000011) + 4; // 4-7
-                        pixelCode = next2;
-                    }
-                    else
-                    {
-                        int next3 = Next4Bits(buffer, ref index, ref startHalf);
-                        if ((next1 & Helper.B00000001) == 0)
+                    case Helper.B00001100:
+                        runLength = 1;
+                        pixelCode = 0;
+                        break;
+                    case Helper.B00001101:
+                        runLength = 2;
+                        pixelCode = 0;
+                        break;
+                    default:
+                        int next2 = Next4Bits(buffer, ref index, ref startHalf);
+                        if ((next1 & Helper.B00000100) == 0)
                         {
-                            runLength = next2 + 9; // 9-24
-                            pixelCode = next3;
+                            runLength = (next1 & Helper.B00000011) + 4; // 4-7
+                            pixelCode = next2;
                         }
-                        else if (next1 == Helper.B00001111)
+                        else
                         {
-                            runLength = ((next2 << 4) + next3) + 25; // 25-280
-                            pixelCode = Next4Bits(buffer, ref index, ref startHalf);
+                            int next3 = Next4Bits(buffer, ref index, ref startHalf);
+                            if ((next1 & Helper.B00000001) == 0)
+                            {
+                                runLength = next2 + 9; // 9-24
+                                pixelCode = next3;
+                            }
+                            else if (next1 == Helper.B00001111)
+                            {
+                                runLength = ((next2 << 4) + next3) + 25; // 25-280
+                                pixelCode = Next4Bits(buffer, ref index, ref startHalf);
+                            }
                         }
-                    }
+
+                        break;
                 }
             }
+
             return true;
         }
 
         private static int Next2Bits(byte[] buffer, ref int index, ref int bitIndex)
         {
             int result;
-            if (bitIndex == 0)
+            switch (bitIndex)
             {
-                bitIndex++;
-                result = (buffer[index] & Helper.B11000000) >> 6;
+                case 0:
+                    bitIndex++;
+                    result = (buffer[index] & Helper.B11000000) >> 6;
+                    break;
+                case 1:
+                    bitIndex++;
+                    result = (buffer[index] & Helper.B00110000) >> 4;
+                    break;
+                case 2:
+                    bitIndex++;
+                    result = (buffer[index] & Helper.B00001100) >> 2;
+                    break;
+                default:
+                    bitIndex = 0;
+                    result = buffer[index] & Helper.B00000011;
+                    index++;
+                    break;
             }
-            else if (bitIndex == 1)
-            {
-                bitIndex++;
-                result = (buffer[index] & Helper.B00110000) >> 4;
-            }
-            else if (bitIndex == 2)
-            {
-                bitIndex++;
-                result = (buffer[index] & Helper.B00001100) >> 2;
-            }
-            else // 3 - last bit pair
-            {
-                bitIndex = 0;
-                result = buffer[index] & Helper.B00000011;
-                index++;
-            }
+
             return result;
         }
 
@@ -433,36 +467,37 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
                 else
                 {
                     int next2 = Next2Bits(buffer, ref index, ref bitIndex);
-                    if (next2 == Helper.B00000001)
+                    switch (next2)
                     {
-                        runLength = 2;
-                        pixelCode = 0;
-                    }
-                    else if (next2 == Helper.B00000010)
-                    {
-                        runLength = (Next2Bits(buffer, ref index, ref bitIndex) << 2) +  // 12-27
-                                     Next2Bits(buffer, ref index, ref bitIndex) + 12;
-                        pixelCode = Next2Bits(buffer, ref index, ref bitIndex);
-                    }
-                    else if (next2 == Helper.B00000011)
-                    {
-                        runLength = (Next2Bits(buffer, ref index, ref bitIndex) << 6) + // 29 - 284
-                                    (Next2Bits(buffer, ref index, ref bitIndex) << 4) +
-                                    (Next2Bits(buffer, ref index, ref bitIndex) << 2) +
+                        case Helper.B00000001:
+                            runLength = 2;
+                            pixelCode = 0;
+                            break;
+                        case Helper.B00000010:
+                            runLength = (Next2Bits(buffer, ref index, ref bitIndex) << 2) +  // 12-27
+                                        Next2Bits(buffer, ref index, ref bitIndex) + 12;
+                            pixelCode = Next2Bits(buffer, ref index, ref bitIndex);
+                            break;
+                        case Helper.B00000011:
+                            runLength = (Next2Bits(buffer, ref index, ref bitIndex) << 6) + // 29 - 284
+                                        (Next2Bits(buffer, ref index, ref bitIndex) << 4) +
+                                        (Next2Bits(buffer, ref index, ref bitIndex) << 2) +
                                         Next2Bits(buffer, ref index, ref bitIndex) + 29;
 
-                        pixelCode = Next2Bits(buffer, ref index, ref bitIndex);
-                    }
-                    else
-                    {
-                        if (bitIndex != 0)
-                            index++;
-                        return false; // end of 2-bit/pixel code string
+                            pixelCode = Next2Bits(buffer, ref index, ref bitIndex);
+                            break;
+                        default:
+                            if (bitIndex != 0)
+                            {
+                                index++;
+                            }
+
+                            return false; // end of 2-bit/pixel code string
                     }
                 }
             }
+
             return true;
         }
-
     }
 }

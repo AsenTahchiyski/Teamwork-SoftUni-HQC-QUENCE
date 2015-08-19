@@ -2,7 +2,7 @@
 {
     internal class HummingDecoder
     {
-        private static byte[] _unhammingTable = new byte[256]
+        private static readonly byte[] UnhammingTable = new byte[256]
         {
           0x01, 0xff, 0x81, 0x01, 0xff, 0x00, 0x01, 0xff, 0xff, 0x02, 0x01, 0xff, 0x0a, 0xff, 0xff, 0x07,
           0xff, 0x00, 0x01, 0xff, 0x00, 0x80, 0xff, 0x00, 0x06, 0xff, 0xff, 0x0b, 0xff, 0x00, 0x03, 0xff,
@@ -37,13 +37,12 @@
 
         public static byte Decode(byte b1, byte b2)
         {
-            return (byte)((_unhammingTable[b2] << 4) | (_unhammingTable[b1] & 0xF));
+            return (byte)((UnhammingTable[b2] << 4) | (UnhammingTable[b1] & 0xF));
         }
 
         public static byte Decode(byte b)
         {
-            return (byte)(_unhammingTable[b] & 0xF);
+            return (byte)(UnhammingTable[b] & 0xF);
         }
-
     }
 }

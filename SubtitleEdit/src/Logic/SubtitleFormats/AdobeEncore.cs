@@ -1,15 +1,15 @@
-﻿using Nikse.SubtitleEdit.Core;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Text.RegularExpressions;
-
-namespace Nikse.SubtitleEdit.Logic.SubtitleFormats
+﻿namespace Nikse.SubtitleEdit.Logic.SubtitleFormats
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Text;
+    using System.Text.RegularExpressions;
+    using Core;
+
     public class AdobeEncore : SubtitleFormat
     {
-        private static readonly Regex regexTimeCodes = new Regex(@"^\d\d:\d\d:\d\d:\d\d \d\d:\d\d:\d\d:\d\d ", RegexOptions.Compiled);
-        private int _maxMsDiv10 = 0;
+        private static readonly Regex RegexTimeCodes = new Regex(@"^\d\d:\d\d:\d\d:\d\d \d\d:\d\d:\d\d:\d\d ", RegexOptions.Compiled);
+        private int maxMsDiv10;
 
         public override string Extension
         {
@@ -32,9 +32,14 @@ namespace Nikse.SubtitleEdit.Logic.SubtitleFormats
 
             var sb = new StringBuilder();
             foreach (string line in lines)
+            {
                 sb.AppendLine(line);
+            }
+
             if (sb.ToString().Contains("#INPOINT OUTPOINT PATH"))
+            {
                 return false; // Pinnacle Impression
+            }
 
             LoadSubtitle(subtitle, lines, fileName);
 
@@ -42,13 +47,20 @@ namespace Nikse.SubtitleEdit.Logic.SubtitleFormats
             foreach (Paragraph p in subtitle.Paragraphs)
             {
                 if (p.Text.Contains(Environment.NewLine))
+                {
                     containsNewLine = true;
+                }
             }
-            if (sb.ToString().Contains("//") && !containsNewLine)
-                return false; // "DVD Subtitle System" format
 
-            if (_maxMsDiv10 > 90 && !containsNewLine)
+            if (sb.ToString().Contains("//") && !containsNewLine)
+            {
+                return false; // "DVD Subtitle System" format
+            }
+
+            if (maxMsDiv10 > 90 && !containsNewLine)
+            {
                 return false; // "DVD Subtitle System" format (frame rate should not go higher than 90...)
+            }
 
             return subtitle.Paragraphs.Count > _errorCount;
         }
@@ -64,6 +76,7 @@ namespace Nikse.SubtitleEdit.Logic.SubtitleFormats
                 sb.AppendLine(string.Format("{0} {1} {2}", EncodeTimeCode(p.StartTime), EncodeTimeCode(p.EndTime), HtmlUtil.RemoveHtmlTags(p.Text, true)));
                 index++;
             }
+
             return sb.ToString();
         }
 
@@ -78,16 +91,16 @@ namespace Nikse.SubtitleEdit.Logic.SubtitleFormats
             //00:03:15:22 00:03:23:10 This is line one.
             //This is line two.
             Paragraph p = null;
-            _maxMsDiv10 = 0;
+            maxMsDiv10 = 0;
             _errorCount = 0;
             subtitle.Paragraphs.Clear();
             foreach (string line in lines)
             {
-                if (regexTimeCodes.IsMatch(line))
+                if (RegexTimeCodes.IsMatch(line))
                 {
                     try
                     {
-                        string temp = line.Substring(0, regexTimeCodes.Match(line).Length);
+                        string temp = line.Substring(0, RegexTimeCodes.Match(line).Length);
                         string start = temp.Substring(0, 11);
                         string end = temp.Substring(12, 11);
 
@@ -95,7 +108,7 @@ namespace Nikse.SubtitleEdit.Logic.SubtitleFormats
                         string[] endParts = end.Split(new[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
                         if (startParts.Length == 4 && endParts.Length == 4)
                         {
-                            string text = line.Remove(0, regexTimeCodes.Match(line).Length - 1).Trim();
+                            string text = line.Remove(0, RegexTimeCodes.Match(line).Length - 1).Trim();
                             p = new Paragraph(DecodeTimeCode(startParts), DecodeTimeCode(endParts), text);
                             subtitle.Paragraphs.Add(p);
                         }
@@ -112,9 +125,13 @@ namespace Nikse.SubtitleEdit.Logic.SubtitleFormats
                 else if (p != null)
                 {
                     if (string.IsNullOrEmpty(p.Text))
+                    {
                         p.Text = line;
+                    }
                     else
+                    {
                         p.Text += Environment.NewLine + line;
+                    }
                 }
                 else
                 {
@@ -133,11 +150,12 @@ namespace Nikse.SubtitleEdit.Logic.SubtitleFormats
             string seconds = parts[2];
             int frames = int.Parse(parts[3]);
 
-            if (frames > _maxMsDiv10)
-                _maxMsDiv10 = frames;
+            if (frames > maxMsDiv10)
+            {
+                maxMsDiv10 = frames;
+            }
 
             return new TimeCode(int.Parse(hour), int.Parse(minutes), int.Parse(seconds), FramesToMillisecondsMax999(frames));
         }
-
     }
 }

@@ -1,14 +1,14 @@
-﻿using Nikse.SubtitleEdit.Core;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Text.RegularExpressions;
-
-namespace Nikse.SubtitleEdit.Logic.SubtitleFormats
+﻿namespace Nikse.SubtitleEdit.Logic.SubtitleFormats
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Text;
+    using System.Text.RegularExpressions;
+    using Core;
+
     public class AdobeEncoreWithLineNumbers : SubtitleFormat
     {
-        private static readonly Regex regexTimeCodes = new Regex(@"^\d+ \d\d:\d\d:\d\d:\d\d \d\d:\d\d:\d\d:\d\d ", RegexOptions.Compiled);
+        private static readonly Regex RegexTimeCodes = new Regex(@"^\d+ \d\d:\d\d:\d\d:\d\d \d\d:\d\d:\d\d:\d\d ", RegexOptions.Compiled);
 
         public override string Extension
         {
@@ -31,11 +31,19 @@ namespace Nikse.SubtitleEdit.Logic.SubtitleFormats
 
             var sb = new StringBuilder();
             foreach (string line in lines)
+            {
                 sb.AppendLine(line);
+            }
+
             if (sb.ToString().Contains("#INPOINT OUTPOINT PATH"))
+            {
                 return false; // Pinnacle Impression
+            }
+
             if (sb.ToString().StartsWith("{{\\rtf1"))
+            {
                 return false;
+            }
 
             LoadSubtitle(subtitle, lines, fileName);
             return subtitle.Paragraphs.Count > _errorCount;
@@ -52,6 +60,7 @@ namespace Nikse.SubtitleEdit.Logic.SubtitleFormats
                 sb.AppendLine(string.Format("{0} {1} {2} {3}", index + 1, EncodeTimeCode(p.StartTime), EncodeTimeCode(p.EndTime), HtmlUtil.RemoveHtmlTags(p.Text, true)));
                 index++;
             }
+
             return sb.ToString();
         }
 
@@ -70,21 +79,23 @@ namespace Nikse.SubtitleEdit.Logic.SubtitleFormats
             _errorCount = 0;
             foreach (string line in lines)
             {
-                if (regexTimeCodes.IsMatch(line))
+                if (RegexTimeCodes.IsMatch(line))
                 {
-                    string temp = line.Substring(0, regexTimeCodes.Match(line).Length);
+                    string temp = line.Substring(0, RegexTimeCodes.Match(line).Length);
                     temp = line.Substring(line.IndexOf(' ')).Trim();
                     string start = temp.Substring(0, 11);
                     string end = temp.Substring(12, 11);
 
                     string[] startParts = start.Split(new[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
                     string[] endParts = end.Split(new[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
-                    if (startParts.Length == 4 && endParts.Length == 4)
+                    if (startParts.Length != 4 || endParts.Length != 4)
                     {
-                        string text = line.Remove(0, regexTimeCodes.Match(line).Length - 1).Trim();
-                        p = new Paragraph(DecodeTimeCode(startParts), DecodeTimeCode(endParts), text);
-                        subtitle.Paragraphs.Add(p);
+                        continue;
                     }
+
+                    string text = line.Remove(0, RegexTimeCodes.Match(line).Length - 1).Trim();
+                    p = new Paragraph(DecodeTimeCode(startParts), DecodeTimeCode(endParts), text);
+                    subtitle.Paragraphs.Add(p);
                 }
                 else if (string.IsNullOrWhiteSpace(line))
                 {
@@ -93,9 +104,13 @@ namespace Nikse.SubtitleEdit.Logic.SubtitleFormats
                 else if (p != null)
                 {
                     if (string.IsNullOrEmpty(p.Text))
+                    {
                         p.Text = line;
+                    }
                     else
+                    {
                         p.Text = p.Text + Environment.NewLine + line;
+                    }
                 }
             }
 
@@ -112,6 +127,5 @@ namespace Nikse.SubtitleEdit.Logic.SubtitleFormats
 
             return new TimeCode(hour, minutes, seconds, FramesToMillisecondsMax999(frames));
         }
-
     }
 }

@@ -1,7 +1,7 @@
-﻿using System;
-
-namespace Nikse.SubtitleEdit.Logic.TransportStream
+﻿namespace Nikse.SubtitleEdit.Logic.TransportStream
 {
+    using System;
+
     public class AdaptationField
     {
         /// <summary>
@@ -10,7 +10,9 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
         public int Length { get; set; }
 
         public bool DiscontinuityIndicator { get; set; }
+      
         public bool RandomAccessIndicator { get; set; }
+        
         public bool ElementaryStreamPriorityIndicator { get; set; }
 
         /// <summary>
@@ -39,14 +41,17 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
         public bool AdaptationFieldExtensionFlag { get; set; }
 
         public int ProgramClockReferenceBase { get; set; }
+      
         public int ProgramClockReferenceExtension { get; set; }
 
         public int OriginalProgramClockReferenceBase { get; set; }
+      
         public int OriginalProgramClockReferenceExtension { get; set; }
 
         public int SpliceCountdown { get; set; }
 
         public int TransportPrivateDataLength { get; set; }
+       
         public byte[] TransportPrivateData { get; set; }
 
         public int AdaptationFieldExtensionLength { get; set; }

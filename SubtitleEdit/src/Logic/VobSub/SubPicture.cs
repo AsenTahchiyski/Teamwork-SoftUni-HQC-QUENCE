@@ -83,7 +83,8 @@
             int lastDisplayControlSequenceTableAddress = 0;
             displayControlSequenceTableAddresses.Add(displayControlSequenceTableAddress);
             int commandIndex = 0;
-            while (displayControlSequenceTableAddress > lastDisplayControlSequenceTableAddress && displayControlSequenceTableAddress + 1 < this.data.Length && commandIndex < this.data.Length)
+            while (displayControlSequenceTableAddress > lastDisplayControlSequenceTableAddress && 
+                displayControlSequenceTableAddress + 1 < this.data.Length && commandIndex < this.data.Length)
             {
                 int delayBeforeExecute = Helper.GetEndianWord(this.data, displayControlSequenceTableAddress + this.pixelDataAddressOffset);
                 commandIndex = displayControlSequenceTableAddress + 4 + this.pixelDataAddressOffset;
@@ -205,14 +206,7 @@
                 }
 
                 lastDisplayControlSequenceTableAddress = displayControlSequenceTableAddress;
-                if (this.pixelDataAddressOffset == -4)
-                {
-                    displayControlSequenceTableAddress = Helper.GetEndianWord(this.data, commandIndex + 3);
-                }
-                else
-                {
-                    displayControlSequenceTableAddress = Helper.GetEndianWord(this.data, displayControlSequenceTableAddress + 2);
-                }
+                displayControlSequenceTableAddress = this.pixelDataAddressOffset == -4 ? Helper.GetEndianWord(this.data, commandIndex + 3) : Helper.GetEndianWord(this.data, displayControlSequenceTableAddress + 2);
             }
 
             if (createBitmap && !bitmapGenerated)
@@ -476,18 +470,20 @@
             {
                 runLength = (b1 << 6) | (b2 >> 2);
                 color = b2 & Helper.B00000011;
-                if (runLength == 0)
+                if (runLength != 0)
                 {
-                    // rest of line + skip 4 bits if Only half
-                    restOfLine = true;
-                    if (onlyHalf)
-                    {
-                        onlyHalf = false;
-                        return 3;
-                    }
+                    return 2;
                 }
 
-                return 2;
+                // rest of line + skip 4 bits if Only half
+                restOfLine = true;
+                if (!onlyHalf)
+                {
+                    return 2;
+                }
+
+                onlyHalf = false;
+                return 3;
             }
 
             if (b1 >> 4 == 0)

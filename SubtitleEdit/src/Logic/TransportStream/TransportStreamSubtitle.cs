@@ -1,49 +1,59 @@
-﻿using System.Drawing;
-
-namespace Nikse.SubtitleEdit.Logic.TransportStream
+﻿namespace Nikse.SubtitleEdit.Logic.TransportStream
 {
+    using System.Drawing;
+
     public class TransportStreamSubtitle
     {
-        private ulong _startMilliseconds;
+        private ulong startMilliseconds;
+        private ulong endMilliseconds;
+        private readonly BluRaySup.BluRaySupParser.PcsData bdSup;
+
         public ulong StartMilliseconds
         {
             get
             {
-                if (_startMilliseconds < OffsetMilliseconds)
+                if (startMilliseconds < OffsetMilliseconds)
+                {
                     return 0;
-                return _startMilliseconds - OffsetMilliseconds;
+                }
+
+                return startMilliseconds - OffsetMilliseconds;
             }
+
             set
             {
-                _startMilliseconds = value + OffsetMilliseconds;
+                startMilliseconds = value + OffsetMilliseconds;
             }
         }
 
-        private ulong _endMilliseconds;
         public ulong EndMilliseconds
         {
             get
             {
-                if (_endMilliseconds < OffsetMilliseconds)
+                if (endMilliseconds < OffsetMilliseconds)
+                {
                     return 0;
-                return _endMilliseconds - OffsetMilliseconds;
+                }
+
+                return endMilliseconds - OffsetMilliseconds;
             }
             set
             {
-                _endMilliseconds = value + OffsetMilliseconds;
+                endMilliseconds = value + OffsetMilliseconds;
             }
         }
 
         public ulong OffsetMilliseconds { get; set; }
+      
         public DvbSubPes Pes { get; set; }
-        private BluRaySup.BluRaySupParser.PcsData _bdSup;
+      
         public int? ActiveImageIndex { get; set; }
 
         public bool IsBluRaySup
         {
             get
             {
-                return _bdSup != null;
+                return bdSup != null;
             }
         }
 
@@ -57,14 +67,14 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
 
         public TransportStreamSubtitle(BluRaySup.BluRaySupParser.PcsData bdSup, ulong startMilliseconds, ulong endMilliseconds)
         {
-            _bdSup = bdSup;
+            this.bdSup = bdSup;
             StartMilliseconds = startMilliseconds;
             EndMilliseconds = endMilliseconds;
         }
 
         public TransportStreamSubtitle(BluRaySup.BluRaySupParser.PcsData bdSup, ulong startMilliseconds, ulong endMilliseconds, ulong offset)
         {
-            _bdSup = bdSup;
+            this.bdSup = bdSup;
             StartMilliseconds = startMilliseconds;
             EndMilliseconds = endMilliseconds;
             OffsetMilliseconds = offset;
@@ -80,24 +90,22 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
         /// <returns></returns>
         public Bitmap GetActiveImage()
         {
-            if (_bdSup != null)
-                return _bdSup.GetBitmap();
+            if (bdSup != null)
+            {
+                return bdSup.GetBitmap();
+            }
 
             if (ActiveImageIndex.HasValue && ActiveImageIndex >= 0 && ActiveImageIndex < Pes.ObjectDataList.Count)
+            {
                 return (Bitmap)Pes.GetImage(Pes.ObjectDataList[ActiveImageIndex.Value]).Clone();
+            }
+
             return Pes.GetImageFull();
         }
 
         public int NumberOfImages
         {
-            get
-            {
-                if (Pes != null)
-                    return Pes.ObjectDataList.Count;
-                else
-                    return _bdSup.BitmapObjects.Count;
-            }
+            get { return Pes != null ? Pes.ObjectDataList.Count : bdSup.BitmapObjects.Count; }
         }
-
     }
 }

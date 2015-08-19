@@ -1,12 +1,14 @@
-﻿using System.Collections.Generic;
-
-namespace Nikse.SubtitleEdit.Logic.TransportStream
+﻿namespace Nikse.SubtitleEdit.Logic.TransportStream
 {
+    using System.Collections.Generic;
+
     public class ClutDefinitionSegment
     {
         public int ClutId { get; set; }
+    
         public int ClutVersionNumber { get; set; }
-        public List<RegionClutSegmentEntry> Entries = new List<RegionClutSegmentEntry>();
+     
+        public List<RegionClutSegmentEntry> Entries;
 
         public ClutDefinitionSegment(byte[] buffer, int index, int segmentLength)
         {
@@ -17,8 +19,7 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
             int k = index + 2;
             while (k + 6 <= index + segmentLength)
             {
-                var rcse = new RegionClutSegmentEntry();
-                rcse.ClutEntryId = buffer[k];
+                var rcse = new RegionClutSegmentEntry { ClutEntryId = buffer[k] };
                 byte flags = buffer[k + 1];
 
                 rcse.ClutEntry2BitClutEntryFlag = (flags & Helper.B10000000) > 0;
@@ -42,6 +43,7 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
                     rcse.ClutEntryT = buffer[k + 3] & Helper.B00000011;
                     k += 4;
                 }
+
                 Entries.Add(rcse);
             }
         }

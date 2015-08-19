@@ -1,12 +1,13 @@
-﻿using Nikse.SubtitleEdit.Logic.BluRaySup;
-using Nikse.SubtitleEdit.Logic.VobSub;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
-
-namespace Nikse.SubtitleEdit.Logic.TransportStream
+﻿namespace Nikse.SubtitleEdit.Logic.TransportStream
 {
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using System.Text;
+    using BluRaySup;
+    using VobSub;
+
     /// <summary>
     /// MPEG transport stream parser
     /// </summary>
@@ -15,15 +16,24 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
         public delegate void LoadTransportStreamCallback(long position, long total);
 
         public int NumberOfNullPackets { get; private set; }
+      
         public long TotalNumberOfPackets { get; private set; }
+        
         public long TotalNumberOfPrivateStream1 { get; private set; }
+        
         public long TotalNumberOfPrivateStream1Continuation0 { get; private set; }
+        
         public List<int> SubtitlePacketIds { get; private set; }
+        
         public List<Packet> SubtitlePackets { get; private set; }
-        //        public List<Packet> ProgramAssociationTables { get; private set; }
+        
+        // public List<Packet> ProgramAssociationTables { get; private set; }
         private Dictionary<int, List<DvbSubPes>> SubtitlesLookup { get; set; }
+        
         private Dictionary<int, List<TransportStreamSubtitle>> DvbSubtitlesLookup { get; set; }
+        
         public bool IsM2TransportStream { get; private set; }
+        
         public ulong FirstVideoPts { get; private set; }
 
         public void Parse(string fileName, LoadTransportStreamCallback callback)
@@ -38,6 +48,7 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
         /// Can be used with e.g. MemoryStream or FileStream
         /// </summary>
         /// <param name="ms">Input stream</param>
+        /// <param name="callback"></param>
         public void Parse(Stream ms, LoadTransportStreamCallback callback)
         {
             bool firstVideoPtsFound = false;
@@ -48,7 +59,7 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
             TotalNumberOfPrivateStream1Continuation0 = 0;
             SubtitlePacketIds = new List<int>();
             SubtitlePackets = new List<Packet>();
-            //            ProgramAssociationTables = new List<Packet>();
+            // ProgramAssociationTables = new List<Packet>();
             ms.Position = 0;
             const int packetLength = 188;
             DetectFormat(ms);
@@ -60,7 +71,9 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
             ms.Seek(position, SeekOrigin.Begin);
             ms.Read(m2TsTimeCodeBuffer, 0, 3);
             if (m2TsTimeCodeBuffer[0] == 0x54 && m2TsTimeCodeBuffer[1] == 0x46 && m2TsTimeCodeBuffer[2] == 0x72)
+            {
                 position = 3760;
+            }
 
             long transportStreamLength = ms.Length;
             while (position < transportStreamLength)
@@ -146,6 +159,7 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
                         {
                             SubtitlePacketIds.Add(packet.PacketId);
                         }
+
                         if (packet.ContinuityCounter == 0)
                         {
                             TotalNumberOfPrivateStream1Continuation0++;
@@ -165,11 +179,13 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
 
                             //}
                         }
+
                         if (callback != null)
                         {
                             callback.Invoke(ms.Position, transportStreamLength);
                         }
                     }
+
                     TotalNumberOfPackets++;
                     position += packetLength;
                 }
@@ -192,18 +208,25 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
                     foreach (var item in list)
                     {
                         item.WriteToStream(bdMs);
-                        if (item.DataIdentifier == 0x16)
+                        if (item.DataIdentifier != 0x16)
                         {
-                            if (startMsList.Count <= endMsList.Count)
-                                startMsList.Add(item.PresentationTimestampToMilliseconds());
-                            else
-                                endMsList.Add(item.PresentationTimestampToMilliseconds());
+                            continue;
+                        }
+
+                        if (startMsList.Count <= endMsList.Count)
+                        {
+                            startMsList.Add(item.PresentationTimestampToMilliseconds());
+                        }
+                        else
+                        {
+                            endMsList.Add(item.PresentationTimestampToMilliseconds());
                         }
                         //else if (item.DataBuffer[0] == 0x80)
                         //{ // TODO: Load bd sub after 0x80, so we can be sure to get correct time code???
                         //    endMsList.Add(item.PresentationTimestampToMilliseconds() / 90);
                         //}
                     }
+
                     SubtitlesLookup.Add(pid, list);
 
                     bdMs.Position = 0;
@@ -217,18 +240,28 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
                             var bdSup = bdList[k];
                             ulong startMs = 0;
                             if (k < startMsList.Count)
+                            {
                                 startMs = startMsList[k];
+                            }
+
                             ulong endMs = 0;
                             if (k < endMsList.Count)
+                            {
                                 endMs = endMsList[k];
+                            }
+
                             subList.Add(new TransportStreamSubtitle(bdSup, startMs, endMs, (ulong)((FirstVideoPts + 45) / 90.0)));
                         }
+
                         DvbSubtitlesLookup.Add(pid, subList);
                     }
                 }
                 SubtitlePacketIds.Clear();
                 foreach (int key in DvbSubtitlesLookup.Keys)
+                {
                     SubtitlePacketIds.Add(key);
+                }
+
                 SubtitlePacketIds.Sort();
                 return;
             }
@@ -241,20 +274,27 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
                 bool hasImageSubtitles = false;
                 foreach (var item in list)
                 {
-                    if (item.IsDvbSubpicture)
+                    if (!item.IsDvbSubpicture)
                     {
-                        hasImageSubtitles = true;
-                        break;
+                        continue;
                     }
+
+                    hasImageSubtitles = true;
+                    break;
                 }
+
                 if (hasImageSubtitles)
                 {
                     SubtitlesLookup.Add(pid, list);
                 }
             }
+
             SubtitlePacketIds.Clear();
             foreach (int key in SubtitlesLookup.Keys)
+            {
                 SubtitlePacketIds.Add(key);
+            }
+
             SubtitlePacketIds.Sort();
 
             // Merge packets and set start/end time
@@ -270,41 +310,55 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
                     {
                         var pes = list[i];
                         pes.ParseSegments();
-                        if (pes.ObjectDataList.Count > 0)
+                        if (pes.ObjectDataList.Count <= 0)
                         {
-                            var sub = new TransportStreamSubtitle();
-                            sub.StartMilliseconds = pes.PresentationTimestampToMilliseconds();
-                            sub.Pes = pes;
-                            if (i + 1 < list.Count && list[i + 1].PresentationTimestampToMilliseconds() > 25)
-                                sub.EndMilliseconds = list[i + 1].PresentationTimestampToMilliseconds() - 25;
-                            if (sub.EndMilliseconds < sub.StartMilliseconds)
-                                sub.EndMilliseconds = sub.StartMilliseconds + 3500;
-                            subtitles.Add(sub);
-                            if (sub.StartMilliseconds < firstVideoMs)
-                                firstVideoMs = sub.StartMilliseconds;
+                            continue;
+                        }
+
+                        var sub = new TransportStreamSubtitle();
+                        sub.StartMilliseconds = pes.PresentationTimestampToMilliseconds();
+                        sub.Pes = pes;
+                        if (i + 1 < list.Count && list[i + 1].PresentationTimestampToMilliseconds() > 25)
+                        {
+                            sub.EndMilliseconds = list[i + 1].PresentationTimestampToMilliseconds() - 25;
+                        }
+
+                        if (sub.EndMilliseconds < sub.StartMilliseconds)
+                        {
+                            sub.EndMilliseconds = sub.StartMilliseconds + 3500;
+                        }
+
+                        subtitles.Add(sub);
+                        if (sub.StartMilliseconds < firstVideoMs)
+                        {
+                            firstVideoMs = sub.StartMilliseconds;
                         }
                     }
                 }
+
                 foreach (var s in subtitles)
                 {
                     s.OffsetMilliseconds = firstVideoMs;
                 }
+
                 DvbSubtitlesLookup.Add(pid, subtitles);
             }
+
             SubtitlePacketIds.Clear();
             foreach (int key in DvbSubtitlesLookup.Keys)
             {
                 if (DvbSubtitlesLookup[key].Count > 0)
+                {
                     SubtitlePacketIds.Add(key);
+                }
             }
+
             SubtitlePacketIds.Sort();
         }
 
         public List<TransportStreamSubtitle> GetDvbSubtitles(int packetId)
         {
-            if (DvbSubtitlesLookup.ContainsKey(packetId))
-                return DvbSubtitlesLookup[packetId];
-            return null;
+            return DvbSubtitlesLookup.ContainsKey(packetId) ? DvbSubtitlesLookup[packetId] : null;
         }
 
         internal static List<DvbSubPes> MakeSubtitlePesPackets(int packetId, List<Packet> subtitlePackets)
@@ -314,36 +368,45 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
             var packetList = new List<Packet>();
             foreach (Packet packet in subtitlePackets)
             {
-                if (packet.PacketId == packetId)
+                if (packet.PacketId != packetId)
                 {
-                    if (packet.PayloadUnitStartIndicator)
-                    {
-                        if (packetList.Count > 0)
-                            AddPesPacket(list, packetList);
-                        packetList = new List<Packet>();
-                    }
-                    if (packet.Payload != null && last != packet.ContinuityCounter)
-                        packetList.Add(packet);
-                    last = packet.ContinuityCounter;
+                    continue;
                 }
+
+                if (packet.PayloadUnitStartIndicator)
+                {
+                    if (packetList.Count > 0)
+                    {
+                        AddPesPacket(list, packetList);
+                    }
+
+                    packetList = new List<Packet>();
+                }
+
+                if (packet.Payload != null && last != packet.ContinuityCounter)
+                {
+                    packetList.Add(packet);
+                }
+
+                last = packet.ContinuityCounter;
             }
+
             if (packetList.Count > 0)
+            {
                 AddPesPacket(list, packetList);
+            }
+
             return list;
         }
 
         public List<DvbSubPes> GetSubtitlePesPackets(int packetId)
         {
-            if (SubtitlesLookup.ContainsKey(packetId))
-                return SubtitlesLookup[packetId];
-            return null;
+            return SubtitlesLookup.ContainsKey(packetId) ? SubtitlesLookup[packetId] : null;
         }
 
         private static void AddPesPacket(List<DvbSubPes> list, List<Packet> packetList)
         {
-            int bufferSize = 0;
-            foreach (Packet p in packetList)
-                bufferSize += p.Payload.Length;
+            int bufferSize = packetList.Sum(p => p.Payload.Length);
             var pesData = new byte[bufferSize];
             int pesIndex = 0;
             foreach (Packet p in packetList)
@@ -365,22 +428,28 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
             {
                 pes = new DvbSubPes(pesData, 0);
             }
+
             list.Add(pes);
         }
 
         internal void DetectFormat(Stream ms)
         {
-            if (ms.Length > 192 + 192 + 5)
+            if (ms.Length <= 192 + 192 + 5)
             {
-                ms.Seek(0, SeekOrigin.Begin);
-                var buffer = new byte[192 + 192 + 5];
-                ms.Read(buffer, 0, buffer.Length);
-                if (buffer[0] == Packet.SynchronizationByte && buffer[188] == Packet.SynchronizationByte)
-                    return;
-                if (buffer[4] == Packet.SynchronizationByte && buffer[192 + 4] == Packet.SynchronizationByte && buffer[192 + 192 + 4] == Packet.SynchronizationByte)
-                {
-                    IsM2TransportStream = true;
-                }
+                return;
+            }
+
+            ms.Seek(0, SeekOrigin.Begin);
+            var buffer = new byte[192 + 192 + 5];
+            ms.Read(buffer, 0, buffer.Length);
+            if (buffer[0] == Packet.SynchronizationByte && buffer[188] == Packet.SynchronizationByte)
+            {
+                return;
+            }
+
+            if (buffer[4] == Packet.SynchronizationByte && buffer[192 + 4] == Packet.SynchronizationByte && buffer[192 + 192 + 4] == Packet.SynchronizationByte)
+            {
+                IsM2TransportStream = true;
             }
         }
 
@@ -390,7 +459,9 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
             {
                 byte[] pesData = File.ReadAllBytes(fileName);
                 if (pesData[0] != 0x20 || pesData[1] != 0 || pesData[2] != 0x0F)
+                {
                     return false;
+                }
 
                 var pes = new DvbSubPes(0, pesData);
                 return pes.SubtitleSegments.Count > 0;
@@ -425,19 +496,25 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
                     sub.StartMilliseconds = (ulong)seconds * 1000UL;
                     seconds += pes.PageCompositions[0].PageTimeOut;
                     if (pes.PageCompositions.Count > 0)
-                        sub.EndMilliseconds = sub.StartMilliseconds + (ulong)pes.PageCompositions[0].PageTimeOut * 1000UL;
+                    {
+                        sub.EndMilliseconds = sub.StartMilliseconds + (ulong)pes.PageCompositions[0].PageTimeOut*1000UL;
+                    }
                     else
+                    {
                         sub.EndMilliseconds = sub.StartMilliseconds + 2500;
-                    sub.Pes = pes;
+                    }
+                    sub.
+                        Pes = pes;
                     subtitles.Add(sub);
                 }
+
                 if (pes.PageCompositions.Count > 0)
                 {
                     seconds += pes.PageCompositions[0].PageTimeOut;
                 }
             }
+
             return subtitles;
         }
-
     }
 }

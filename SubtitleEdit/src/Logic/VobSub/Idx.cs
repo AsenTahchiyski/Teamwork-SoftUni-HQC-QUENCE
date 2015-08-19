@@ -13,7 +13,7 @@
         public readonly List<Color> Palette = new List<Color>();
         public readonly List<string> Languages = new List<string>();
 
-        private static Regex timeCodeLinePattern = new Regex(@"^timestamp: \d+:\d+:\d+:\d+, filepos: [\dabcdefABCDEF]+$", RegexOptions.Compiled);
+        private static readonly Regex TimeCodeLinePattern = new Regex(@"^timestamp: \d+:\d+:\d+:\d+, filepos: [\dabcdefABCDEF]+$", RegexOptions.Compiled);
 
         public Idx(string fileName)
             : this(File.ReadAllLines(fileName))
@@ -24,7 +24,7 @@
         {
             foreach (string line in lines)
             {
-                if (timeCodeLinePattern.IsMatch(line))
+                if (TimeCodeLinePattern.IsMatch(line))
                 {
                     IdxParagraph p = GetTimeCodeAndFilePosition(line);
                     if (p != null)
@@ -47,18 +47,20 @@
                     // id: es, index: 2
                     string s = line.Substring("id:".Length + 1);
                     string[] parts = s.Split(new[] { ':', ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                    if (parts.Length > 0)
+                    if (parts.Length <= 0)
                     {
-                        try
-                        {
-                            string twoLetterLanguageId = parts[0];
-                            CultureInfo info = CultureInfo.GetCultureInfoByIetfLanguageTag(twoLetterLanguageId);
-                            this.Languages.Add(string.Format("{0} (0x{1:x})", info.NativeName, this.Languages.Count + 32));
-                        }
-                        catch
-                        {
-                            // ignored
-                        }
+                        continue;
+                    }
+
+                    try
+                    {
+                        string twoLetterLanguageId = parts[0];
+                        CultureInfo info = CultureInfo.GetCultureInfoByIetfLanguageTag(twoLetterLanguageId);
+                        this.Languages.Add(string.Format("{0} (0x{1:x})", info.NativeName, this.Languages.Count + 32));
+                    }
+                    catch
+                    {
+                        // ignored
                     }
                 }
             }
@@ -67,20 +69,23 @@
         private static Color HexToColor(string hex)
         {
             hex = hex.TrimStart('#').Trim();
-            if (hex.Length == 6)
+            switch (hex.Length)
             {
-                int r = Convert.ToInt32(hex.Substring(0, 2), 16);
-                int g = Convert.ToInt32(hex.Substring(2, 2), 16);
-                int b = Convert.ToInt32(hex.Substring(4, 2), 16);
-                return Color.FromArgb(r, g, b);
-            }
-            else if (hex.Length == 8)
-            {
-                int a = Convert.ToInt32(hex.Substring(0, 2), 16);
-                int r = Convert.ToInt32(hex.Substring(2, 2), 16);
-                int g = Convert.ToInt32(hex.Substring(4, 2), 16);
-                int b = Convert.ToInt32(hex.Substring(6, 2), 16);
-                return Color.FromArgb(a, r, g, b);
+                case 6:
+                {
+                    int r = Convert.ToInt32(hex.Substring(0, 2), 16);
+                    int g = Convert.ToInt32(hex.Substring(2, 2), 16);
+                    int b = Convert.ToInt32(hex.Substring(4, 2), 16);
+                    return Color.FromArgb(r, g, b);
+                }
+                case 8:
+                {
+                    int a = Convert.ToInt32(hex.Substring(0, 2), 16);
+                    int r = Convert.ToInt32(hex.Substring(2, 2), 16);
+                    int g = Convert.ToInt32(hex.Substring(4, 2), 16);
+                    int b = Convert.ToInt32(hex.Substring(6, 2), 16);
+                    return Color.FromArgb(a, r, g, b);
+                }
             }
 
             return Color.Red;

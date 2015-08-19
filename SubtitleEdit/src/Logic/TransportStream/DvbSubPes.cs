@@ -1,17 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.IO;
-
-namespace Nikse.SubtitleEdit.Logic.TransportStream
+﻿namespace Nikse.SubtitleEdit.Logic.TransportStream
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Drawing;
+    using System.IO;
+    using System.Linq;
 
     public class DvbSubPes
     {
         public const int HeaderLength = 6;
         public const int Mpeg2HeaderLength = 14;
 
-        public readonly UInt32 StartCode;
+        public readonly uint StartCode;
         public readonly int StreamId;
         public readonly int Length;
         public readonly int ScramblingControl;
@@ -28,17 +28,29 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
         public readonly int ExtensionFlag;
         public readonly int HeaderDataLength;
 
-        public readonly UInt64? PresentationTimestamp;
-        public readonly UInt64? DecodeTimestamp;
+        public readonly ulong? PresentationTimestamp;
+        public readonly ulong? DecodeTimestamp;
 
         public readonly int? SubPictureStreamId;
 
-        private readonly byte[] _dataBuffer;
+        private readonly byte[] dataBuffer;
+
+        public List<SubtitleSegment> SubtitleSegments { get; set; }
+       
+        public List<ClutDefinitionSegment> ClutDefinitions { get; set; }
+        
+        public List<RegionCompositionSegment> RegionCompositions { get; set; }
+        
+        public List<PageCompositionSegment> PageCompositions { get; set; }
+        
+        public List<ObjectDataSegment> ObjectDataList { get; set; }
 
         public DvbSubPes(byte[] buffer, int index)
         {
             if (buffer.Length < 9)
+            {
                 return;
+            }
 
             StartCode = Helper.GetEndian(buffer, index + 0, 3);
             StreamId = buffer[index + 3];
@@ -63,7 +75,9 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
             {
                 int id = buffer[index + 9 + HeaderDataLength];
                 if (id >= 0x20 && id <= 0x40) // x3f 0r x40 ?
+                {
                     SubPictureStreamId = id;
+                }
             }
 
             int tempIndex = index + 9;
@@ -92,11 +106,13 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
             {
                 dataSize = buffer.Length - dataIndex;
                 if (dataSize < 0)
+                {
                     return;
+                }
             }
 
-            _dataBuffer = new byte[dataSize + 1];
-            Buffer.BlockCopy(buffer, dataIndex - 1, _dataBuffer, 0, _dataBuffer.Length); // why subtract one from dataIndex???
+            dataBuffer = new byte[dataSize + 1];
+            Buffer.BlockCopy(buffer, dataIndex - 1, dataBuffer, 0, dataBuffer.Length); // why subtract one from dataIndex???
         }
 
         public DvbSubPes(int index, byte[] buffer)
@@ -105,13 +121,19 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
             Length = index + 1;
 
             if (index + 9 >= buffer.Length)
+            {
                 return;
+            }
 
             if (buffer[0 + index] != 0x20)
+            {
                 return;
+            }
 
             if (buffer[1 + index] != 0)
+            {
                 return;
+            }
 
             SubtitleSegments = new List<SubtitleSegment>();
             ClutDefinitions = new List<ClutDefinitionSegment>();
@@ -127,18 +149,23 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
                 SubtitleSegments.Add(ss);
                 index += 6 + ss.SegmentLength;
                 if (index + 6 < buffer.Length)
+                {
                     ss = new SubtitleSegment(buffer, index);
+                }
                 else
+                {
                     ss.SyncByte = Helper.B11111111;
+                }
             }
+
             Length = index;
             int size = index - start;
-            _dataBuffer = new byte[size];
-            Buffer.BlockCopy(buffer, start, _dataBuffer, 0, _dataBuffer.Length);
+            dataBuffer = new byte[size];
+            Buffer.BlockCopy(buffer, start, dataBuffer, 0, dataBuffer.Length);
 
             // Parse segments
             index = 2;
-            ss = new SubtitleSegment(_dataBuffer, index);
+            ss = new SubtitleSegment(dataBuffer, index);
             while (ss.SyncByte == Helper.B00001111)
             {
                 SubtitleSegments.Add(ss);
@@ -160,10 +187,14 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
                 }
 
                 index += 6 + ss.SegmentLength;
-                if (index + 6 < _dataBuffer.Length)
-                    ss = new SubtitleSegment(_dataBuffer, index);
+                if (index + 6 < dataBuffer.Length)
+                {
+                    ss = new SubtitleSegment(dataBuffer, index);
+                }
                 else
+                {
                     ss.SyncByte = Helper.B11111111;
+                }
             }
         }
 
@@ -176,10 +207,12 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
         {
             get
             {
-                if (_dataBuffer == null || _dataBuffer.Length < 2)
+                if (dataBuffer == null || dataBuffer.Length < 2)
+                {
                     return 0;
+                }
 
-                return _dataBuffer[0];
+                return dataBuffer[0];
             }
         }
 
@@ -187,23 +220,21 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
         {
             get
             {
-                if (_dataBuffer == null || _dataBuffer.Length < 2)
+                if (dataBuffer == null || dataBuffer.Length < 2)
+                {
                     return 0;
+                }
 
-                return _dataBuffer[1];
+                return dataBuffer[1];
             }
         }
-
-        public List<SubtitleSegment> SubtitleSegments { get; set; }
-        public List<ClutDefinitionSegment> ClutDefinitions { get; set; }
-        public List<RegionCompositionSegment> RegionCompositions { get; set; }
-        public List<PageCompositionSegment> PageCompositions { get; set; }
-        public List<ObjectDataSegment> ObjectDataList { get; set; }
 
         public void ParseSegments()
         {
             if (SubtitleSegments != null)
+            {
                 return;
+            }
 
             SubtitleSegments = new List<SubtitleSegment>();
             ClutDefinitions = new List<ClutDefinitionSegment>();
@@ -212,7 +243,7 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
             ObjectDataList = new List<ObjectDataSegment>();
 
             int index = 2;
-            var ss = new SubtitleSegment(_dataBuffer, index);
+            var ss = new SubtitleSegment(dataBuffer, index);
             while (ss.SyncByte == Helper.B00001111)
             {
                 SubtitleSegments.Add(ss);
@@ -234,10 +265,14 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
                 }
 
                 index += 6 + ss.SegmentLength;
-                if (index + 6 < _dataBuffer.Length)
-                    ss = new SubtitleSegment(_dataBuffer, index);
+                if (index + 6 < dataBuffer.Length)
+                {
+                    ss = new SubtitleSegment(dataBuffer, index);
+                }
                 else
+                {
                     ss.SyncByte = Helper.B11111111;
+                }
             }
         }
 
@@ -247,74 +282,83 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
             {
                 foreach (RegionCompositionSegmentObject o in rcs.Objects)
                 {
-                    if (o.ObjectId == ods.ObjectId)
+                    if (o.ObjectId != ods.ObjectId)
                     {
-                        foreach (ClutDefinitionSegment cds in ClutDefinitions)
-                        {
-                            if (cds.ClutId == rcs.RegionClutId)
-                                return cds;
-                        }
+                        continue;
+                    }
+                    foreach (ClutDefinitionSegment cds in ClutDefinitions.Where(cds => cds.ClutId == rcs.RegionClutId))
+                    {
+                        return cds;
                     }
                 }
             }
 
-            if (ClutDefinitions.Count > 0)
-                return ClutDefinitions[0];
-
-            return null; // TODO: Return default clut
+            return ClutDefinitions.Count > 0 ? ClutDefinitions[0] : null;
         }
 
         public Point GetImagePosition(ObjectDataSegment ods)
         {
             if (SubtitleSegments == null)
+            {
                 ParseSegments();
+            }
 
-            var p = new Point(0, 0);
+            var point = new Point(0, 0);
 
             foreach (RegionCompositionSegment rcs in RegionCompositions)
             {
                 foreach (RegionCompositionSegmentObject o in rcs.Objects)
                 {
-                    if (o.ObjectId == ods.ObjectId)
+                    if (o.ObjectId != ods.ObjectId)
                     {
-                        foreach (PageCompositionSegment cds in PageCompositions)
-                        {
-                            foreach (var r in cds.Regions)
-                            {
-                                if (r.RegionId == rcs.RegionId)
-                                {
-                                    p.X = r.RegionHorizontalAddress + o.ObjectHorizontalPosition;
-                                    p.Y = r.RegionVerticalAddress + o.ObjectVerticalPosition;
-                                    return p;
-                                }
-                            }
-                        }
-                        p.X = o.ObjectHorizontalPosition;
-                        p.Y = o.ObjectVerticalPosition;
+                        continue;
                     }
+                    foreach (PageCompositionSegment cds in PageCompositions)
+                    {
+                        foreach (var r in cds.Regions)
+                        {
+                            if (r.RegionId != rcs.RegionId)
+                            {
+                                continue;
+                            }
+
+                            point.X = r.RegionHorizontalAddress + o.ObjectHorizontalPosition;
+                            point.Y = r.RegionVerticalAddress + o.ObjectVerticalPosition;
+                            return point;
+                        }
+                    }
+
+                    point.X = o.ObjectHorizontalPosition;
+                    point.Y = o.ObjectVerticalPosition;
                 }
             }
 
-            return p;
+            return point;
         }
 
         public Bitmap GetImage(ObjectDataSegment ods)
         {
             if (SubtitleSegments == null)
+            {
                 ParseSegments();
+            }
 
             if (ods.Image != null)
+            {
                 return ods.Image;
+            }
 
             ClutDefinitionSegment cds = GetClutDefinitionSegment(ods);
-            ods.DecodeImage(_dataBuffer, ods.BufferIndex, cds);
+            ods.DecodeImage(dataBuffer, ods.BufferIndex, cds);
             return ods.Image;
         }
 
         public Bitmap GetImageFull()
         {
             if (SubtitleSegments == null)
+            {
                 ParseSegments();
+            }
 
             int width = 720;
             int height = 576;
@@ -322,36 +366,45 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
             var segments = SubtitleSegments;
             foreach (SubtitleSegment ss in segments)
             {
-                if (ss.DisplayDefinition != null)
+                if (ss.DisplayDefinition == null)
                 {
-                    width = ss.DisplayDefinition.DisplayWith;
-                    height = ss.DisplayDefinition.DisplayHeight;
+                    continue;
                 }
+
+                width = ss.DisplayDefinition.DisplayWith;
+                height = ss.DisplayDefinition.DisplayHeight;
             }
 
             var bmp = new Bitmap(width, height);
             foreach (var ods in ObjectDataList)
             {
                 var odsImage = GetImage(ods);
-                if (odsImage != null)
+                if (odsImage == null)
                 {
-                    var odsPoint = GetImagePosition(ods);
-                    using (var g = Graphics.FromImage(bmp))
-                    {
-                        g.DrawImageUnscaled(odsImage, odsPoint);
-                    }
+                    continue;
+                }
+
+                var odsPoint = GetImagePosition(ods);
+                using (var g = Graphics.FromImage(bmp))
+                {
+                    g.DrawImageUnscaled(odsImage, odsPoint);
                 }
             }
+
             return bmp;
         }
 
         public static string GetStreamIdDescription(int streamId)
         {
             if (0xC0 <= streamId && streamId < 0xE0)
+            {
                 return "ISO/IEC 13818-3 or ISO/IEC 11172-3 or ISO/IEC 13818-7 or ISO/IEC 14496-3 audio stream number " + (streamId & 0x1F).ToString("X4");
+            }
 
             if (0xE0 <= streamId && streamId < 0xF0)
+            {
                 return "ITU-T Rec. H.262 | ISO/IEC 13818-2 or ISO/IEC 11172-2 or ISO/IEC 14496-2 video stream number " + (streamId & 0x0F).ToString("X4");
+            }
 
             switch (streamId)
             {
@@ -382,14 +435,16 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
         public ulong PresentationTimestampToMilliseconds()
         {
             if (PresentationTimestamp.HasValue)
+            {
                 return (ulong)Math.Round((PresentationTimestamp.Value + 45.0) / 90.0);
+            }
+
             return 0;
         }
 
         public void WriteToStream(Stream stream)
         {
-            stream.Write(_dataBuffer, 0, _dataBuffer.Length);
+            stream.Write(dataBuffer, 0, dataBuffer.Length);
         }
-
     }
 }

@@ -1,76 +1,76 @@
-﻿using System;
-using System.Drawing;
-using System.IO;
-using System.Text;
-
-namespace Nikse.SubtitleEdit.Logic.VobSub
+﻿namespace Nikse.SubtitleEdit.Logic.VobSub
 {
+    using System;
+    using System.Drawing;
+    using System.IO;
+    using System.Text;
+
     public class VobSubWriter : IDisposable
     {
 
         private class MemWriter
         {
-            private readonly byte[] _buf;
-            private long _pos;
+            private readonly byte[] buf;
+            private long pos;
 
             public MemWriter(long size)
             {
-                _buf = new byte[size];
-                _pos = 0;
+                buf = new byte[size];
+                pos = 0;
             }
 
             public byte[] GetBuf()
             {
-                return _buf;
+                return buf;
             }
 
             public long GetPosition()
             {
-                return _pos;
+                return pos;
             }
 
             public void GotoBegin()
             {
-                _pos = 0;
+                pos = 0;
             }
 
             public void WriteByte(byte val)
             {
-                _buf[_pos++] = val;
+                buf[pos++] = val;
             }
         }
 
-        private readonly string _subFileName;
-        private FileStream _subFile;
-        private readonly StringBuilder _idx = new StringBuilder();
-        private readonly int _screenWidth = 720;
-        private readonly int _screenHeight = 480;
-        private readonly int _bottomMargin = 15;
-        private readonly int _leftRightMargin = 15;
-        private readonly int _languageStreamId;
-        private Color _background = Color.Transparent;
-        private Color _pattern = Color.White;
-        private Color _emphasis1 = Color.Black;
-        private readonly bool _useInnerAntialiasing = true;
-        private Color _emphasis2 = Color.FromArgb(240, Color.Black);
-        private readonly string _languageName = "English";
-        private readonly string _languageNameShort = "en";
+        private readonly string subFileName;
+        private FileStream subFile;
+        private readonly StringBuilder idx;
+        private readonly int screenWidth = 720;
+        private readonly int screenHeight = 480;
+        private readonly int bottomMargin = 15;
+        private readonly int leftRightMargin = 15;
+        private readonly int languageStreamId;
+        private Color background = Color.Transparent;
+        private Color pattern = Color.White;
+        private Color emphasis1 = Color.Black;
+        private readonly bool useInnerAntialiasing = true;
+        private Color emphasis2 = Color.FromArgb(240, Color.Black);
+        private readonly string languageName = "English";
+        private readonly string languageNameShort = "en";
 
         public VobSubWriter(string subFileName, int screenWidth, int screenHeight, int bottomMargin, int leftRightMargin, int languageStreamId, Color pattern, Color emphasis1, bool useInnerAntialiasing, string languageName, string languageNameShort)
         {
-            _subFileName = subFileName;
-            _screenWidth = screenWidth;
-            _screenHeight = screenHeight;
-            _bottomMargin = bottomMargin;
-            _leftRightMargin = leftRightMargin;
-            _languageStreamId = languageStreamId;
-            _pattern = pattern;
-            _emphasis1 = emphasis1;
-            _useInnerAntialiasing = useInnerAntialiasing;
-            _languageName = languageName;
-            _languageNameShort = languageNameShort;
-            _idx = CreateIdxHeader();
-            _subFile = new FileStream(subFileName, FileMode.Create);
+            this.subFileName = subFileName;
+            this.screenWidth = screenWidth;
+            this.screenHeight = screenHeight;
+            this.bottomMargin = bottomMargin;
+            this.leftRightMargin = leftRightMargin;
+            this.languageStreamId = languageStreamId;
+            this.pattern = pattern;
+            this.emphasis1 = emphasis1;
+            this.useInnerAntialiasing = useInnerAntialiasing;
+            this.languageName = languageName;
+            this.languageNameShort = languageNameShort;
+            idx = CreateIdxHeader();
+            subFile = new FileStream(subFileName, FileMode.Create);
         }
 
         public static void WriteEndianWord(int i, Stream stream)
@@ -105,9 +105,13 @@ namespace Nikse.SubtitleEdit.Logic.VobSub
 
             // Control command start
             if (p.Forced)
+            {
                 ms.WriteByte(0); // ForcedStartDisplay==0
+            }
             else
+            {
                 ms.WriteByte(1); // StartDisplay==1
+            }
 
             // Control command 3 = SetColor
             WriteColors(ms); // 3 bytes
@@ -143,15 +147,15 @@ namespace Nikse.SubtitleEdit.Logic.VobSub
         public void WriteParagraph(Paragraph p, Bitmap bmp, ContentAlignment alignment) // inspired by code from SubtitleCreator
         {
             // timestamp: 00:00:33:900, filepos: 000000000
-            _idx.AppendLine(string.Format("timestamp: {0:00}:{1:00}:{2:00}:{3:000}, filepos: {4}", p.StartTime.Hours, p.StartTime.Minutes, p.StartTime.Seconds, p.StartTime.Milliseconds, _subFile.Position.ToString("X").PadLeft(9, '0').ToLower()));
+            idx.AppendLine(string.Format("timestamp: {0:00}:{1:00}:{2:00}:{3:000}, filepos: {4}", p.StartTime.Hours, p.StartTime.Minutes, p.StartTime.Seconds, p.StartTime.Milliseconds, subFile.Position.ToString("X").PadLeft(9, '0').ToLower()));
 
             var nbmp = new NikseBitmap(bmp);
-            _emphasis2 = nbmp.ConverToFourColors(_background, _pattern, _emphasis1, _useInnerAntialiasing);
-            var twoPartBuffer = nbmp.RunLengthEncodeForDvd(_background, _pattern, _emphasis1, _emphasis2);
+            emphasis2 = nbmp.ConverToFourColors(background, pattern, emphasis1, useInnerAntialiasing);
+            var twoPartBuffer = nbmp.RunLengthEncodeForDvd(background, pattern, emphasis1, emphasis2);
             var imageBuffer = GetSubImageBuffer(twoPartBuffer, nbmp, p, alignment);
 
             int bufferIndex = 0;
-            byte vobSubId = (byte)_languageStreamId;
+            byte vobSubId = (byte)languageStreamId;
             var mwsub = new MemWriter(200000);
             byte[] subHeader = new byte[30];
             byte[] ts = new byte[4];
@@ -210,6 +214,7 @@ namespace Nikse.SubtitleEdit.Logic.VobSub
                     {
                         subHeader[23 + i] = Convert.ToByte(fiveBytesString.Substring((i * 8), 8), 2);
                     }
+
                     subHeader[28] = vobSubId;
                     headerSize = 29;
                 }
@@ -232,16 +237,22 @@ namespace Nikse.SubtitleEdit.Logic.VobSub
 
                     // First Write header
                     for (int x = 0; x < headerSize; x++)
+                    {
                         mwsub.WriteByte(subHeader[x]);
+                    }
 
                     // Write Image Data
                     for (int x = 0; x < toWrite; x++)
+                    {
                         mwsub.WriteByte(imageBuffer[bufferIndex++]);
+                    }
 
                     // Pad remaining space
                     long paddingSize = 0x800 - headerSize - toWrite;
                     for (int x = 0; x < paddingSize; x++)
+                    {
                         mwsub.WriteByte(0xff);
+                    }
 
                     toWrite = 0;
                 }
@@ -256,11 +267,15 @@ namespace Nikse.SubtitleEdit.Logic.VobSub
 
                     // First Write header
                     for (int x = 0; x < headerSize; x++)
+                    {
                         mwsub.WriteByte(subHeader[x]);
+                    }
 
                     // Write Image Data
                     for (int x = 0; x < blockSize; x++)
+                    {
                         mwsub.WriteByte(imageBuffer[bufferIndex++]);
+                    }
 
                     toWrite -= blockSize;
                 }
@@ -269,7 +284,7 @@ namespace Nikse.SubtitleEdit.Logic.VobSub
             // Write whole memory stream to file
             long endPosition = mwsub.GetPosition();
             mwsub.GotoBegin();
-            _subFile.Write(mwsub.GetBuf(), 0, (int)endPosition);
+            subFile.Write(mwsub.GetBuf(), 0, (int)endPosition);
         }
 
         private static void WritePixelDataAddress(Stream stream, int imageTopFieldDataAddress, int imageBottomFieldDataAddress)
@@ -284,24 +299,27 @@ namespace Nikse.SubtitleEdit.Logic.VobSub
             stream.WriteByte(5);
 
             // Write 6 bytes of area - starting X, ending X, starting Y, ending Y, each 12 bits
-            ushort startX = (ushort)((_screenWidth - nbmp.Width) / 2);
-            ushort startY = (ushort)(_screenHeight - nbmp.Height - _bottomMargin);
+            ushort startX = (ushort)((screenWidth - nbmp.Width) / 2);
+            ushort startY = (ushort)(screenHeight - nbmp.Height - bottomMargin);
 
             if (alignment == ContentAlignment.TopLeft || alignment == ContentAlignment.TopCenter || alignment == ContentAlignment.TopRight)
             {
-                startY = (ushort)_bottomMargin;
+                startY = (ushort)bottomMargin;
             }
+
             if (alignment == ContentAlignment.MiddleLeft || alignment == ContentAlignment.MiddleCenter || alignment == ContentAlignment.MiddleRight)
             {
-                startY = (ushort)((_screenHeight / 2) - (nbmp.Height / 2));
+                startY = (ushort)((screenHeight / 2) - (nbmp.Height / 2));
             }
+
             if (alignment == ContentAlignment.TopLeft || alignment == ContentAlignment.MiddleLeft || alignment == ContentAlignment.BottomLeft)
             {
-                startX = (ushort)_leftRightMargin;
+                startX = (ushort)leftRightMargin;
             }
+
             if (alignment == ContentAlignment.TopRight || alignment == ContentAlignment.MiddleRight || alignment == ContentAlignment.BottomRight)
             {
-                startX = (ushort)(_screenWidth - nbmp.Width - _leftRightMargin);
+                startX = (ushort)(screenWidth - nbmp.Width - leftRightMargin);
             }
 
             ushort endX = (ushort)(startX + nbmp.Width - 1);
@@ -318,8 +336,8 @@ namespace Nikse.SubtitleEdit.Logic.VobSub
         private void WriteContrast(Stream stream)
         {
             stream.WriteByte(4);
-            stream.WriteByte((byte)((_emphasis2.A << 4) | _emphasis1.A)); // emphasis2 + emphasis1
-            stream.WriteByte((byte)((_pattern.A << 4) | _background.A)); // pattern + background
+            stream.WriteByte((byte)((emphasis2.A << 4) | emphasis1.A)); // emphasis2 + emphasis1
+            stream.WriteByte((byte)((pattern.A << 4) | background.A)); // pattern + background
         }
 
         /// <summary>
@@ -340,8 +358,8 @@ namespace Nikse.SubtitleEdit.Logic.VobSub
 
         public void WriteIdxFile()
         {
-            string idxFileName = _subFileName.Substring(0, _subFileName.Length - 3) + "idx";
-            File.WriteAllText(idxFileName, _idx.ToString().Trim());
+            string idxFileName = subFileName.Substring(0, subFileName.Length - 3) + "idx";
+            File.WriteAllText(idxFileName, idx.ToString().Trim());
         }
 
         private StringBuilder CreateIdxHeader()
@@ -368,7 +386,7 @@ namespace Nikse.SubtitleEdit.Logic.VobSub
 # Settings
 
 # Original frame size
-size: " + _screenWidth + "x" + _screenHeight + @"
+size: " + screenWidth + "x" + screenHeight + @"
 
 # Origin, relative to the upper-left corner, can be overloaded by aligment
 org: 0, 0
@@ -396,7 +414,7 @@ time offset: 0
 forced subs: OFF
 
 # The original palette of the DVD
-palette: 000000, " + ToHexColor(_pattern) + ", " + ToHexColor(_emphasis1) + ", " + ToHexColor(_emphasis2) + @", 828282, 828282, 828282, ffffff, 828282, bababa, 828282, 828282, 828282, 828282, 828282, 828282
+palette: 000000, " + ToHexColor(pattern) + ", " + ToHexColor(emphasis1) + ", " + ToHexColor(emphasis2) + @", 828282, 828282, 828282, ffffff, 828282, bababa, 828282, 828282, 828282, 828282, 828282, 828282
 
 # Custom colors (transp idxs and the four colors)
 custom colors: OFF, tridx: 0000, colors: 000000, 000000, 000000, 000000
@@ -404,10 +422,10 @@ custom colors: OFF, tridx: 0000, colors: 000000, 000000, 000000, 000000
 # Language index in use
 langidx: 0
 
-# " + _languageName + @"
-id: " + _languageNameShort + @", index: 0
+# " + languageName + @"
+id: " + languageNameShort + @", index: 0
 # Decomment next line to activate alternative name in DirectVobSub / Windows Media Player 6.x
-# alt: " + _languageName + @"
+# alt: " + languageName + @"
 # Vob/Cell ID: 1, 1 (PTS: 0)");
             return sb;
         }
@@ -419,11 +437,13 @@ id: " + _languageNameShort + @", index: 0
 
         private void ReleaseManagedResources()
         {
-            if (_subFile != null)
+            if (subFile == null)
             {
-                _subFile.Dispose();
-                _subFile = null;
+                return;
             }
+
+            subFile.Dispose();
+            subFile = null;
         }
 
         public void Dispose()
@@ -439,6 +459,5 @@ id: " + _languageNameShort + @", index: 0
                 ReleaseManagedResources();
             }
         }
-
     }
 }

@@ -1,50 +1,49 @@
-﻿using System;
-using System.Collections;
-using System.Runtime.InteropServices;
-using System.Text;
-
-namespace Nikse.SubtitleEdit.Logic.VideoPlayers.MpcHC
+﻿namespace Nikse.SubtitleEdit.Logic.VideoPlayers.MpcHC
 {
+    using System;
+    using System.Collections;
+    using System.Runtime.InteropServices;
+    using System.Text;
+
     internal static class NativeMethods
     {
-
         internal delegate bool EnumedWindow(IntPtr handleWindow, ArrayList handles);
 
         #region structs, constants and enums
 
         public struct CopyDataStruct
         {
-            public UIntPtr dwData;
-            public int cbData;
-            public IntPtr lpData;
+            public UIntPtr DwData;
+            public int CbData;
+            public IntPtr LpData;
         }
 
         public enum SpecialWindowHandles
         {
-            HWND_TOP = 0,
-            HWND_BOTTOM = 1,
-            HWND_TOPMOST = -1,
-            HWND_NOTOPMOST = -2
+            HwndTop = 0,
+            HwndBottom = 1,
+            HwndTopmost = -1,
+            HwndNotopmost = -2
         }
 
         [Flags]
         public enum SetWindowPosFlags : uint
         {
-            SWP_ASYNCWINDOWPOS = 0x4000,
-            SWP_DEFERERASE = 0x2000,
-            SWP_DRAWFRAME = 0x0020,
-            SWP_FRAMECHANGED = 0x0020,
-            SWP_HIDEWINDOW = 0x0080,
-            SWP_NOACTIVATE = 0x0010,
-            SWP_NOCOPYBITS = 0x0100,
-            SWP_NOMOVE = 0x0002,
-            SWP_NOOWNERZORDER = 0x0200,
-            SWP_NOREDRAW = 0x0008,
-            SWP_NOREPOSITION = 0x0200,
-            SWP_NOSENDCHANGING = 0x0400,
-            SWP_NOSIZE = 0x0001,
-            SWP_NOZORDER = 0x0004,
-            SWP_SHOWWINDOW = 0x0040,
+            SwpAsyncwindowpos = 0x4000,
+            SwpDefererase = 0x2000,
+            SwpDrawframe = 0x0020,
+            SwpFramechanged = 0x0020,
+            SwpHidewindow = 0x0080,
+            SwpNoactivate = 0x0010,
+            SwpNocopybits = 0x0100,
+            SwpNomove = 0x0002,
+            SwpNoownerzorder = 0x0200,
+            SwpNoredraw = 0x0008,
+            SwpNoreposition = 0x0200,
+            SwpNosendchanging = 0x0400,
+            SwpNosize = 0x0001,
+            SwpNozorder = 0x0004,
+            SwpShowwindow = 0x0040,
         }
 
         public enum ShowWindowCommands
@@ -131,7 +130,7 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers.MpcHC
 
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
-        internal static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, SetWindowPosFlags uFlags);
+        internal static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int x, int y, int cx, int cy, SetWindowPosFlags uFlags);
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
@@ -153,5 +152,4 @@ namespace Nikse.SubtitleEdit.Logic.VideoPlayers.MpcHC
         #endregion Win32 API
 
     }
-
 }

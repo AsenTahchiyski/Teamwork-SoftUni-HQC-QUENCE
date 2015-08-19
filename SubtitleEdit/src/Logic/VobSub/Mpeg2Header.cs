@@ -7,13 +7,16 @@
     {
         public const int Length = 14;
 
-        public readonly uint StartCode;
-        public readonly byte PackIndentifier;
+        public uint StartCode { get; set; }
+     
+        public byte PackIndentifier { get; set; }
 
         // public readonly UInt64 SystemClockReferenceQuotient;
         // public readonly UInt64 SystemClockReferenceRemainder;
-        public readonly ulong ProgramMuxRate;
-        public readonly int PackStuffingLength;
+      
+        public ulong ProgramMuxRate { get; set; }
+       
+        public int PackStuffingLength { get; set; }
 
         public Mpeg2Header(byte[] buffer)
         {

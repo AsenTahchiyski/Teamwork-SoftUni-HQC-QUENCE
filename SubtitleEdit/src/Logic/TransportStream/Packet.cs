@@ -1,7 +1,7 @@
-﻿using System;
-
-namespace Nikse.SubtitleEdit.Logic.TransportStream
+﻿namespace Nikse.SubtitleEdit.Logic.TransportStream
 {
+    using System;
+
     /// <summary>
     /// MPEG transport stream packet
     /// </summary>
@@ -82,7 +82,9 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
             get
             {
                 if (Payload == null || Payload.Length < 4)
+                {
                     return false;
+                }
 
                 return Payload[0] == 0 &&
                        Payload[1] == 0 &&
@@ -96,7 +98,9 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
             get
             {
                 if (Payload == null || Payload.Length < 4)
+                {
                     return false;
+                }
 
                 return Payload[0] == 0 &&
                        Payload[1] == 0 &&
@@ -120,24 +124,29 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
             AdaptionFieldLength = AdaptationFieldControl > 1 ? (0xFF & packetBuffer[4]) + 1 : 0;
 
             if (AdaptationFieldControl == Helper.B00000010 || AdaptationFieldControl == Helper.B00000011)
-                AdaptationField = new AdaptationField(packetBuffer);
-
-            if (AdaptationFieldControl == Helper.B00000001 || AdaptationFieldControl == Helper.B00000011) // Payload exists -  binary '01' || '11'
             {
-                int payloadStart = 4;
-                if (AdaptationField != null)
-                    payloadStart += (1 + AdaptationField.Length);
-
-                if (PacketId == ProgramAssociationTablePacketId) // PAT = Program Association Table: lists all programs available in the transport stream.
-                {
-                    ProgramAssociationTable = new ProgramAssociationTable(packetBuffer, payloadStart + 1); // TODO: What index?
-                }
-
-                // Save payload
-                Payload = new byte[packetBuffer.Length - payloadStart];
-                Buffer.BlockCopy(packetBuffer, payloadStart, Payload, 0, Payload.Length);
+                AdaptationField = new AdaptationField(packetBuffer);
             }
-        }
 
+            if (AdaptationFieldControl != Helper.B00000001 && AdaptationFieldControl != Helper.B00000011)
+            {
+                return;
+            }
+
+            int payloadStart = 4;
+            if (AdaptationField != null)
+            {
+                payloadStart += (1 + AdaptationField.Length);
+            }
+
+            if (PacketId == ProgramAssociationTablePacketId) // PAT = Program Association Table: lists all programs available in the transport stream.
+            {
+                ProgramAssociationTable = new ProgramAssociationTable(packetBuffer, payloadStart + 1); // TODO: What index?
+            }
+
+            // Save payload
+            Payload = new byte[packetBuffer.Length - payloadStart];
+            Buffer.BlockCopy(packetBuffer, payloadStart, Payload, 0, Payload.Length);
+        }
     }
 }

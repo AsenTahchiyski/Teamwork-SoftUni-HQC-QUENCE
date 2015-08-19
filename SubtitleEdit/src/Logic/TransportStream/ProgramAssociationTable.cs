@@ -1,17 +1,25 @@
-﻿using System.Collections.Generic;
-
-namespace Nikse.SubtitleEdit.Logic.TransportStream
+﻿namespace Nikse.SubtitleEdit.Logic.TransportStream
 {
+    using System.Collections.Generic;
+
     public class ProgramAssociationTable
     {
         public int TableId { get; set; }
+     
         public int SectionLength { get; set; }
+        
         public int TransportStreamId { get; set; }
+        
         public int VersionNumber { get; set; }
+        
         public int CurrentNextIndicator { get; set; }
+        
         public int SectionNumber { get; set; }
+        
         public int LastSectionNumber { get; set; }
+        
         public List<int> ProgramNumbers { get; set; }
+        
         public List<int> ProgramIds { get; set; }
 
         public ProgramAssociationTable(byte[] packetBuffer, int index)
@@ -29,14 +37,16 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
             index = index + 8;
             for (int i = 0; i < (SectionLength - 5) / 8; i++)
             {
-                if (index + 3 < packetBuffer.Length)
+                if (index + 3 >= packetBuffer.Length)
                 {
-                    int programNumber = packetBuffer[index] * 256 + packetBuffer[index + 1];
-                    int programId = (packetBuffer[index + 2] & Helper.B00011111) * 256 + packetBuffer[index + 3];
-                    ProgramNumbers.Add(programNumber);
-                    ProgramIds.Add(programId);
-                    index += 8;
+                    continue;
                 }
+
+                int programNumber = packetBuffer[index] * 256 + packetBuffer[index + 1];
+                int programId = (packetBuffer[index + 2] & Helper.B00011111) * 256 + packetBuffer[index + 3];
+                ProgramNumbers.Add(programNumber);
+                ProgramIds.Add(programId);
+                index += 8;
             }
         }
     }

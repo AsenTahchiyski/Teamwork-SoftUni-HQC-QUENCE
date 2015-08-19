@@ -1,11 +1,11 @@
-﻿using Nikse.SubtitleEdit.Core;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Xml;
-
-namespace Nikse.SubtitleEdit.Logic.SubtitleFormats
+﻿namespace Nikse.SubtitleEdit.Logic.SubtitleFormats
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Text;
+    using System.Xml;
+    using Core;
+
     public class AbcIViewer : SubtitleFormat
     {
         public override string Extension
@@ -41,6 +41,11 @@ namespace Nikse.SubtitleEdit.Logic.SubtitleFormats
 
             var xml = new XmlDocument { XmlResolver = null };
             xml.LoadXml(xmlStructure);
+            if (xml.DocumentElement == null)
+            {
+                return ToUtf8XmlString(xml);
+            }
+
             XmlNode reel = xml.DocumentElement.SelectSingleNode("reel");
             foreach (Paragraph p in subtitle.Paragraphs)
             {
@@ -48,15 +53,21 @@ namespace Nikse.SubtitleEdit.Logic.SubtitleFormats
 
                 XmlAttribute start = xml.CreateAttribute("start");
                 start.InnerText = ToTimeCode(p.StartTime.TotalMilliseconds);
-                paragraph.Attributes.Append(start);
+                if (paragraph.Attributes != null)
+                {
+                    paragraph.Attributes.Append(start);
 
-                XmlAttribute end = xml.CreateAttribute("end");
-                end.InnerText = ToTimeCode(p.EndTime.TotalMilliseconds);
-                paragraph.Attributes.Append(end);
+                    XmlAttribute end = xml.CreateAttribute("end");
+                    end.InnerText = ToTimeCode(p.EndTime.TotalMilliseconds);
+                    paragraph.Attributes.Append(end);
+                }
 
                 paragraph.InnerText = HtmlUtil.RemoveHtmlTags(p.Text.Replace(Environment.NewLine, "|"), true);
 
-                reel.AppendChild(paragraph);
+                if (reel != null)
+                {
+                    reel.AppendChild(paragraph);
+                }
             }
 
             return ToUtf8XmlString(xml);
@@ -77,7 +88,9 @@ namespace Nikse.SubtitleEdit.Logic.SubtitleFormats
 
             string xmlString = sb.ToString();
             if (!xmlString.Contains("<reel"))
+            {
                 return;
+            }
 
             var xml = new XmlDocument { XmlResolver = null };
             try
@@ -90,22 +103,33 @@ namespace Nikse.SubtitleEdit.Logic.SubtitleFormats
                 return;
             }
 
-            foreach (XmlNode node in xml.DocumentElement.SelectNodes("reel/title"))
+            if (xml.DocumentElement != null)
             {
-                try
-                {
-                    string start = node.Attributes["start"].InnerText;
-                    string end = node.Attributes["end"].InnerText;
-                    string text = node.InnerText;
-                    text = text.Replace("|", Environment.NewLine);
-                    subtitle.Paragraphs.Add(new Paragraph(text, ParseTimeCode(start), ParseTimeCode(end)));
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine(ex.Message);
-                    _errorCount++;
-                }
+                var xmlNodeList = xml.DocumentElement.SelectNodes("reel/title");
+                if (xmlNodeList != null)
+                    foreach (XmlNode node in xmlNodeList)
+                    {
+                        try
+                        {
+                            if (node.Attributes == null)
+                            {
+                                continue;
+                            }
+
+                            string start = node.Attributes["start"].InnerText;
+                            string end = node.Attributes["end"].InnerText;
+                            string text = node.InnerText;
+                            text = text.Replace("|", Environment.NewLine);
+                            subtitle.Paragraphs.Add(new Paragraph(text, ParseTimeCode(start), ParseTimeCode(end)));
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine(ex.Message);
+                            _errorCount++;
+                        }
+                    }
             }
+
             subtitle.Renumber();
         }
 
@@ -114,6 +138,5 @@ namespace Nikse.SubtitleEdit.Logic.SubtitleFormats
             string[] arr = start.Split(':');
             return new TimeSpan(0, int.Parse(arr[0]), int.Parse(arr[1]), int.Parse(arr[2]), int.Parse(arr[3])).TotalMilliseconds;
         }
-
     }
 }

@@ -1,15 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.IO;
-
-namespace Nikse.SubtitleEdit.Logic.VobSub
+﻿namespace Nikse.SubtitleEdit.Logic.VobSub
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Drawing;
+    using System.IO;
+
     public class VobSubParser
     {
         public bool IsPal { get; private set; }
+      
         public List<VobSubPack> VobSubPacks { get; private set; }
+        
         public List<Color> IdxPalette = new List<Color>();
+        
         public List<string> IdxLanguages = new List<string>();
 
         private const int PacketizedElementaryStreamMaximumLength = 2028;
@@ -43,7 +46,9 @@ namespace Nikse.SubtitleEdit.Logic.VobSub
                 ms.Seek(position, SeekOrigin.Begin);
                 ms.Read(buffer, 0, 0x0800);
                 if (IsSubtitlePack(buffer))
+                {
                     VobSubPacks.Add(new VobSubPack(buffer, null));
+                }
 
                 position += 0x800;
             }
@@ -65,50 +70,68 @@ namespace Nikse.SubtitleEdit.Logic.VobSub
                     {
                         foreach (var p in idx.IdxParagraphs)
                         {
-                            if (p.FilePosition + 100 < fs.Length)
+                            if (p.FilePosition + 100 >= fs.Length)
                             {
-                                long position = p.FilePosition;
+                                continue;
+                            }
+
+                            long position = p.FilePosition;
+                            fs.Seek(position, SeekOrigin.Begin);
+                            fs.Read(buffer, 0, 0x0800);
+                            if (!IsSubtitlePack(buffer) && !IsPrivateStream1(buffer, 0))
+                            {
+                                continue;
+                            }
+
+                            var vsp = new VobSubPack(buffer, p);
+                            VobSubPacks.Add(vsp);
+
+                            if (IsPrivateStream1(buffer, 0))
+                            {
+                                position += vsp.PacketizedElementaryStream.Length + 6;
+                            }
+                            else
+                            {
+                                position += 0x800;
+                            }
+
+                            if (vsp.PacketizedElementaryStream.SubPictureStreamId == null)
+                            {
+                                continue;
+                            }
+
+                            int currentSubPictureStreamId = vsp.PacketizedElementaryStream.SubPictureStreamId.Value;
+                            while (vsp.PacketizedElementaryStream != null &&
+                                   vsp.PacketizedElementaryStream.SubPictureStreamId.HasValue &&
+                                   (vsp.PacketizedElementaryStream.Length == PacketizedElementaryStreamMaximumLength ||
+                                    currentSubPictureStreamId != vsp.PacketizedElementaryStream.SubPictureStreamId.Value) && position < fs.Length)
+                            {
                                 fs.Seek(position, SeekOrigin.Begin);
-                                fs.Read(buffer, 0, 0x0800);
-                                if (IsSubtitlePack(buffer) || IsPrivateStream1(buffer, 0))
+                                fs.Read(buffer, 0, 0x800);
+                                vsp = new VobSubPack(buffer, p); // idx position?
+
+                                if (vsp.PacketizedElementaryStream != null && vsp.PacketizedElementaryStream.SubPictureStreamId.HasValue && currentSubPictureStreamId == vsp.PacketizedElementaryStream.SubPictureStreamId.Value)
                                 {
-                                    var vsp = new VobSubPack(buffer, p);
                                     VobSubPacks.Add(vsp);
 
                                     if (IsPrivateStream1(buffer, 0))
-                                        position += vsp.PacketizedElementaryStream.Length + 6;
-                                    else
-                                        position += 0x800;
-
-                                    int currentSubPictureStreamId = vsp.PacketizedElementaryStream.SubPictureStreamId.Value;
-                                    while (vsp.PacketizedElementaryStream != null &&
-                                           vsp.PacketizedElementaryStream.SubPictureStreamId.HasValue &&
-                                           (vsp.PacketizedElementaryStream.Length == PacketizedElementaryStreamMaximumLength ||
-                                            currentSubPictureStreamId != vsp.PacketizedElementaryStream.SubPictureStreamId.Value) && position < fs.Length)
                                     {
-                                        fs.Seek(position, SeekOrigin.Begin);
-                                        fs.Read(buffer, 0, 0x800);
-                                        vsp = new VobSubPack(buffer, p); // idx position?
-
-                                        if (vsp.PacketizedElementaryStream != null && vsp.PacketizedElementaryStream.SubPictureStreamId.HasValue && currentSubPictureStreamId == vsp.PacketizedElementaryStream.SubPictureStreamId.Value)
-                                        {
-                                            VobSubPacks.Add(vsp);
-
-                                            if (IsPrivateStream1(buffer, 0))
-                                                position += vsp.PacketizedElementaryStream.Length + 6;
-                                            else
-                                                position += 0x800;
-                                        }
-                                        else
-                                        {
-                                            position += 0x800;
-                                            fs.Seek(position, SeekOrigin.Begin);
-                                        }
+                                        position += vsp.PacketizedElementaryStream.Length + 6;
                                     }
+                                    else
+                                    {
+                                        position += 0x800;
+                                    }
+                                }
+                                else
+                                {
+                                    position += 0x800;
+                                    fs.Seek(position, SeekOrigin.Begin);
                                 }
                             }
                         }
                     }
+
                     return;
                 }
             }
@@ -130,7 +153,9 @@ namespace Nikse.SubtitleEdit.Logic.VobSub
 
             float ticksPerMillisecond = 90.000F;
             if (!IsPal)
+            {
                 ticksPerMillisecond = 90.090F; // TODO: What should this be for NTSC?
+            }
 
             // get unique streamIds
             var uniqueStreamIds = new List<int>();
@@ -139,7 +164,9 @@ namespace Nikse.SubtitleEdit.Logic.VobSub
                 if (p.PacketizedElementaryStream != null &&
                     p.PacketizedElementaryStream.SubPictureStreamId.HasValue &&
                     !uniqueStreamIds.Contains(p.PacketizedElementaryStream.SubPictureStreamId.Value))
+                {
                     uniqueStreamIds.Add(p.PacketizedElementaryStream.SubPictureStreamId.Value);
+                }
             }
 
             IdxParagraph lastIdxParagraph = null;
@@ -147,32 +174,41 @@ namespace Nikse.SubtitleEdit.Logic.VobSub
             {
                 foreach (var p in VobSubPacks)
                 {
-                    if (p.PacketizedElementaryStream != null && p.PacketizedElementaryStream.SubPictureStreamId.HasValue &&
-                        p.PacketizedElementaryStream.SubPictureStreamId.Value == uniqueStreamId)
+                    if (p.PacketizedElementaryStream == null || !p.PacketizedElementaryStream.SubPictureStreamId.HasValue || p.PacketizedElementaryStream.SubPictureStreamId.Value != uniqueStreamId)
                     {
-                        if (p.PacketizedElementaryStream.PresentationTimestampDecodeTimestampFlags > 0)
-                        {
-                            if (lastIdxParagraph == null || p.IdxLine.FilePosition != lastIdxParagraph.FilePosition)
-                            {
-                                if (ms.Length > 0)
-                                    list.Add(new VobSubMergedPack(ms.ToArray(), pts, streamId, lastIdxParagraph));
-                                ms.Close();
-                                ms = new MemoryStream();
-                                pts = TimeSpan.FromMilliseconds(Convert.ToDouble(p.PacketizedElementaryStream.PresentationTimestamp / ticksPerMillisecond)); //90000F * 1000)); (PAL)
-                                streamId = p.PacketizedElementaryStream.SubPictureStreamId.Value;
-                            }
-                        }
-                        lastIdxParagraph = p.IdxLine;
-                        p.PacketizedElementaryStream.WriteToStream(ms);
+                        continue;
                     }
+
+                    if (p.PacketizedElementaryStream.PresentationTimestampDecodeTimestampFlags > 0)
+                    {
+                        if (lastIdxParagraph == null || p.IdxLine.FilePosition != lastIdxParagraph.FilePosition)
+                        {
+                            if (ms.Length > 0)
+                            {
+                                list.Add(new VobSubMergedPack(ms.ToArray(), pts, streamId, lastIdxParagraph));
+                            }
+
+                            ms.Close();
+                            ms = new MemoryStream();
+                            pts = TimeSpan.FromMilliseconds(Convert.ToDouble(p.PacketizedElementaryStream.PresentationTimestamp / ticksPerMillisecond)); //90000F * 1000)); (PAL)
+                            streamId = p.PacketizedElementaryStream.SubPictureStreamId.Value;
+                        }
+                    }
+
+                    lastIdxParagraph = p.IdxLine;
+                    p.PacketizedElementaryStream.WriteToStream(ms);
                 }
-                if (ms.Length > 0)
+
+                if (ms.Length <= 0)
                 {
-                    list.Add(new VobSubMergedPack(ms.ToArray(), pts, streamId, lastIdxParagraph));
-                    ms.Close();
-                    ms = new MemoryStream();
+                    continue;
                 }
+
+                list.Add(new VobSubMergedPack(ms.ToArray(), pts, streamId, lastIdxParagraph));
+                ms.Close();
+                ms = new MemoryStream();
             }
+
             ms.Close();
 
             // Remove any bad packs
@@ -180,9 +216,13 @@ namespace Nikse.SubtitleEdit.Logic.VobSub
             {
                 VobSubMergedPack pack = list[i];
                 if (pack.SubPicture == null || pack.SubPicture.ImageDisplayArea.Width <= 3 || pack.SubPicture.ImageDisplayArea.Height <= 2)
+                {
                     list.RemoveAt(i);
+                }
                 else if (pack.EndTime.TotalSeconds - pack.StartTime.TotalSeconds < 0.1 && pack.SubPicture.ImageDisplayArea.Width <= 10 && pack.SubPicture.ImageDisplayArea.Height <= 10)
+                {
                     list.RemoveAt(i);
+                }
             }
 
             // Fix subs with no duration (completely normal) or negative duration or duration > 10 seconds
@@ -190,15 +230,16 @@ namespace Nikse.SubtitleEdit.Logic.VobSub
             {
                 VobSubMergedPack pack = list[i];
                 if (pack.SubPicture.Delay.TotalMilliseconds > 0)
-                    pack.EndTime = pack.StartTime.Add(pack.SubPicture.Delay);
-
-                if (pack.EndTime < pack.StartTime || pack.EndTime.TotalSeconds - pack.StartTime.TotalSeconds > 10.0)
                 {
-                    if (i + 1 < list.Count)
-                        pack.EndTime = TimeSpan.FromMilliseconds(list[i].StartTime.TotalMilliseconds - 100);
-                    else
-                        pack.EndTime = TimeSpan.FromMilliseconds(pack.StartTime.TotalMilliseconds + 3000);
+                    pack.EndTime = pack.StartTime.Add(pack.SubPicture.Delay);
                 }
+
+                if (pack.EndTime >= pack.StartTime && !(pack.EndTime.TotalSeconds - pack.StartTime.TotalSeconds > 10.0))
+                {
+                    continue;
+                }
+
+                pack.EndTime = i + 1 < list.Count ? TimeSpan.FromMilliseconds(list[i].StartTime.TotalMilliseconds - 100) : TimeSpan.FromMilliseconds(pack.StartTime.TotalMilliseconds + 3000);
             }
 
             return list;
@@ -233,15 +274,14 @@ namespace Nikse.SubtitleEdit.Logic.VobSub
 
         internal static bool IsSubtitlePack(byte[] buffer)
         {
-            if (IsMpeg2PackHeader(buffer) && IsPrivateStream1(buffer, Mpeg2Header.Length))
+            if (!IsMpeg2PackHeader(buffer) || !IsPrivateStream1(buffer, Mpeg2Header.Length))
             {
-                int pesHeaderDataLength = buffer[Mpeg2Header.Length + 8];
-                int streamId = buffer[Mpeg2Header.Length + 8 + 1 + pesHeaderDataLength];
-                if (streamId >= 0x20 && streamId <= 0x3f) // Subtitle IDs allowed (or x3f to x40?)
-                    return true;
+                return false;
             }
-            return false;
-        }
 
+            int pesHeaderDataLength = buffer[Mpeg2Header.Length + 8];
+            int streamId = buffer[Mpeg2Header.Length + 8 + 1 + pesHeaderDataLength];
+            return streamId >= 0x20 && streamId <= 0x3f;
+        }
     }
 }

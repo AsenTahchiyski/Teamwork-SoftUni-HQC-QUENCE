@@ -1,13 +1,16 @@
-﻿using System.Collections.Generic;
-
-namespace Nikse.SubtitleEdit.Logic.TransportStream
+﻿namespace Nikse.SubtitleEdit.Logic.TransportStream
 {
+    using System.Collections.Generic;
+
     public class PageCompositionSegment
     {
         public int PageTimeOut { get; set; }
+     
         public int PageVersionNumber { get; set; }
+        
         public int PageState { get; set; }
-        public List<PageCompositionSegmentRegion> Regions = new List<PageCompositionSegmentRegion>();
+        
+        public List<PageCompositionSegmentRegion> Regions;
 
         public PageCompositionSegment(byte[] buffer, int index, int regionLength)
         {
@@ -18,8 +21,7 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
             int i = 0;
             while (i < regionLength && i + index < buffer.Length)
             {
-                var rcsr = new PageCompositionSegmentRegion();
-                rcsr.RegionId = buffer[i + index + 2];
+                var rcsr = new PageCompositionSegmentRegion { RegionId = buffer[i + index + 2] };
                 i += 2;
                 rcsr.RegionHorizontalAddress = Helper.GetEndianWord(buffer, i + index + 2);
                 i += 2;
@@ -29,5 +31,4 @@ namespace Nikse.SubtitleEdit.Logic.TransportStream
             }
         }
     }
-
 }
