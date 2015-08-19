@@ -1,17 +1,19 @@
-﻿using System.Collections.Generic;
-
-namespace Nikse.SubtitleEdit.Logic.Ocr
+﻿namespace Nikse.SubtitleEdit.Logic.Ocr
 {
+    using System.Collections.Generic;
+
     public class ModiLanguage
     {
+        public const int DefaultLanguageId = 2048;
+
         public int Id { get; set; }
+       
         public string Text { get; set; }
+        
         public override string ToString()
         {
             return Text;
         }
-
-        public const int DefaultLanguageId = 2048;
 
         public static IEnumerable<ModiLanguage> AllLanguages
         {

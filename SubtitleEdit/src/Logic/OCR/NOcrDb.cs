@@ -1,16 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.IO;
-using System.IO.Compression;
-
-namespace Nikse.SubtitleEdit.Logic.Ocr
+﻿namespace Nikse.SubtitleEdit.Logic.Ocr
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Drawing;
+    using System.IO;
+    using System.IO.Compression;
+
     public class NOcrDb
     {
-        public string FileName { get; private set; }
         public List<NOcrChar> OcrCharacters = new List<NOcrChar>();
         public List<NOcrChar> OcrCharactersExpanded = new List<NOcrChar>();
+
+        public string FileName { get; private set; }
 
         public NOcrDb(string fileName)
         {
@@ -23,9 +24,14 @@ namespace Nikse.SubtitleEdit.Logic.Ocr
             using (Stream gz = new GZipStream(File.OpenWrite(FileName), CompressionMode.Compress))
             {
                 foreach (var ocrChar in OcrCharacters)
+                {
                     ocrChar.Save(gz);
+                }
+
                 foreach (var ocrChar in OcrCharactersExpanded)
+                {
                     ocrChar.Save(gz);
+                }
             }
         }
 
@@ -50,9 +56,13 @@ namespace Nikse.SubtitleEdit.Logic.Ocr
                     if (ocrChar.LoadedOk)
                     {
                         if (ocrChar.ExpandCount > 0)
+                        {
                             listExpanded.Add(ocrChar);
+                        }
                         else
+                        {
                             list.Add(ocrChar);
+                        }
                     }
                     else
                     {
@@ -60,6 +70,7 @@ namespace Nikse.SubtitleEdit.Logic.Ocr
                     }
                 }
             }
+
             OcrCharacters = list;
             OcrCharactersExpanded = listExpanded;
         }
@@ -72,14 +83,18 @@ namespace Nikse.SubtitleEdit.Logic.Ocr
         public void Add(NOcrChar ocrChar)
         {
             if (ocrChar.ExpandCount > 0)
+            {
                 OcrCharactersExpanded.Insert(0, ocrChar);
+            }
             else
+            {
                 OcrCharacters.Insert(0, ocrChar);
+            }
         }
 
         public NOcrChar GetMatch(NikseBitmap nbmp)
         {
-            const int NocrMinColor = 300;
+            const int nocrMinColor = 300;
             const int topMargin = 1;
             double widthPercent = nbmp.Height * 100.0 / nbmp.Width;
 
@@ -95,62 +110,81 @@ namespace Nikse.SubtitleEdit.Logic.Ocr
                         NOcrPoint op = oc.LinesForeground[index];
                         foreach (Point point in op.ScaledGetPoints(oc, nbmp.Width, nbmp.Height))
                         {
-                            if (point.X >= 0 && point.Y >= 0 && point.X < nbmp.Width && point.Y < nbmp.Height)
+                            if (point.X < 0 || point.Y < 0 || point.X >= nbmp.Width || point.Y >= nbmp.Height)
                             {
-                                Color c = nbmp.GetPixel(point.X, point.Y);
-                                if (c.A > 150 && c.R + c.G + c.B > NocrMinColor)
+                                continue;
+                            }
+
+                            Color color = nbmp.GetPixel(point.X, point.Y);
+                            if (color.A > 150 && color.R + color.G + color.B > nocrMinColor)
+                            {
+                            }
+                            else
+                            {
+                                Point p = new Point(point.X - 1, point.Y);
+                                if (p.X < 0)
                                 {
+                                    p.X = 1;
                                 }
-                                else
+
+                                color = nbmp.GetPixel(p.X, p.Y);
+                                if (nbmp.Width > 20 && color.A > 150 && color.R + color.G + color.B > nocrMinColor)
                                 {
-                                    Point p = new Point(point.X - 1, point.Y);
-                                    if (p.X < 0)
-                                        p.X = 1;
-                                    c = nbmp.GetPixel(p.X, p.Y);
-                                    if (nbmp.Width > 20 && c.A > 150 && c.R + c.G + c.B > NocrMinColor)
-                                    {
-                                    }
-                                    else
-                                    {
-                                        ok = false;
-                                        break;
-                                    }
+                                    continue;
                                 }
+
+                                ok = false;
+                                break;
                             }
                         }
+
                         index++;
                     }
+
                     index = 0;
                     while (index < oc.LinesBackground.Count && ok)
                     {
                         NOcrPoint op = oc.LinesBackground[index];
                         foreach (Point point in op.ScaledGetPoints(oc, nbmp.Width, nbmp.Height))
                         {
-                            if (point.X >= 0 && point.Y >= 0 && point.X < nbmp.Width && point.Y < nbmp.Height)
+                            if (point.X < 0 || point.Y < 0 || point.X >= nbmp.Width || point.Y >= nbmp.Height)
                             {
-                                Color c = nbmp.GetPixel(point.X, point.Y);
-                                if (c.A > 150 && c.R + c.G + c.B > NocrMinColor)
-                                {
-                                    Point p = new Point(point.X, point.Y);
-                                    if (oc.Width > 19 && point.X > 0)
-                                        p.X = p.X - 1;
-                                    c = nbmp.GetPixel(p.X, p.Y);
-                                    if (c.A > 150 && c.R + c.G + c.B > NocrMinColor)
-                                    {
-                                        ok = false;
-                                        break;
-                                    }
-                                }
+                                continue;
                             }
+
+                            Color c = nbmp.GetPixel(point.X, point.Y);
+                            if (c.A <= 150 || c.R + c.G + c.B <= nocrMinColor)
+                            {
+                                continue;
+                            }
+
+                            Point p = new Point(point.X, point.Y);
+                            if (oc.Width > 19 && point.X > 0)
+                            {
+                                p.X = p.X - 1;
+                            }
+
+                            c = nbmp.GetPixel(p.X, p.Y);
+                            if (c.A <= 150 || c.R + c.G + c.B <= nocrMinColor)
+                            {
+                                continue;
+                            }
+
+                            ok = false;
+                            break;
                         }
+
                         index++;
                     }
+
                     if (ok)
+                    {
                         return oc;
+                    }
                 }
             }
+
             return null;
         }
-
     }
 }

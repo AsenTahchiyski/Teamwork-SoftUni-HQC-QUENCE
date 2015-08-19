@@ -1,13 +1,17 @@
-﻿using System;
-
-namespace Nikse.SubtitleEdit.Logic.Networking
+﻿namespace Nikse.SubtitleEdit.Logic.Networking
 {
+    using System;
+
     public class UpdateLogEntry
     {
         public int Id { get; set; }
+      
         public string UserName { get; set; }
+        
         public int Index { get; set; }
+        
         public DateTime OccuredAt { get; set; }
+        
         public string Action { get; set; }
 
         public UpdateLogEntry(int id, string userName, int index, string action)
@@ -23,6 +27,5 @@ namespace Nikse.SubtitleEdit.Logic.Networking
         {
             return string.Format("{0:00}:{1:00}:{2:00} {3}: {4}", OccuredAt.Hour, OccuredAt.Minute, OccuredAt.Second, UserName, Action);
         }
-
     }
 }

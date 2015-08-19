@@ -1,14 +1,15 @@
-﻿using System.Collections.Generic;
-using System.IO;
-using System.IO.Compression;
-
-namespace Nikse.SubtitleEdit.Logic.Ocr.Binary
+﻿namespace Nikse.SubtitleEdit.Logic.Ocr.Binary
 {
+    using System.Collections.Generic;
+    using System.IO;
+    using System.IO.Compression;
+
     public class BinaryOcrDb
     {
-        public string FileName { get; private set; }
         public List<BinaryOcrBitmap> CompareImages = new List<BinaryOcrBitmap>();
         public List<BinaryOcrBitmap> CompareImagesExpanded = new List<BinaryOcrBitmap>();
+
+        public string FileName { get; private set; }
 
         public BinaryOcrDb(string fileName)
         {
@@ -19,7 +20,9 @@ namespace Nikse.SubtitleEdit.Logic.Ocr.Binary
         {
             FileName = fileName;
             if (loadCompareImages)
+            {
                 LoadCompareImages();
+            }
         }
 
         public void Save()
@@ -27,12 +30,17 @@ namespace Nikse.SubtitleEdit.Logic.Ocr.Binary
             using (Stream gz = new GZipStream(File.OpenWrite(FileName), CompressionMode.Compress))
             {
                 foreach (var bob in CompareImages)
+                {
                     bob.Save(gz);
+                }
+
                 foreach (var bob in CompareImagesExpanded)
                 {
                     bob.Save(gz);
                     foreach (var expandedBob in bob.ExpandedList)
+                    {
                         expandedBob.Save(gz);
+                    }
                 }
             }
         }
@@ -64,9 +72,13 @@ namespace Nikse.SubtitleEdit.Logic.Ocr.Binary
                             {
                                 var expandedBob = new BinaryOcrBitmap(gz);
                                 if (expandedBob.LoadedOk)
+                                {
                                     bob.ExpandedList.Add(expandedBob);
+                                }
                                 else
+                                {
                                     break;
+                                }
                             }
                         }
                         else
@@ -80,6 +92,7 @@ namespace Nikse.SubtitleEdit.Logic.Ocr.Binary
                     }
                 }
             }
+
             CompareImages = list;
             CompareImagesExpanded = expandList;
         }
@@ -90,8 +103,11 @@ namespace Nikse.SubtitleEdit.Logic.Ocr.Binary
             {
                 var b = CompareImages[i];
                 if (bob.Hash == b.Hash && bob.Width == b.Width && bob.Height == b.Height && bob.NumberOfColoredPixels == b.NumberOfColoredPixels)
+                {
                     return i;
+                }
             }
+
             return -1;
         }
 
@@ -101,8 +117,11 @@ namespace Nikse.SubtitleEdit.Logic.Ocr.Binary
             {
                 var b = CompareImagesExpanded[i];
                 if (bob.Hash == b.Hash && bob.Width == b.Width && bob.Height == b.Height && bob.NumberOfColoredPixels == b.NumberOfColoredPixels)
+                {
                     return i;
+                }
             }
+
             return -1;
         }
 
@@ -122,24 +141,35 @@ namespace Nikse.SubtitleEdit.Logic.Ocr.Binary
                     for (int i = 0; i < bob.ExpandCount - 1; i++)
                     {
                         if (bob.ExpandedList[i].Hash != CompareImagesExpanded[index].ExpandedList[i].Hash)
+                        {
                             allAlike = false;
+                        }
                     }
+
                     if (!allAlike)
+                    {
                         CompareImages.Add(bob);
+                    }
                     else
+                    {
                         System.Windows.Forms.MessageBox.Show("Expanded image already in db!");
+                    }
                 }
             }
             else
             {
                 index = FindExactMatch(bob);
                 if (index == -1)
+                {
                     CompareImages.Add(bob);
+                }
                 else
+                {
                     System.Windows.Forms.MessageBox.Show("Image already in db!");
+                }
             }
+
             return index;
         }
-
     }
 }

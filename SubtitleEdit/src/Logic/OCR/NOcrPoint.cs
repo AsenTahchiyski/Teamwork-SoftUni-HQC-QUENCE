@@ -7,6 +7,10 @@
 
     public class NOcrPoint
     {
+        public Point Start { get; set; }
+
+        public Point End { get; set; }
+
         public NOcrPoint()
         {
             this.Start = new Point();
@@ -18,10 +22,6 @@
             this.Start = new Point(start.X, start.Y);
             this.End = new Point(end.X, end.Y);
         }
-
-        public Point Start { get; set; }
-
-        public Point End { get; set; }
 
         public static PointF PointPixelsToPercent(Point p, int pixelWidth, int pixelHeight)
         {

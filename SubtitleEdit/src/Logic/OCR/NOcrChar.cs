@@ -1,20 +1,28 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.IO;
-
-namespace Nikse.SubtitleEdit.Logic.Ocr
+﻿namespace Nikse.SubtitleEdit.Logic.Ocr
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Drawing;
+    using System.IO;
+
     public class NOcrChar
     {
         public string Text { get; set; }
+      
         public int Width { get; set; }
+        
         public int Height { get; set; }
+        
         public int MarginTop { get; set; }
+        
         public bool Italic { get; set; }
+        
         public List<NOcrPoint> LinesForeground { get; private set; }
+        
         public List<NOcrPoint> LinesBackground { get; private set; }
+        
         public int ExpandCount { get; set; }
+        
         public bool LoadedOk { get; private set; }
 
         public Double WidthPercent
@@ -42,9 +50,14 @@ namespace Nikse.SubtitleEdit.Logic.Ocr
             MarginTop = old.MarginTop;
             Italic = old.Italic;
             foreach (NOcrPoint p in old.LinesForeground)
+            {
                 LinesForeground.Add(new NOcrPoint(new Point(p.Start.X, p.Start.Y), new Point(p.End.X, p.End.Y)));
+            }
+
             foreach (NOcrPoint p in old.LinesBackground)
+            {
                 LinesBackground.Add(new NOcrPoint(new Point(p.Start.X, p.Start.Y), new Point(p.End.X, p.End.Y)));
+            }
         }
 
         public NOcrChar(string text)
@@ -94,6 +107,7 @@ namespace Nikse.SubtitleEdit.Logic.Ocr
                     stream.Read(buffer, 0, buffer.Length);
                     Text = System.Text.Encoding.UTF8.GetString(buffer);
                 }
+
                 LinesForeground = ReadPoints(stream);
                 LinesBackground = ReadPoints(stream);
 
@@ -118,8 +132,10 @@ namespace Nikse.SubtitleEdit.Logic.Ocr
                     Start = new Point(buffer[0] << 8 | buffer[1], buffer[2] << 8 | buffer[3]),
                     End = new Point(buffer[4] << 8 | buffer[5], buffer[6] << 8 | buffer[7])
                 };
+
                 list.Add(point);
             }
+
             return list;
         }
 
@@ -143,6 +159,7 @@ namespace Nikse.SubtitleEdit.Logic.Ocr
                 stream.WriteByte((byte)textBuffer.Length);
                 stream.Write(textBuffer, 0, textBuffer.Length);
             }
+
             WritePoints(stream, LinesForeground);
             WritePoints(stream, LinesBackground);
         }
@@ -166,6 +183,5 @@ namespace Nikse.SubtitleEdit.Logic.Ocr
             buffer[1] = (byte)(val & 0x00FF);
             stream.Write(buffer, 0, buffer.Length);
         }
-
     }
 }
